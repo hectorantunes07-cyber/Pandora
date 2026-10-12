@@ -8,6 +8,7 @@ directories:
 # intentionally inspectable; an ASAR archive is not a security boundary.
 asar: false
 npmRebuild: false
+afterPack: build/after-pack.cjs
 files:
   - dist/**/*
   - dist-electron/**/*
@@ -39,7 +40,8 @@ nsis:
   installerIcon: build/icon.ico
   uninstallerIcon: build/icon.ico
   installerHeaderIcon: build/icon.ico
-  include: build/installer.nsh
+  script: build/pandora-installer.nsi
+  packElevateHelper: false
   deleteAppDataOnUninstall: false
 portable:
   artifactName: PANDORA-Portable-${version}-${arch}.${ext}
