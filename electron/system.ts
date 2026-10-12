@@ -29,7 +29,8 @@ try {
 }
 $adapters = @()
 try {
- $adapters = @(Get-NetAdapter -Physical -ErrorAction Stop | ForEach-Object { [pscustomobject]@{ description=$_.InterfaceDescription; status=[string]$_.Status; linkSpeedBits=[double]$_.LinkSpeed } })
+ # LinkSpeed is a formatted display property on Windows. Read the numeric CIM rate.
+ $adapters = @(Get-NetAdapter -Physical -ErrorAction Stop | ForEach-Object { [pscustomobject]@{ description=$_.InterfaceDescription; status=[string]$_.Status; linkSpeedBits=$(if ($null -ne $_.TransmitLinkSpeed) { [double]$_.TransmitLinkSpeed } else { $null }) } })
 } catch { $notes.Add('Network adapter inventory is unavailable from this Windows provider.') }
 $bootTime = $null
 if ($osInfo.Count -gt 0 -and $osInfo[0].LastBootUpTime) { $bootTime = $osInfo[0].LastBootUpTime.ToUniversalTime().ToString('o') }

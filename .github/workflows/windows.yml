@@ -54,10 +54,12 @@ jobs:
       - name: Verify package archives, architecture, bundled files and checksums
         run: npm run verify:package
       - name: Read-only packaged desktop smoke
+        timeout-minutes: 3
         run: node scripts/smoke-desktop.mjs
         env:
           PANDORA_SMOKE_EXECUTABLE: release/win-unpacked/PANDORA.exe
       - name: Disposable Windows install, launch and uninstall
+        timeout-minutes: 5
         shell: pwsh
         run: |
           try { ./scripts/test-installer.ps1 }
@@ -80,7 +82,7 @@ jobs:
             physicalHardwareTesting = 'still required'
           }
           $manifest | ConvertTo-Json -Depth 8 | Set-Content release/verification.json -Encoding utf8
-          Copy-Item docs/WINDOWS-QUICKSTART.md,docs/windows-validation.md,FEATURES.md -Destination release/
+          Copy-Item docs/WINDOWS-QUICKSTART.md,docs/windows-validation.md,docs/WINDOWS-HANDOFF.md,FEATURES.md -Destination release/
       - uses: actions/upload-artifact@v5
         with:
           name: PANDORA-Windows-x64-unsigned
@@ -91,6 +93,7 @@ jobs:
             release/PANDORA-Portable-*.exe.sha256
             release/verification.json
             release/WINDOWS-QUICKSTART.md
+            release/WINDOWS-HANDOFF.md
             release/windows-validation.md
             release/FEATURES.md
           if-no-files-found: error
