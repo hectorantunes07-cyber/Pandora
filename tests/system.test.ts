@@ -15,6 +15,32 @@ function dependencies(extra: Partial<SystemDependencies> = {}): Partial<SystemDe
 }
 
 describe('hardware inventory and telemetry', () => {
+  it('reports physical storage, installed RAM and network adapters without sensitive fields', async () => {
+    const service = createSystemService(dependencies({ platform: 'win32', runWindows: async () => ({
+      installedRamBytes: 32e9, deviceType: 'Portable', bootTime: '1970-01-01T00:05:00Z',
+      physicalDisks: [{ model: 'NVMe test drive', bytes: 1e12, media: 'SSD', bus: 'NVMe', health: 'Healthy', serialNumber: 'private' }, { model: '', bytes: -1 }],
+      networkAdapters: [{ description: 'Test Ethernet', status: 'Up', linkSpeedBits: 2.5e9, macAddress: 'private', ip: 'private' }],
+    }) }));
+    const info = await service.getSystem();
+    expect(info.installedRamBytes).toBe(32e9);
+    expect(info.deviceType).toBe('Portable');
+    expect(info.bootTime).toBe('1970-01-01T00:05:00.000Z');
+    expect(info.physicalDisks).toEqual([{ model: 'NVMe test drive', bytes: 1e12, media: 'SSD', bus: 'NVMe', health: 'Healthy' }]);
+    expect(info.networkAdapters).toEqual([{ description: 'Test Ethernet', status: 'Up', linkSpeedBits: 2.5e9 }]);
+    expect(JSON.stringify(info)).not.toContain('private');
+  });
+
+  it('keeps invalid extended hardware readings unavailable', async () => {
+    const service = createSystemService(dependencies({ platform: 'win32', runWindows: async () => ({
+      installedRamBytes: -1, deviceType: 'fabricated', bootTime: '2099-01-01T00:00:00Z',
+      physicalDisks: [{ model: 'Disk', bytes: Infinity }], networkAdapters: [{ description: 'Adapter', linkSpeedBits: -1 }],
+    }) }));
+    const info = await service.getSystem();
+    expect(info).toMatchObject({ installedRamBytes: null, deviceType: 'Unknown', bootTime: null });
+    expect(info.physicalDisks?.[0]).toMatchObject({ bytes: null, media: 'Unknown', health: null });
+    expect(info.networkAdapters?.[0].linkSpeedBits).toBeNull();
+  });
+
   it('identifies the real development platform without manufacturing Windows hardware', async () => {
     const query = vi.fn();
     const service = createSystemService(dependencies({ runWindows: query }));

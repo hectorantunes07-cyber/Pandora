@@ -43,3 +43,11 @@ Windows workflow now builds both portable and installer on Node 24, validates ar
 Current cloud result: 79 backend checks passed, four Windows checks skipped; 12 browser journeys passed; native script syntax/layout and Linux desktop smoke passed. Portable archive checks passed. Windows CI results and real Windows behavior remain unverified. The local installer cannot finish because the supplied Wine runtime lacks kernel32.dll. See VALIDATION.md for current artifact identity.
 
 Next Windows stage: run the portable read-only first, compare inventory with Windows tools, test controlled temporary-file cleanup and one preference apply/restore, then run the full Windows release checklist and collect the native Actions results. Keep all settings/history in place for rollback.
+
+## Stage 6 — installer build repaired and fuller diagnostics
+
+Replaced the Wine-dependent installer generation with a conventional per-user NSIS setup that creates its uninstaller during installation. Uninstall removes an exact generated list of packaged files and only empty directories, retaining application data and unrelated files. Added manifest tests and a disposable Windows install/launch/uninstall integration script. Reproduced and corrected the build pipeline's missing installer language-table failure; the complete electron-builder NSIS integration now produces an executable locally.
+
+Added physical disk model/media/bus/health, network adapter inventory/link rate, installed RAM, device type and boot timestamp. Added a Network Diagnostics page with fixed-destination, user-initiated ICMP sampling and honest loss/jitter accounting. Sidebar navigation scrolls independently so creator branding and settings remain visible at the minimum window height.
+
+Validation for this stage: production build passed; 89 backend tests passed with four Windows-only tests skipped locally; all 15 browser journeys passed. Six PowerShell scripts parsed, cleaner C# layouts compiled, installer integration script parsed, and real Linux Electron read-only smoke passed. Native Windows installation results are pending the new workflow run.

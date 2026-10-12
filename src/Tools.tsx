@@ -30,6 +30,7 @@ export function Processes() {
 
   return <>
     <PageHeading eyebrow="LESS MYSTERY. MORE CLARITY." title="Processes & Startup" description="See what is running now and what starts with Windows.">
+      {tab === 'startup' && <button className="button primary" disabled={!isDesktop} onClick={() => api.openWindowsSettings('startup').catch(err => setError(errorMessage(err)))}>Open Windows startup settings<ArrowRight size={16}/></button>}
       <button className="button secondary" onClick={() => void refresh()} disabled={!isDesktop || loading}><RefreshCw size={16} className={loading ? 'spin' : ''}/>Refresh list</button>
     </PageHeading>
     <div className="tabs" aria-label="Application inventory">

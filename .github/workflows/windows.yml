@@ -13,8 +13,8 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: '24'
           cache: npm
@@ -54,7 +54,10 @@ jobs:
         run: node scripts/smoke-desktop.mjs
         env:
           PANDORA_SMOKE_EXECUTABLE: release/win-unpacked/PANDORA.exe
-      - uses: actions/upload-artifact@v4
+      - name: Disposable Windows install, launch and uninstall
+        shell: pwsh
+        run: ./scripts/test-installer.ps1
+      - uses: actions/upload-artifact@v5
         with:
           name: PANDORA-Windows-x64-unsigned
           path: |
@@ -64,7 +67,7 @@ jobs:
             release/PANDORA-Portable-*.exe.sha256
             release/verification.json
           if-no-files-found: error
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: failure()
         with:
           name: test-failure-details

@@ -5,6 +5,11 @@ export interface SystemInfo {
   os: string; motherboard: string | null; powerPlan: string | null;
   volumes: { name: string; totalBytes: number; freeBytes: number; model?: string }[];
   monitors: { name: string; width: number; height: number; refreshHz: number | null }[];
+  installedRamBytes?: number | null;
+  deviceType?: 'Desktop' | 'Portable' | 'Unknown';
+  bootTime?: string | null;
+  physicalDisks?: { model: string; bytes: number | null; media: string; bus: string; health: string | null }[];
+  networkAdapters?: { description: string; status: string; linkSpeedBits: number | null }[];
   notes: string[];
 }
 export interface Metrics { timestamp: string; cpuPercent: number | null; ramUsedBytes: number; ramTotalBytes: number; gpuPercent: number | null; processCount: number | null; }
@@ -21,7 +26,15 @@ export interface CleanupScan { id: string; kind: CleanupKind; timestamp: string;
 export interface CleanupResult { kind?: CleanupKind; deletedBytes: number; deletedFiles: number; skippedFiles: number; failures: { path: string; reason: string }[]; recoveredBytes: number | null; }
 export interface ProgressEvent { operation: 'scan' | 'clean' | 'tweaks'; completed: number; total: number | null; message: string; }
 export interface AppSettings { reduceMotion: boolean; pollInterval: number; scanOnLaunch: boolean; }
+export type WindowsSettingsPage = 'display' | 'power' | 'startup' | 'graphics';
+export type NetworkTarget = 'cloudflare' | 'google';
+export interface NetworkResult {
+  target: NetworkTarget; address: string; timestamp: string; samples: (number | null)[];
+  received: number; lossPercent: number; averageMs: number | null; minMs: number | null; maxMs: number | null; jitterMs: number | null;
+}
 export interface AppApi {
+  openWindowsSettings(page: WindowsSettingsPage): Promise<void>;
+  testNetwork(target: NetworkTarget): Promise<NetworkResult>;
   getSystem(forceRefresh?: boolean): Promise<SystemInfo>;
   getMetrics(): Promise<Metrics>;
   getTweaks(): Promise<TweakState[]>;

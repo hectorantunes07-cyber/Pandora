@@ -12,3 +12,9 @@ export function isTrustedRenderer(url: string, packagedUrl: string, devUrl?: str
 export function externalDocumentation(url: string): boolean {
   try { const u = new URL(url); return u.protocol === 'https:' && !u.username && !u.password && !u.port && ['learn.microsoft.com', 'support.microsoft.com', 'support.xbox.com', 'www.epicgames.com', 'www.nvidia.com', 'www.amd.com'].includes(u.hostname); } catch { return false; }
 }
+
+const SETTINGS_PAGES = { display: 'ms-settings:display-advanced', power: 'ms-settings:powersleep', startup: 'ms-settings:startupapps', graphics: 'ms-settings:display-advancedgraphics' } as const;
+export function windowsSettingsUri(value: unknown): string {
+  if (typeof value !== 'string' || !Object.hasOwn(SETTINGS_PAGES, value)) throw new Error('Unknown Windows settings page.');
+  return SETTINGS_PAGES[value as keyof typeof SETTINGS_PAGES];
+}

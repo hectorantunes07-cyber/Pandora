@@ -10,7 +10,7 @@ actual test/build outcomes and [the release checklist](docs/windows-validation.m
 | Feature | Status | Scope and limitations |
 | --- | --- | --- |
 | Original branding and desktop shell | COMPLETE | Purple/black React UI in Electron; original SVG/PNG/ICO assets, PANDORA and Created by Sonnier identity. |
-| Hardware inventory | PARTIAL; WINDOWS VALIDATION REQUIRED | CPU/core count, RAM, GPU/driver, OS, motherboard, active power plan and fixed volumes. Display information comes from active video controllers and may not map one-to-one to monitors. Physical disk model/interface, network adapter inventory and VRAM are not implemented. |
+| Hardware inventory | PARTIAL; WINDOWS VALIDATION REQUIRED | CPU/core count, RAM, GPU/driver, OS, motherboard, active power plan and fixed volumes. Display information comes from active video controllers and may not map one-to-one to monitors. Physical storage model/media/bus/health, physical network adapters/link rates, installed versus usable RAM, device type and last boot are now reported when exposed. VRAM and detailed sensors remain unavailable. |
 | Live CPU/RAM/process monitoring | COMPLETE; WINDOWS VALIDATION REQUIRED | Actual OS observations with timestamps. Process CPU values are cumulative seconds, not a percent estimate. |
 | GPU utilization | PARTIAL; WINDOWS VALIDATION REQUIRED | Busiest 3D-engine utilization from CIM, cached at five seconds. Provider absence is reported. No GPU/CPU temperature, fan or power sensors. |
 | Startup inventory | COMPLETE; WINDOWS VALIDATION REQUIRED | Read-only HKCU/HKLM Run, 32-bit Run and Startup folders with available StartupApproved metadata. No disable/restore actions, publisher verification or fabricated impact score. |
@@ -27,10 +27,10 @@ actual test/build outcomes and [the release checklist](docs/windows-validation.m
 | Benchmark comparison | PARTIAL | Manual user-supplied comparison when shown; no live game telemetry, automatic benchmark capture, imported frame traces or claimed gains. |
 | Privacy-filtered exports | COMPLETE | Native save dialog for system/history JSON; usernames, local paths, serials and addresses omitted by fixed schema. |
 | Settings persistence | COMPLETE | Reduced motion, monitor interval and scan-on-launch. No startup registration, tray service or updater. |
-| Network tuning/latency diagnostics | NOT IMPLEMENTED | No arbitrary ping/DNS target executor or network-stack modification. |
+| Network diagnostics | COMPLETE; WINDOWS VALIDATION REQUIRED | Explicit eight-request ICMP tests to two fixed public destinations; individual replies, round-trip range/mean, adjacent-reply jitter and loss. No background probing, arbitrary target executor, DNS changes or network-stack modifications. |
 | App removal/debloat | NOT IMPLEMENTED | No bundled-app uninstall, security disablement or service disable lists. |
 | Portable Windows executable | BUILT; WINDOWS VALIDATION REQUIRED | Unsigned x64 payload; archive integrity, bundled assets and checksum verified. Windows launch still required. |
-| Windows installer | BUILD CONFIGURATION COMPLETE | Per-user x64 NSIS, icons, shortcuts, uninstaller and unsigned metadata. Actual artifact result is recorded separately; real Windows install/uninstall validation required. |
+| Windows installer | BUILT; WINDOWS VALIDATION REQUIRED | Per-user x64 NSIS with runtime-generated uninstaller, exact owned-file removal, icons and shortcuts. No Wine required to build. CI includes disposable install/launch/uninstall and preservation checks; actual outcomes recorded separately. |
 | Code signing / auto-update | NOT IMPLEMENTED | No verified-publisher claim, signing certificate or update service. |
 | Source and third-party licensing | PARTIAL | Source explicitly UNLICENSED pending owner decision; dependencies retain their licenses and bundled notices. |
 

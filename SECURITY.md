@@ -88,3 +88,10 @@ or universal driver compatibility is made.
 No security-contact address has been configured. Until the owner supplies one,
 report a reproducible issue privately to the repository owner through an agreed
 channel. Do not include secrets or detailed personal paths in public reports.
+
+Network diagnostics are explicitly user-initiated, fixed-destination ICMP tests
+(eight requests, bounded timeout). No arbitrary destination or script is exposed
+over IPC. Windows Settings shortcuts map four fixed IDs to approved ms-settings
+URIs; arbitrary URLs, paths and commands are rejected. The installer owns an exact
+build-generated file list, never recursively removes an installation folder, and
+leaves the user's application data and rollback journal intact.

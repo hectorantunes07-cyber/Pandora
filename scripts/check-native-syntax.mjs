@@ -12,10 +12,10 @@ const root = fileURLToPath(new URL('..', import.meta.url));
 const directory = await mkdtemp(join(tmpdir(), 'pandora-native-syntax-'));
 try {
   const bundle = join(directory, 'scripts.cjs');
-  await build({ stdin: { contents: "export {CLEANER_SCRIPT} from './electron/cleaner-native'; export {WINDOWS_QUERIES} from './electron/system';", resolveDir: root }, outfile: bundle, bundle: true, platform: 'node', format: 'cjs', logLevel: 'silent' });
-  const { CLEANER_SCRIPT, WINDOWS_QUERIES } = createRequire(import.meta.url)(bundle);
+  await build({ stdin: { contents: "export {CLEANER_SCRIPT} from './electron/cleaner-native'; export {WINDOWS_QUERIES} from './electron/system'; export {NETWORK_SCRIPT} from './electron/network';", resolveDir: root }, outfile: bundle, bundle: true, platform: 'node', format: 'cjs', logLevel: 'silent' });
+  const { CLEANER_SCRIPT, WINDOWS_QUERIES, NETWORK_SCRIPT } = createRequire(import.meta.url)(bundle);
   const payload = join(directory, 'scripts.json');
-  await writeFile(payload, JSON.stringify({ cleaner: CLEANER_SCRIPT, ...WINDOWS_QUERIES }));
+  await writeFile(payload, JSON.stringify({ cleaner: CLEANER_SCRIPT, network: NETWORK_SCRIPT, ...WINDOWS_QUERIES }));
   const checker = join(directory, 'check.ps1');
   await writeFile(checker, String.raw`param([string]$InputFile)
 $ErrorActionPreference = 'Stop'

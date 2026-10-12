@@ -29,6 +29,7 @@ win:
   requestedExecutionLevel: asInvoker
   # No certificate is configured. Publisher metadata is not a digital signature.
 nsis:
+  installerLanguages: [en_US]
   oneClick: false
   perMachine: false
   allowElevation: false

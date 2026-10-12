@@ -1,6 +1,8 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { AppApi, ProgressEvent } from '../shared/types';
 const api: AppApi = {
+  openWindowsSettings: page => ipcRenderer.invoke('pandora:windows-settings', page),
+  testNetwork: target => ipcRenderer.invoke('pandora:network-test', target),
   getSystem: forceRefresh => ipcRenderer.invoke('pandora:system', forceRefresh),
   getMetrics: () => ipcRenderer.invoke('pandora:metrics'),
   getTweaks: () => ipcRenderer.invoke('pandora:tweaks'),

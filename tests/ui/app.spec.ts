@@ -8,7 +8,9 @@ async function desktopFixture(page: Page) {
     const track = (method: string, ...args: unknown[]) => calls.push({ method, args });
     const states = [{ id: 'transparency', title: 'Reduce transparency', description: 'Use opaque Windows surfaces.', category: 'Quality of life' as const, risk: 'Low' as const, tradeoff: 'Windows surfaces will look opaque.', target: 'HKCU\\Test\\Transparency', desiredValue: 0, restart: 'Sign out may be required.', reference: 'https://support.microsoft.com/', state: 'available' as const, currentValue: 1, managed: false }];
     window.pandora = {
-      getSystem: async () => ({ platform: 'win32', timestamp: new Date().toISOString(), cpu: 'UI test processor', logicalCores: 8, physicalCores: 4, gpu: 'UI test graphics', gpuDriver: 'test-driver', ramBytes: 16e9, ramSpeedMHz: 3200, os: 'Windows test fixture', motherboard: 'UI test board', powerPlan: 'Balanced', volumes: [{ name: 'C:', totalBytes: 1e12, freeBytes: 6e11 }], monitors: [{ name: 'Test display', width: 1920, height: 1080, refreshHz: 144 }], notes: [] }),
+      openWindowsSettings: async page => { track('windows-settings', page); },
+      testNetwork: async target => { track('network', target); return { target, address: target === 'google' ? '8.8.8.8' : '1.1.1.1', timestamp: new Date().toISOString(), samples: [10, 20, null, 10, 20, 10, 20, 10], received: 7, lossPercent: 12.5, averageMs: 14.3, minMs: 10, maxMs: 20, jitterMs: 10 }; },
+      getSystem: async () => ({ platform: 'win32', timestamp: new Date().toISOString(), cpu: 'UI test processor', logicalCores: 8, physicalCores: 4, gpu: 'UI test graphics', gpuDriver: 'test-driver', ramBytes: 16e9, ramSpeedMHz: 3200, os: 'Windows test fixture', motherboard: 'UI test board', installedRamBytes: 32e9, deviceType: 'Portable', physicalDisks: [{ model: 'Test NVMe drive', bytes: 1e12, media: 'SSD', bus: 'NVMe', health: 'Healthy' }], networkAdapters: [{ description: 'Test Ethernet adapter', status: 'Up', linkSpeedBits: 2.5e9 }], powerPlan: 'Balanced', volumes: [{ name: 'C:', totalBytes: 1e12, freeBytes: 6e11 }], monitors: [{ name: 'Test display', width: 1920, height: 1080, refreshHz: 144 }], notes: [] }),
       getMetrics: async () => ({ timestamp: new Date().toISOString(), cpuPercent: 24, gpuPercent: null, ramUsedBytes: 6e9, ramTotalBytes: 16e9, processCount: 12 }),
       getTweaks: async () => states,
       applyTweaks: async ids => { track('apply', ids); return ids.map(id => ({ id, success: true, message: 'Applied and verified.' })); },
@@ -92,13 +94,14 @@ test('all navigation routes render and the minimum desktop viewport does not ove
   page.on('pageerror', error => errors.push(error.message));
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto('/');
-  for (const name of ['System Monitor', 'Optimizations', 'Game Profiles', 'PC Cleaner', 'Restore & History', 'Processes & Startup', 'Performance Lab']) {
+  for (const name of ['System Monitor', 'Optimizations', 'Game Profiles', 'PC Cleaner', 'Restore & History', 'Processes & Startup', 'Performance Lab', 'Network Diagnostics']) {
     await page.getByRole('navigation').getByRole('button', { name: new RegExp(name) }).click();
     await expect(page.getByRole('main')).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   }
   await page.getByRole('button', { name: 'Settings & About' }).click();
   await expect(page.getByText('PANDORA — Created by Sonnier')).toBeVisible();
+  await expect(page.locator('.creator')).toBeInViewport();
   expect(errors).toEqual([]);
 });
 
@@ -115,6 +118,9 @@ test('scanner displays returned hardware, keeps unavailable GPU metrics honest, 
   await page.getByRole('navigation').getByRole('button', { name: 'System Monitor', exact: true }).click();
   await expect(page.getByText('UI test processor').first()).toBeVisible();
   await expect(page.getByText('Windows test fixture')).toBeVisible();
+  await expect(page.getByText('Test NVMe drive')).toBeVisible();
+  await expect(page.getByText('Test Ethernet adapter')).toBeVisible();
+  await expect(page.getByText('Up · 2.5 Gbps link')).toBeVisible();
   await expect(page.getByText('CPU and GPU temperatures are not exposed', { exact: false })).toBeVisible();
   await expect(page.locator('.metric-card').nth(1).locator('.meter > span')).toHaveText('—');
   await page.getByRole('button', { name: 'Export report' }).click();
@@ -225,4 +231,44 @@ test('hardware refresh requests a new inventory and displays updated storage', a
   await expect(page.getByText('Power saver', { exact: true })).toBeVisible();
   await expect(page.getByText('700.0 GB free of 1.0 TB')).toBeVisible();
   expect(await page.evaluate(() => (window as any).__calls.find((c: any) => c.method === 'system').args)).toEqual([true]);
+});
+
+test('network diagnostic runs only on request and preserves measured results across navigation', async ({ page }) => {
+  await desktopFixture(page);
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Network Diagnostics' }).click();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'network'))).toHaveLength(0);
+  await page.getByLabel('Diagnostic destination').selectOption('google');
+  await page.getByRole('button', { name: 'Start test' }).click();
+  await expect(page.getByRole('region', { name: 'Network test results' })).toContainText('12.5%');
+  await expect(page.getByText('Google · 8.8.8.8', { exact: true }).last()).toBeVisible();
+  expect(await page.evaluate(() => (window as any).__calls.find((c: any) => c.method === 'network').args)).toEqual(['google']);
+  await page.getByRole('navigation').getByRole('button', { name: 'Overview', exact: true }).click();
+  await page.getByRole('navigation').getByRole('button', { name: 'Network Diagnostics' }).click();
+  await expect(page.getByRole('region', { name: 'Network test results' })).toContainText('14.3 ms');
+  await page.screenshot({ path: 'test-results/pandora-network.png', fullPage: true });
+});
+
+test('network failure remains explicit and never renders invented latency', async ({ page }) => {
+  await desktopFixture(page);
+  await page.goto('/');
+  await page.evaluate(() => { window.pandora!.testNetwork = async () => { throw new Error('Network provider unavailable.'); }; });
+  await page.getByRole('navigation').getByRole('button', { name: 'Network Diagnostics' }).click();
+  await page.getByRole('button', { name: 'Start test' }).click();
+  await expect(page.getByRole('alert')).toContainText('Network provider unavailable.');
+  await expect(page.getByRole('region', { name: 'Network test results' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Start test' })).toBeEnabled();
+});
+
+test('Windows settings shortcuts open only their named destination', async ({ page }) => {
+  await desktopFixture(page);
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'System Monitor', exact: true }).click();
+  await page.getByRole('button', { name: 'Power settings' }).click();
+  await page.getByRole('button', { name: 'Display settings' }).click();
+  await page.getByRole('navigation').getByRole('button', { name: 'Processes & Startup' }).click();
+  await page.getByRole('button', { name: 'Startup apps', exact: true }).click();
+  await page.getByRole('button', { name: 'Open Windows startup settings' }).click();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'windows-settings').map((c: any) => c.args))).toEqual([['power'], ['display'], ['startup']]);
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => ['apply', 'clean', 'revert'].includes(c.method)))).toHaveLength(0);
 });

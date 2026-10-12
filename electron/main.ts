@@ -5,8 +5,9 @@ import { pathToFileURL } from 'node:url';
 import { getSystem, getMetrics, getProcesses, getStartup, getGames } from './system';
 import { createTweakService } from './tweaks';
 import { createCleanerService } from './cleaner';
+import { createNetworkService } from './network';
 import { createSettingsService } from './settings';
-import { cleanupKind, validateIds, isTrustedRenderer, externalDocumentation } from './validation';
+import { cleanupKind, validateIds, isTrustedRenderer, externalDocumentation, windowsSettingsUri } from './validation';
 import type { ProgressEvent } from '../shared/types';
 app.setName('PANDORA');
 app.setAppUserModelId('io.sonnier.pandora');
@@ -31,6 +32,13 @@ function registerServices() {
       try { return await fn(...args); } finally { if (mutates) activeMutations--; }
     });
   }
+  const network = createNetworkService();
+  handle('network-test', (target: unknown) => network.testNetwork(target));
+  handle('windows-settings', async (page: unknown) => {
+    const uri = windowsSettingsUri(page);
+    if (process.platform !== 'win32') throw new Error('This shortcut requires Windows.');
+    await shell.openExternal(uri);
+  });
   handle('system', getSystem);
   handle('metrics', getMetrics);
   handle('processes', getProcesses);
@@ -58,7 +66,7 @@ function registerServices() {
     if (!window) return null;
     // Fixed schema intentionally excludes usernames, network addresses, serials, paths and hardware IDs.
     const info = kind === 'system' ? await getSystem() : null;
-    const report = info ? { product: 'PANDORA', version: app.getVersion(), createdBy: 'Sonnier', timestamp: info.timestamp, platform: info.platform, cpu: info.cpu, logicalCores: info.logicalCores, physicalCores: info.physicalCores, gpu: info.gpu, gpuDriver: info.gpuDriver, ramBytes: info.ramBytes, ramSpeedMHz: info.ramSpeedMHz, os: info.os, motherboard: info.motherboard, volumes: info.volumes.map(v => ({ totalBytes: v.totalBytes, freeBytes: v.freeBytes })), monitors: info.monitors.map(m => ({ width: m.width, height: m.height, refreshHz: m.refreshHz })) } : { product: 'PANDORA', timestamp: new Date().toISOString(), history: (await tweaks.getHistory()).map(h => ({ tweakId: h.tweakId, title: h.title, timestamp: h.timestamp, status: h.status, originalValue: h.originalValue, appliedValue: h.appliedValue })) };
+    const report = info ? { product: 'PANDORA', version: app.getVersion(), createdBy: 'Sonnier', timestamp: info.timestamp, platform: info.platform, cpu: info.cpu, logicalCores: info.logicalCores, physicalCores: info.physicalCores, gpu: info.gpu, gpuDriver: info.gpuDriver, ramBytes: info.ramBytes, installedRamBytes: info.installedRamBytes, deviceType: info.deviceType, physicalDisks: info.physicalDisks, networkAdapters: info.networkAdapters, ramSpeedMHz: info.ramSpeedMHz, os: info.os, motherboard: info.motherboard, volumes: info.volumes.map(v => ({ totalBytes: v.totalBytes, freeBytes: v.freeBytes })), monitors: info.monitors.map(m => ({ width: m.width, height: m.height, refreshHz: m.refreshHz })) } : { product: 'PANDORA', timestamp: new Date().toISOString(), history: (await tweaks.getHistory()).map(h => ({ tweakId: h.tweakId, title: h.title, timestamp: h.timestamp, status: h.status, originalValue: h.originalValue, appliedValue: h.appliedValue })) };
     const result = await dialog.showSaveDialog(window, { title: 'Save privacy-filtered PANDORA report', defaultPath: `PANDORA-${kind}-${new Date().toISOString().slice(0, 10)}.json`, filters: [{ name: 'JSON report', extensions: ['json'] }] });
     if (result.canceled || !result.filePath) return null;
     await fs.writeFile(result.filePath, JSON.stringify(report, null, 2), { mode: 0o600 });

@@ -13,7 +13,7 @@ module.exports = async context => {
     }
   }
   await walk(context.appOutDir);
-  const quote = value => value.replaceAll('$', '$$').replaceAll('"', '$\\"');
+  const quote = value => value.replaceAll('$', () => '$$').replaceAll('"', '$\\"');
   const win = value => quote(value.split(path.sep).join('\\'));
   const script = ['!macro PandoraInstallFiles', '  SetOutPath "$INSTDIR"'];
   for (const rel of files) {

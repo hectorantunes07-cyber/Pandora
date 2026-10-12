@@ -19,6 +19,22 @@ $board = @(Query 'Win32_BaseBoard')
 $osInfo = @(Query 'Win32_OperatingSystem')
 $disks = @(Query 'Win32_LogicalDisk' | Where-Object { $_.DriveType -eq 3 -and $_.Size -gt 0 })
 $power = @(Query 'Win32_PowerPlan' 'root\cimv2\power' | Where-Object IsActive)
+$computer = @(Query 'Win32_ComputerSystem')
+$physical = @()
+try {
+ $physical = @(Get-PhysicalDisk -ErrorAction Stop | ForEach-Object { [pscustomobject]@{ model=$_.FriendlyName; bytes=[double]$_.Size; media=[string]$_.MediaType; bus=[string]$_.BusType; health=[string]$_.HealthStatus } })
+} catch {
+ $notes.Add('Storage health and media type are unavailable; physical disk models use the basic Windows provider.')
+ $physical = @(Query 'Win32_DiskDrive' | ForEach-Object { [pscustomobject]@{ model=$_.Model; bytes=[double]$_.Size; media='Unknown'; bus=[string]$_.InterfaceType; health=$null } })
+}
+$adapters = @()
+try {
+ $adapters = @(Get-NetAdapter -Physical -ErrorAction Stop | ForEach-Object { [pscustomobject]@{ description=$_.InterfaceDescription; status=[string]$_.Status; linkSpeedBits=[double]$_.LinkSpeed } })
+} catch { $notes.Add('Network adapter inventory is unavailable from this Windows provider.') }
+$bootTime = $null
+if ($osInfo.Count -gt 0 -and $osInfo[0].LastBootUpTime) { $bootTime = $osInfo[0].LastBootUpTime.ToUniversalTime().ToString('o') }
+$deviceType = 'Unknown'
+if ($computer.Count -gt 0) { if ($computer[0].PCSystemType -eq 2) { $deviceType='Portable' } elseif ($computer[0].PCSystemType -in @(1,3,4,5,6,7,8)) { $deviceType='Desktop' } }
 [pscustomobject]@{
  cpu = ($cpu | ForEach-Object Name) -join ' + '
  physicalCores = ($cpu | Measure-Object NumberOfCores -Sum).Sum
@@ -30,6 +46,11 @@ $power = @(Query 'Win32_PowerPlan' 'root\cimv2\power' | Where-Object IsActive)
  powerPlan = ($power | ForEach-Object ElementName) -join ', '
  volumes = @($disks | ForEach-Object { [pscustomobject]@{ name = $_.DeviceID; totalBytes = [double]$_.Size; freeBytes = [double]$_.FreeSpace } })
  monitors = @($gpu | Where-Object { $_.CurrentHorizontalResolution -gt 0 -and $_.CurrentVerticalResolution -gt 0 } | ForEach-Object { [pscustomobject]@{ name = $_.Name; width = $_.CurrentHorizontalResolution; height = $_.CurrentVerticalResolution; refreshHz = $(if ($_.CurrentRefreshRate -gt 1) { $_.CurrentRefreshRate } else { $null }) } })
+ installedRamBytes = ($ram | Measure-Object Capacity -Sum).Sum
+ deviceType = $deviceType
+ bootTime = $bootTime
+ physicalDisks = @($physical)
+ networkAdapters = @($adapters)
  notes = @($notes)
 } | ConvertTo-Json -Depth 5 -Compress`,
   metrics: String.raw`
@@ -134,7 +155,7 @@ export function createSystemService(overrides: Partial<SystemDependencies> = {})
       platform: deps.platform, timestamp: new Date(deps.now()).toISOString(), cpu: cpus[0]?.model || 'Unavailable',
       logicalCores: cpus.length, physicalCores: null, gpu: null, gpuDriver: null, ramBytes: deps.totalmem(),
       ramSpeedMHz: null, os: `${deps.platform} ${deps.release()}`, motherboard: null, powerPlan: null,
-      volumes: [], monitors: [], notes: [],
+      volumes: [], monitors: [], notes: [], installedRamBytes: null, deviceType: 'Unknown', bootTime: null, physicalDisks: [], networkAdapters: [],
     };
     if (deps.platform !== 'win32') {
       info.notes.push('Development host: Windows hardware providers, optimizations and startup inventory are unavailable on this platform.');
@@ -148,6 +169,18 @@ export function createSystemService(overrides: Partial<SystemDependencies> = {})
         info.ramSpeedMHz = positive(data.ramSpeedMHz);
         info.os = safeText(data.os) || info.os; info.motherboard = safeText(data.motherboard);
         info.powerPlan = safeText(data.powerPlan);
+        info.installedRamBytes = positive(data.installedRamBytes);
+        info.deviceType = data.deviceType === 'Desktop' || data.deviceType === 'Portable' ? data.deviceType : 'Unknown';
+        const boot = typeof data.bootTime === 'string' ? Date.parse(data.bootTime) : NaN;
+        info.bootTime = Number.isFinite(boot) && boot > 0 && boot <= deps.now() ? new Date(boot).toISOString() : null;
+        info.physicalDisks = records(data.physicalDisks).flatMap(disk => {
+          const model = safeText(disk.model);
+          return model ? [{ model, bytes: positive(disk.bytes), media: safeText(disk.media) || 'Unknown', bus: safeText(disk.bus) || 'Unknown', health: safeText(disk.health) }] : [];
+        });
+        info.networkAdapters = records(data.networkAdapters).flatMap(adapter => {
+          const description = safeText(adapter.description);
+          return description ? [{ description, status: safeText(adapter.status) || 'Unknown', linkSpeedBits: nonnegative(adapter.linkSpeedBits) }] : [];
+        });
         info.volumes = records(data.volumes).flatMap(volume => {
           const totalBytes = positive(volume.totalBytes), freeBytes = nonnegative(volume.freeBytes), name = safeText(volume.name);
           return name && totalBytes !== null && freeBytes !== null && freeBytes <= totalBytes ? [{ name, totalBytes, freeBytes }] : [];

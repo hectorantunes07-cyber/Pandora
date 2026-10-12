@@ -85,8 +85,8 @@ that manual Windows release checks have passed.
 
 The artifact path above is a build output contract, not proof that an installer
 has been produced. Consult [docs/VALIDATION.md](docs/VALIDATION.md) for the
-recorded build outcome. Linux cross-packaging can require Wine for Windows
-resource editing. A local `npm run dist:linux` build is useful for UI testing;
+recorded build outcome. The custom per-user NSIS installer creates its uninstaller during installation,
+so the current build does not need Wine. A local `npm run dist:linux` build is useful for UI testing;
 Windows preferences and cleanup remain unavailable there.
 
 No signing certificate or automatic updater is configured. Publisher metadata
@@ -183,3 +183,23 @@ A mismatched, missing or incomplete package fails verification.
 
 See [the Windows quick start](docs/WINDOWS-QUICKSTART.md) for a short, ordered
 first test and [the full checklist](docs/windows-validation.md) for release gates.
+
+## Hardware and connection diagnostics
+
+System Monitor now reads physical disk model/media/bus/provider health, physical
+network adapter descriptions and link rates, installed versus OS-usable RAM,
+device type and last boot when Windows exposes them. RAID/virtual storage may
+hide devices; missing data is reported as unavailable. Link rate is not measured
+internet throughput. Power, display and startup shortcuts open fixed Windows
+Settings pages so you can review supported controls yourself.
+
+Network Diagnostics sends eight bounded ICMP requests only when Start test is
+selected, to Cloudflare (1.1.1.1) or Google (8.8.8.8). It shows each actual reply,
+round-trip range/mean, missing replies and mean absolute changes between adjacent
+successful samples. ICMP blocking/deprioritization can look like loss; these
+destinations do not measure game-server latency. No DNS or adapter settings change.
+
+The Windows workflow includes a disposable install/installed-launch/uninstall
+check with user-data and unrelated-file sentinels. `scripts/test-installer.ps1`
+refuses to run outside a GitHub-hosted CI runner. These checks complement the
+manual Windows release checklist; they do not certify all physical machines.
