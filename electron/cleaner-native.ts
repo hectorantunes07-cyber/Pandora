@@ -44,7 +44,7 @@ public static class PandoraCleaner {
     public uint attributes; public FILETIME creation; public FILETIME access; public FILETIME write;
     public uint volume; public uint sizeHigh; public uint sizeLow; public uint links; public uint indexHigh; public uint indexLow;
   }
-  [StructLayout(LayoutKind.Sequential)] struct DISPOSITION { [MarshalAs(UnmanagedType.Bool)] public bool DeleteFile; }
+  [StructLayout(LayoutKind.Sequential)] struct DISPOSITION { [MarshalAs(UnmanagedType.U1)] public bool DeleteFile; }
   [StructLayout(LayoutKind.Sequential, Pack=8)] struct BININFO { public uint cbSize; public long size; public long count; }
   [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)] static extern SafeFileHandle CreateFile(string name, uint access, uint share, IntPtr security, uint creation, uint flags, IntPtr template);
   [DllImport("kernel32.dll", SetLastError=true)] static extern bool GetFileInformationByHandle(SafeFileHandle file, out INFO info);
@@ -71,6 +71,7 @@ public static class PandoraCleaner {
     if (h.IsInvalid) { h.Dispose(); throw new IOException("Locked, missing, or inaccessible (Windows " + Marshal.GetLastWin32Error() + ")."); }
     if (!GetFileInformationByHandle(h, out info)) { h.Dispose(); throw new IOException("Could not verify file identity."); }
     if ((info.attributes & (REPARSE | OFFLINE)) != 0 || (((info.attributes & DIRECTORY) != 0) != directory)) { h.Dispose(); throw new IOException("Links, offline files, and unexpected file types are excluded."); }
+    if (!directory && (info.attributes & 0x4) != 0) { h.Dispose(); throw new IOException("Windows system files are excluded."); }
     if (!directory && info.links != 1) { h.Dispose(); throw new IOException("Hard-linked files are excluded."); }
     return h;
   }

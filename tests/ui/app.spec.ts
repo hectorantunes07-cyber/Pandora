@@ -108,3 +108,44 @@ test('capture branded overview and cleaner for visual review', async ({ page }) 
   await page.getByRole('button', { name: /Clean Junk Files/ }).click();
   await page.screenshot({ path: 'test-results/pandora-cleaner.png', fullPage: true });
 });
+
+test('scanner displays returned hardware, keeps unavailable GPU metrics honest, and exports on request', async ({ page }) => {
+  await desktopFixture(page);
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'System Monitor', exact: true }).click();
+  await expect(page.getByText('UI test processor').first()).toBeVisible();
+  await expect(page.getByText('Windows test fixture')).toBeVisible();
+  await expect(page.getByText('CPU and GPU temperatures are not exposed', { exact: false })).toBeVisible();
+  await expect(page.locator('.metric-card').nth(1).locator('.meter > span')).toHaveText('—');
+  await page.getByRole('button', { name: 'Export report' }).click();
+  expect(await page.evaluate(() => (window as any).__calls.find((c: any) => c.method === 'export').args)).toEqual(['system']);
+});
+
+test('failed scan reports the provider error and never offers deletion', async ({ page }) => {
+  await desktopFixture(page);
+  await page.addInitScript(() => {
+    const api = window.pandora!;
+    api.scanCleanup = async () => { throw new Error('The Windows provider is unavailable. No files changed.'); };
+  });
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: /PC Cleaner/ }).click();
+  await page.getByRole('button', { name: 'Scan & Clean' }).click();
+  await expect(page.getByRole('alert')).toContainText('The Windows provider is unavailable');
+  await expect(page.getByRole('button', { name: 'Clean selected' })).toHaveCount(0);
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'clean'))).toHaveLength(0);
+});
+
+test('cleanup confirmations trap keyboard focus and Escape cancels without deleting', async ({ page }) => {
+  await desktopFixture(page);
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: /PC Cleaner/ }).click();
+  await page.getByRole('button', { name: 'Scan & Clean' }).click();
+  await page.getByRole('button', { name: 'Clean selected' }).click();
+  await page.keyboard.press('Shift+Tab');
+  await expect(page.getByRole('button', { name: 'Confirm cleanup' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: 'Close dialog' })).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'clean'))).toHaveLength(0);
+});

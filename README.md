@@ -90,10 +90,10 @@ trusted code signing. Do not disable Windows security controls to run PANDORA.
 
 ## First use and recovery
 
-1. Open **System Scanner** to review detected devices and unavailable providers.
+1. Open **System Monitor** to review detected devices and unavailable providers.
 2. Open an optimization, review its exact target and tradeoffs, then confirm the
    selected changes. A durable original-value snapshot precedes every write.
-3. Open **Backups & Restore** or **History & Reports** to inspect results and
+3. Open **Restore & History** to inspect results and
    restore PANDORA-managed changes. A successful setting write is not evidence of
    an FPS improvement. Retest a comparable game workload yourself.
 4. Open **PC Cleaner**, choose **Scan & Clean**, review categories and measured
@@ -150,3 +150,18 @@ ImageMagick are installed. The ICO contains 16, 24, 32, 48, 64, 128 and 256 px
 images. No competitor imagery is shipped. Source licensing is **UNLICENSED**
 pending the owner's decision; see [LICENSE](LICENSE) and
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+## Additional integration checks
+
+`node scripts/check-native-syntax.mjs` parses the fixed PowerShell queries and
+compiles the cleaner’s C# declarations without invoking Windows APIs. It needs
+PowerShell (`powershell.exe` on Windows or `pwsh` elsewhere); set `PANDORA_PWSH` to
+an explicit executable path when necessary. This catches syntax errors, not
+Windows runtime compatibility.
+
+After `npm run build`, `node scripts/smoke-desktop.mjs` opens the bundled desktop
+interface and checks the real preload bridge and read-only hardware service.
+It never applies tweaks or deletes files. In an isolated Linux container only,
+`PANDORA_CONTAINER_SMOKE=1` uses headless Chromium test flags including
+`--no-sandbox`; those flags are never part of the normal app, installer or
+development launcher. Such a test does not validate Chromium’s OS sandbox.

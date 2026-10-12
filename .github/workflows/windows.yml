@@ -21,6 +21,8 @@ jobs:
         run: npm ci
       - name: Typecheck
         run: npm run typecheck
+      - name: Native script syntax and C# compilation
+        run: node scripts/check-native-syntax.mjs
       - name: Unit and filesystem safety tests
         run: npm test
       - name: Disposable runner registry apply and exact restore

@@ -11,6 +11,7 @@ import type { ProgressEvent } from '../shared/types';
 app.setName('PANDORA');
 app.setAppUserModelId('io.sonnier.pandora');
 let window: BrowserWindow | null = null;
+let activeMutations = 0;
 const packagedUrl = pathToFileURL(path.join(__dirname, '../dist/index.html')).href;
 const requestedDevUrl = process.env.PANDORA_DEV_URL;
 const devUrl = !app.isPackaged && requestedDevUrl && /^http:\/\/(127\.0\.0\.1|localhost):5173\/?$/.test(requestedDevUrl) ? requestedDevUrl : undefined;
@@ -23,7 +24,12 @@ function registerServices() {
   const cleaner = createCleanerService(progress);
   const settings = createSettingsService(app.getPath('userData'));
   function handle(name: string, fn: (...args: any[]) => unknown) {
-    ipcMain.handle(`pandora:${name}`, async (event, ...args) => { checkSender(event); return fn(...args); });
+    ipcMain.handle(`pandora:${name}`, async (event, ...args) => {
+      checkSender(event);
+      const mutates = ['apply', 'revert', 'clean'].includes(name);
+      if (mutates) activeMutations++;
+      try { return await fn(...args); } finally { if (mutates) activeMutations--; }
+    });
   }
   handle('system', getSystem);
   handle('metrics', getMetrics);
@@ -74,6 +80,12 @@ function createWindow() {
   window.webContents.session.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
   window.webContents.session.setPermissionCheckHandler(() => false);
   window.once('ready-to-show', () => window?.show());
+  window.on('close', event => {
+    if (activeMutations > 0) {
+      event.preventDefault();
+      if (window) void dialog.showMessageBox(window, { type: 'info', title: 'PANDORA is finishing your operation', message: 'Please wait for the current cleanup or settings change to finish.', detail: 'Keeping this window open lets PANDORA report the result and preserve your change history.', buttons: ['Keep PANDORA open'] });
+    }
+  });
   window.on('closed', () => { window = null; });
   void window.loadURL(devUrl ?? packagedUrl);
 }

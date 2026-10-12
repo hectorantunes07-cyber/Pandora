@@ -15,3 +15,11 @@ Added the complete responsive purple/black stylesheet, retained existing applica
 Validation on Linux: TypeScript and production renderer/Electron build passed; six Playwright browser journeys passed; backend suite passed 78 tests with four native Windows checks skipped. Browser tests use explicitly synthetic adapters only in test code. Runtime screenshots were inspected.
 
 Next: validate native-script syntax and scanner/cleaner desktop integration, then package and verify the Windows artifact.
+
+## Stage 2 — scanner and cleaner integration
+
+Added native PowerShell parsing, C# compilation and Win32 structure-layout checks; corrected the file-disposition Boolean layout and excluded files marked as Windows system files. Added a desktop close guard during cleanup/settings mutations so results are not lost by a normal close action. Added scanner rendering/export, failed-scan and keyboard-confirmation UI coverage.
+
+Validation: 78 backend tests passed, four native Windows checks skipped; nine browser journeys passed; production build passed. The bundled Electron desktop read actual Linux CPU/RAM through the preload bridge and rejected Windows cleanup on Linux. This isolated container smoke used test-only headless/no-sandbox flags; normal application sandbox configuration remains enabled. Five PowerShell scripts parsed and the native C# declarations/Win32 structure sizes compiled and checked without invoking Windows APIs.
+
+Windows hardware/provider behavior, actual cleanup, and install/uninstall remain Windows validation requirements. Next stage: build the unsigned Windows installer and verify its artifact and contents.
