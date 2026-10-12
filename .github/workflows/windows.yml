@@ -35,7 +35,17 @@ jobs:
       - name: UI smoke tests
         run: npm run test:ui
       - name: Build unsigned installer and portable executable
-        run: npm run dist:windows
+        shell: pwsh
+        run: |
+          & npm.cmd run dist:windows 2>&1 | Tee-Object -FilePath build-windows.log
+          $buildExit = $LASTEXITCODE
+          if ($buildExit -ne 0) {
+            '### Windows packaging failure' >> $env:GITHUB_STEP_SUMMARY
+            '```text' >> $env:GITHUB_STEP_SUMMARY
+            Get-Content build-windows.log -Tail 70 >> $env:GITHUB_STEP_SUMMARY
+            '```' >> $env:GITHUB_STEP_SUMMARY
+          }
+          exit $buildExit
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
       - name: Verify package archives, architecture, bundled files and checksums
@@ -59,6 +69,7 @@ jobs:
         with:
           name: test-failure-details
           path: |
+            build-windows.log
             playwright-report
             test-results
 
