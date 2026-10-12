@@ -29,8 +29,8 @@ actual test/build outcomes and [the release checklist](docs/windows-validation.m
 | Settings persistence | COMPLETE | Reduced motion, monitor interval and scan-on-launch. No startup registration, tray service or updater. |
 | Network diagnostics | COMPLETE; WINDOWS VALIDATION REQUIRED | Explicit eight-request ICMP tests to two fixed public destinations; individual replies, round-trip range/mean, adjacent-reply jitter and loss. No background probing, arbitrary target executor, DNS changes or network-stack modifications. |
 | App removal/debloat | NOT IMPLEMENTED | No bundled-app uninstall, security disablement or service disable lists. |
-| Portable Windows executable | BUILT; WINDOWS VALIDATION REQUIRED | Unsigned x64 payload; archive integrity, bundled assets and checksum verified. Windows launch still required. |
-| Windows installer | BUILT; WINDOWS VALIDATION REQUIRED | Per-user x64 NSIS with runtime-generated uninstaller, exact owned-file removal, icons and shortcuts. No Wine required to build. CI includes disposable install/launch/uninstall and preservation checks; actual outcomes recorded separately. |
+| Portable Windows executable | BUILT; WINDOWS VALIDATION REQUIRED | Unsigned x64 payload; archive integrity, bundled assets and checksum verified. Packaged Windows launch passed in hosted CI; physical-PC testing remains required. |
+| Windows installer | BUILT; WINDOWS VALIDATION REQUIRED | Per-user x64 NSIS with runtime-generated uninstaller, exact owned-file removal, icons and shortcuts. No Wine required to build. CI includes disposable install/launch/uninstall and preservation checks; install/launch/uninstall and preservation passed in hosted CI; exact outcomes recorded separately. |
 | Code signing / auto-update | NOT IMPLEMENTED | No verified-publisher claim, signing certificate or update service. |
 | Source and third-party licensing | PARTIAL | Source explicitly UNLICENSED pending owner decision; dependencies retain their licenses and bundled notices. |
 

@@ -1,6 +1,6 @@
 # PANDORA — Created by Sonnier: Windows testing handoff
 
-PANDORA 0.1.0 is a development build, not a signed production release. The full original specification is not finished. The core implemented features are ready for controlled Windows testing once the native workflow passes. The approximate 70% scope estimate is a planning estimate, not a percentage of Windows compatibility or guaranteed performance.
+PANDORA 0.1.0 is a development build, not a signed production release. The full original specification is not finished. The core implemented features have passed the native Windows workflow and are intended for controlled Windows testing. The approximate 70% scope estimate is a planning estimate, not a percentage of Windows compatibility or guaranteed performance.
 
 ## Implemented
 

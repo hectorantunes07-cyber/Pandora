@@ -51,3 +51,11 @@ Replaced the Wine-dependent installer generation with a conventional per-user NS
 Added physical disk model/media/bus/health, network adapter inventory/link rate, installed RAM, device type and boot timestamp. Added a Network Diagnostics page with fixed-destination, user-initiated ICMP sampling and honest loss/jitter accounting. Sidebar navigation scrolls independently so creator branding and settings remain visible at the minimum window height.
 
 Validation for this stage: production build passed; 89 backend tests passed with four Windows-only tests skipped locally; all 15 browser journeys passed. Six PowerShell scripts parsed, cleaner C# layouts compiled, installer integration script parsed, and real Linux Electron read-only smoke passed. Native Windows installation results are pending the new workflow run.
+
+## Stage 7 — native Windows pipeline passing
+
+Corrected NSIS include path separators and disabled electron-builder's implicit release publishing. Windows runs 15 and 16 passed the full pipeline: native cleanup fixtures, disposable registry apply/restore, interface tests, both package builds and archive verification, actual packaged hardware/bridge launch, installed launch, uninstall, and preservation of application data and unrelated files. Build artifacts include checksums, validation evidence and testing guides.
+
+Corrected adapter speed collection to use numeric CIM transmit rates instead of a formatted display property. Added a runtime fixture for the actual inventory PowerShell script and extra Windows-only browser-cache and exclusive-lock cleanup tests. These last safety tests are being checked in the current native run; do not infer their result from older green runs.
+
+Both updated local packages have been built. `docs/VALIDATION.md` identifies their hashes, native workflow evidence and remaining manual gates. `docs/WINDOWS-HANDOFF.md` separates implemented functionality, unfinished master-spec scope and the user's Windows checklist. The broader master specification remains approximately 70% implemented; the core test build is not a signed production release.

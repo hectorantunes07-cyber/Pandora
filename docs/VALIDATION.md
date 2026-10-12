@@ -47,7 +47,7 @@ Windows CI now builds both NSIS installer and portable, verifies artifacts, and 
 
 Hardware-provider accuracy, Win32 cleanup guards, registry shell effects, Windows launch, and install/uninstall remain real Windows checks.
 
-## Installer and portable build — 2026-10-12
+## Earlier installer and portable build — 2026-10-12
 
 The Wine blocker above is resolved: PANDORA now uses its own per-user NSIS installer script, generating the uninstaller at install time. Both compressed packages built successfully on Linux. The package verifier at clean commit `874229d` extracted **both** executables, checked archive integrity, validated the embedded x64 application, compared bundled code/assets against the production build, and checked licenses and the installer’s embedded uninstaller.
 
@@ -56,4 +56,33 @@ The Wine blocker above is resolved: PANDORA now uses its own per-user NSIS insta
 - Backend: **89 passed**, four native Windows tests skipped locally. UI: **15 passed**. Production build, six PowerShell syntax checks, C# layout checks and read-only Linux Electron smoke passed.
 - Both packages remain unsigned. Archive verification is not a Windows launch or installation result. `verification.json` deliberately records `windowsLaunchVerified: false` for these local artifacts.
 
-Public GitHub Actions pages are accessible even though the API route is blocked. The Windows workflow's packaging failure is under investigation; it must be resolved before claiming the native build workflow passes. Hardware accuracy and physical-PC behavior remain manual validation gates even after CI succeeds.
+The initial native packaging failures were resolved: NSIS needs Windows-style include separators, and artifact-only builds must explicitly disable electron-builder's implicit publishing. Public GitHub Actions pages are accessible even though the API route is blocked.
+
+### Native Windows workflow passed
+
+[Windows run 15](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/38303810161), source `8ee591f`, completed successfully. Its required steps cover:
+
+- Type checking, native-script parsing/C# compilation, unit tests and all 15 UI journeys.
+- Three actual Win32 cleaner fixture tests: stale-file removal/accounting, personal/recent/hardlink/junction protection, changed/missing/replaced files and ancestor replacement/out-of-root rejection.
+- Explicit disposable-account registry apply, read-back, service reopening and exact restoration.
+- Both Windows package builds, full archive/payload verification and checksums.
+- Packaged desktop launch with the secure bridge, no renderer Node access, real Windows CIM CPU/volume inventory and OS memory readings.
+- Per-user installation, installed desktop launch, shortcut/registration verification, uninstall and preservation of application data and an unrelated file.
+- Artifact upload with the native validation manifest and testing instructions.
+
+This is evidence from a GitHub-hosted Windows runner, not representative physical hardware or a standard-account Windows 11 certification. It does not verify every preference's visible shell effect, sensor accuracy, optional browser/Recycle Bin cleanup, interactive installer choices or all upgrade paths. Those remain manual gates.
+
+A final review also corrected network adapter inventory to read the numeric CIM `TransmitLinkSpeed`, rather than the formatted `LinkSpeed` display property. The actual inventory PowerShell script now has a runtime fixture covering this regression, extended aggregation and numeric serialization. Updated package identities and the latest native run are recorded below.
+
+## Current adapter-corrected Windows test packages
+
+Application source: `33df09c`. [Windows run 16](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/38304399308) passed the complete workflow with the adapter correction, including installation, installed launch, uninstall, data preservation and artifact upload. Later commits add verification fixtures and documentation without changing the packaged application.
+
+The current locally cross-built files are:
+
+| Artifact | Bytes | SHA256 |
+| --- | ---: | --- |
+| `PANDORA-Setup-0.1.0-x64.exe` | 164121368 | `aa71a4c8b2e84ae05581827586799ba8ad19bfcde13a9d1e7b52106f0e120e8d` |
+| `PANDORA-Portable-0.1.0-x64.exe` | 116914172 | `5cb604978e102625d769ccb0368299c2dd0d5b4b2f971de671981895ccff2e24` |
+
+The adjacent manifest records archive extraction and code comparison against the current production output. Local package hashes differ from native CI package hashes; use only the matching sidecars. The local manifest does not claim these exact cross-built bytes were executed on Windows. Use the successful CI artifact for packages built and launched by the Windows runner.
