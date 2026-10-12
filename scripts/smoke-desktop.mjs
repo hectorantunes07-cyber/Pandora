@@ -27,13 +27,18 @@ try {
     if (!api) throw new Error('Secure preload bridge did not load.');
     const system = await api.getSystem();
     const metrics = await api.getMetrics();
-    return { platform: system.platform, cpu: system.cpu, ramBytes: system.ramBytes,
+    return { platform: system.platform, cpu: system.cpu, ramBytes: system.ramBytes, os: system.os,
+      physicalCores: system.physicalCores, volumeCount: system.volumes.length,
       ramTotal: metrics.ramTotalBytes, nodeExposed: typeof window.require !== 'undefined',
       tweaks: (await api.getTweaks()).map(tweak => tweak.state) };
   });
   assert.equal(info.platform, process.platform);
   assert.ok(info.ramBytes > 0 && info.ramTotal > 0);
   assert.equal(info.nodeExposed, false);
+  if (process.platform === 'win32') {
+    assert.match(info.os, /Windows/i, 'Windows CIM inventory must load, not only Node fallback readings');
+    assert.ok(info.physicalCores > 0 && info.volumeCount > 0, 'Windows CPU and volume providers must return real inventory');
+  }
   if (process.platform !== 'win32') assert.ok(info.tweaks.every(state => state === 'unsupported'));
   await page.getByRole('navigation').getByRole('button', { name: /PC Cleaner/ }).click();
   await page.getByRole('button', { name: 'Scan & Clean' }).waitFor();
@@ -47,6 +52,12 @@ try {
   console.log(JSON.stringify({ passed: true, platform: info.platform, realHardwareRead: true,
     bridgeLoaded: true, rendererNodeAccess: false, unavailableWindowsActionsGuarded: process.platform !== 'win32',
     containerTestFlags: containerMode }, null, 2));
+} catch (error) {
+  if (process.env.GITHUB_ACTIONS === 'true') {
+    const message = String(error).replaceAll('%', '%25').replaceAll('\r', '%0D').replaceAll('\n', '%0A');
+    console.error(`::error title=Desktop integration::${message}`);
+  }
+  throw error;
 } finally {
   if (app) await app.close();
   await rm(directory, { recursive: true, force: true });

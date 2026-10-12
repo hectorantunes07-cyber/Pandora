@@ -28,5 +28,7 @@ module.exports = async context => {
   for (const rel of files) script.push(`  IfFileExists "$INSTDIR\\${win(rel)}" uninstallFailed`);
   script.push('!macroend', '');
   await fs.mkdir(context.outDir, { recursive: true });
-  await fs.writeFile(path.join(context.outDir, 'pandora-owned-files.nsh'), script.join('\n'));
+  const manifest = path.join(context.outDir, 'pandora-owned-files.nsh');
+  await fs.writeFile(manifest, script.join('\n'));
+  console.log(`PANDORA installer manifest: ${manifest} (${files.length} owned files)`);
 };

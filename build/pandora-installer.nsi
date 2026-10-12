@@ -6,7 +6,7 @@
 !include "x64.nsh"
 !include "WinVer.nsh"
 !include "nsProcess.nsh"
-!include "${PROJECT_DIR}/release/pandora-owned-files.nsh"
+!include "${PROJECT_DIR}\release\pandora-owned-files.nsh"
 !define REGKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\io.sonnier.pandora"
 Name "PANDORA — Created by Sonnier"
 BrandingText "Created by Sonnier"
@@ -17,10 +17,10 @@ ShowUninstDetails show
 CRCCheck on
 !define MUI_ABORTWARNING
 !ifndef MUI_ICON
-  !define MUI_ICON "${BUILD_RESOURCES_DIR}/icon.ico"
+  !define MUI_ICON "${BUILD_RESOURCES_DIR}\icon.ico"
 !endif
 !ifndef MUI_UNICON
-  !define MUI_UNICON "${BUILD_RESOURCES_DIR}/icon.ico"
+  !define MUI_UNICON "${BUILD_RESOURCES_DIR}\icon.ico"
 !endif
 !define MUI_WELCOMEPAGE_TITLE "PANDORA — Created by Sonnier"
 !define MUI_WELCOMEPAGE_TEXT "Local hardware insights, reviewed settings, and a safer cleanup workflow.$\r$\n$\r$\nInstalls for your Windows account. No administrator access is required.$\r$\n$\r$\nThis development build is unsigned."
