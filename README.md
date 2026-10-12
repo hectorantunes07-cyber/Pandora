@@ -76,16 +76,15 @@ with a start-menu shortcut, desktop shortcut, uninstaller, original icon, and
 PANDORA/Sonnier metadata. `release/win-unpacked/PANDORA.exe` is an unpacked build;
 keep its neighboring files with it. Build the single-file portable executable with
 `npm run dist:portable`; output is `release/PANDORA-Portable-0.1.0-x64.exe`.
-The portable package has been cross-built and integrity checked, but still needs
-a Windows launch test. The Windows workflow builds both packages, verifies archives and bundled code,
+Both installer and portable packages have been cross-built and integrity checked;
+Windows launch and installation results are recorded separately. The Windows workflow builds both packages, verifies archives and bundled code,
 runs a read-only desktop smoke check, and uploads artifacts without publishing
 a release. Download the `PANDORA-Windows-x64-unsigned` artifact from a successful
 run in the repository’s Actions tab. An artifact is a testing build, not evidence
 that manual Windows release checks have passed.
 
-The artifact path above is a build output contract, not proof that an installer
-has been produced. Consult [docs/VALIDATION.md](docs/VALIDATION.md) for the
-recorded build outcome. The custom per-user NSIS installer creates its uninstaller during installation,
+Consult [docs/VALIDATION.md](docs/VALIDATION.md) for the exact package sizes,
+checksums, tested source and remaining validation. The custom per-user NSIS installer creates its uninstaller during installation,
 so the current build does not need Wine. A local `npm run dist:linux` build is useful for UI testing;
 Windows preferences and cleanup remain unavailable there.
 

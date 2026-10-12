@@ -18,7 +18,7 @@ Before calling a release production-ready, verify native inventory, graphics cou
 
 Cleanup reports exact logical file sizes at scan time and logical bytes confirmed removed. Compression, allocation, locks, open handles and concurrent disk activity prevent an exact advance guarantee of physical free space recovered. The application explicitly distinguishes these quantities.
 
-## Verified cloud checkpoint
+## Historical cloud checkpoint
 
 - Fresh lockfile installation, TypeScript and production build passed.
 - Backend: 78 passed, four Windows-only checks skipped. Browser journeys: nine passed.
@@ -31,7 +31,7 @@ Cleanup reports exact logical file sizes at scan time and logical bytes confirme
 
 The checksum above identifies this checkpoint only. Rebuilt artifacts receive a new checksum sidecar.
 
-## Current portable test build — 2026-10-12
+## Historical portable test build — 2026-10-12
 
 Source: `cffe3b4ba83b1cc70c0f982f284ee7777ba7cc93` (clean working tree at verification).
 
@@ -46,3 +46,14 @@ Source: `cffe3b4ba83b1cc70c0f982f284ee7777ba7cc93` (clean working tree at verifi
 Windows CI now builds both NSIS installer and portable, verifies artifacts, and runs a read-only launch check against the packaged desktop. Its remote outcome is **unverified**: this cloud environment's GitHub API connection returns an egress 403. Git pushes to the repository succeed. The local Wine bundle's missing kernel32.dll blocks the native installer generation step. A portable package is available; a completed Setup installer is not claimed.
 
 Hardware-provider accuracy, Win32 cleanup guards, registry shell effects, Windows launch, and install/uninstall remain real Windows checks.
+
+## Installer and portable build — 2026-10-12
+
+The Wine blocker above is resolved: PANDORA now uses its own per-user NSIS installer script, generating the uninstaller at install time. Both compressed packages built successfully on Linux. The package verifier at clean commit `874229d` extracted **both** executables, checked archive integrity, validated the embedded x64 application, compared bundled code/assets against the production build, and checked licenses and the installer’s embedded uninstaller.
+
+- Installer: `PANDORA-Setup-0.1.0-x64.exe`, **164,121,223 bytes**, SHA256 `f4dd7b50d16c76f0b6fcd9688eac568520828776134c4cdb299907e6713ec4bb`.
+- Portable: `PANDORA-Portable-0.1.0-x64.exe`, **116,914,084 bytes**, SHA256 `2a8170d53521359256cd07d7a51ad31c2e4bf4a60514101d71c1220caf3d8f1d`.
+- Backend: **89 passed**, four native Windows tests skipped locally. UI: **15 passed**. Production build, six PowerShell syntax checks, C# layout checks and read-only Linux Electron smoke passed.
+- Both packages remain unsigned. Archive verification is not a Windows launch or installation result. `verification.json` deliberately records `windowsLaunchVerified: false` for these local artifacts.
+
+Public GitHub Actions pages are accessible even though the API route is blocked. The Windows workflow's packaging failure is under investigation; it must be resolved before claiming the native build workflow passes. Hardware accuracy and physical-PC behavior remain manual validation gates even after CI succeeds.
