@@ -18,4 +18,15 @@ Before calling a release production-ready, verify native inventory, graphics cou
 
 Cleanup reports exact logical file sizes at scan time and logical bytes confirmed removed. Compression, allocation, locks, open handles and concurrent disk activity prevent an exact advance guarantee of physical free space recovered. The application explicitly distinguishes these quantities.
 
-Final measured outcomes and artifact checksums are recorded in the release report after the build.
+## Verified cloud checkpoint
+
+- Fresh lockfile installation, TypeScript and production build passed.
+- Backend: 78 passed, four Windows-only checks skipped. Browser journeys: nine passed.
+- Five PowerShell scripts parsed; cleaner C# compiled and native structure layouts checked.
+- Bundled Electron read-only smoke passed on Linux, with test-only headless/no-sandbox flags. This does not validate the OS sandbox or Windows APIs.
+- Portable `PANDORA-Portable-0.1.0-x64.exe`: 100,768,019 bytes.
+- SHA256: `aa0ad34b31a7984153c3eda96bcdd88a565672a8ff079f186c2d0392b7ee9a8c`.
+- Outer NSIS archive and inner app-64.7z passed 7-Zip integrity checks. Embedded PANDORA.exe is AMD64/x64; the launcher is the normal x86 NSIS stub. Bundled application code/assets match the tested build; Electron and Chromium notices are present. Executables are unsigned.
+- NSIS installer cross-build is blocked by the cloud Wine runtime failing to load its Windows system libraries. The incomplete output is not an installer download. Native Windows CI is configured but no remote CI result or Windows launch/install result has been verified here.
+
+The checksum above identifies this checkpoint only. Rebuilt artifacts receive a new checksum sidecar.

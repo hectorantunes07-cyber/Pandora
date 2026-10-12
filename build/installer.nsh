@@ -6,6 +6,6 @@
 
 !macro customUnWelcomePage
   !define MUI_WELCOMEPAGE_TITLE "Uninstall PANDORA"
-  !define MUI_WELCOMEPAGE_TEXT "Before uninstalling, open PANDORA and use Backups & Restore to revert any changes you no longer want.$\r$\n$\r$\nUninstalling removes the app. It does not silently change Windows settings or remove your local rollback history. Keep that history if you may reinstall PANDORA."
+  !define MUI_WELCOMEPAGE_TEXT "Before uninstalling, open PANDORA and use Restore & History to revert any changes you no longer want.$\r$\n$\r$\nUninstalling removes the app. It does not silently change Windows settings or remove your local rollback history. Keep that history if you may reinstall PANDORA."
   !insertmacro MUI_UNPAGE_WELCOME
 !macroend

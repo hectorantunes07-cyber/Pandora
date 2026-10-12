@@ -25,7 +25,6 @@ win:
       arch: [x64]
   icon: build/icon.ico
   artifactName: PANDORA-Setup-${version}-${arch}.${ext}
-  publisherName: Sonnier
   requestedExecutionLevel: asInvoker
   # No certificate is configured. Publisher metadata is not a digital signature.
 nsis:
@@ -42,6 +41,8 @@ nsis:
   installerHeaderIcon: build/icon.ico
   include: build/installer.nsh
   deleteAppDataOnUninstall: false
+portable:
+  artifactName: PANDORA-Portable-${version}-${arch}.${ext}
 linux:
   target: dir
   icon: build/icon.png

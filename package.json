@@ -1,7 +1,7 @@
 {
   "name": "pandora-desktop",
   "version": "0.1.0",
-  "description": "PANDORA — local Windows diagnostics and reversible tuning. Created by Sonnier.",
+  "description": "PANDORA \u2014 local Windows diagnostics and reversible tuning. Created by Sonnier.",
   "author": "Sonnier",
   "private": true,
   "license": "UNLICENSED",
@@ -16,7 +16,8 @@
     "test:ui": "playwright test",
     "dist:win": "npm run build && electron-builder --win nsis --x64",
     "dist:linux": "npm run build && electron-builder --linux dir",
-    "start": "electron ."
+    "start": "electron .",
+    "dist:portable": "npm run build && electron-builder --win portable --x64"
   },
   "dependencies": {
     "lucide-react": "1.55.0",

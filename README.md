@@ -73,9 +73,11 @@ Get-FileHash .\release\PANDORA-Setup-0.1.0-x64.exe -Algorithm SHA256
 Expected output: `release/PANDORA-Setup-0.1.0-x64.exe`, an NSIS per-user installer
 with a start-menu shortcut, desktop shortcut, uninstaller, original icon, and
 PANDORA/Sonnier metadata. `release/win-unpacked/PANDORA.exe` is an unpacked build;
-keep its neighboring files with it. A portable single-file target is not
-configured. The Windows workflow builds and uploads installer artifacts without
-publishing a release.
+keep its neighboring files with it. Build the single-file portable executable with
+`npm run dist:portable`; output is `release/PANDORA-Portable-0.1.0-x64.exe`.
+The portable package has been cross-built and integrity checked, but still needs
+a Windows launch test. The Windows workflow uploads artifacts without publishing
+a release.
 
 The artifact path above is a build output contract, not proof that an installer
 has been produced. Consult [docs/VALIDATION.md](docs/VALIDATION.md) for the

@@ -23,3 +23,9 @@ Added native PowerShell parsing, C# compilation and Win32 structure-layout check
 Validation: 78 backend tests passed, four native Windows checks skipped; nine browser journeys passed; production build passed. The bundled Electron desktop read actual Linux CPU/RAM through the preload bridge and rejected Windows cleanup on Linux. This isolated container smoke used test-only headless/no-sandbox flags; normal application sandbox configuration remains enabled. Five PowerShell scripts parsed and the native C# declarations/Win32 structure sizes compiled and checked without invoking Windows APIs.
 
 Windows hardware/provider behavior, actual cleanup, and install/uninstall remain Windows validation requirements. Next stage: build the unsigned Windows installer and verify its artifact and contents.
+
+## Stage 3 — verified portable checkpoint
+
+Built the unsigned portable Windows x64 executable and verified both archive layers, embedded architecture, bundled files, notices and SHA256. Added a dedicated portable build command and corrected obsolete installer schema metadata. A fresh locked dependency install, production build and backend suite passed again.
+
+The NSIS installer configuration is retained; Linux Wine cannot complete its final uninstaller-generation step. Use the Windows workflow for the native installer build. Real Windows launch, install/uninstall and native behavior remain unverified. See VALIDATION.md for artifact identity and measured results.

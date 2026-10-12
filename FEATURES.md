@@ -29,6 +29,7 @@ actual test/build outcomes and [the release checklist](docs/windows-validation.m
 | Settings persistence | COMPLETE | Reduced motion, monitor interval and scan-on-launch. No startup registration, tray service or updater. |
 | Network tuning/latency diagnostics | NOT IMPLEMENTED | No arbitrary ping/DNS target executor or network-stack modification. |
 | App removal/debloat | NOT IMPLEMENTED | No bundled-app uninstall, security disablement or service disable lists. |
+| Portable Windows executable | BUILT; WINDOWS VALIDATION REQUIRED | Unsigned x64 payload; archive integrity, bundled assets and checksum verified. Windows launch still required. |
 | Windows installer | BUILD CONFIGURATION COMPLETE | Per-user x64 NSIS, icons, shortcuts, uninstaller and unsigned metadata. Actual artifact result is recorded separately; real Windows install/uninstall validation required. |
 | Code signing / auto-update | NOT IMPLEMENTED | No verified-publisher claim, signing certificate or update service. |
 | Source and third-party licensing | PARTIAL | Source explicitly UNLICENSED pending owner decision; dependencies retain their licenses and bundled notices. |
