@@ -35,3 +35,11 @@ The NSIS installer configuration is retained; Linux Wine cannot complete its fin
 Hardware refresh now bypasses the 30-second cache while concurrent readers share the new scan. The monitor displays the inventory timestamp and labels OS-usable memory accurately. Restore & History now previews all active saved originals, restores newest first after confirmation, and keeps every partial/conflict result visible. Cleaner result wording distinguishes skipped files from unconfirmed outcomes after interruption.
 
 Validation: production build passed; 79 backend tests passed with four Windows-only checks skipped; all 12 browser journeys passed, including cancellation before applying, reviewed batch rollback, busy close/Escape guards, external conflicts and refreshed storage readings.
+
+## Stage 5 — current Windows test package
+
+Windows workflow now builds both portable and installer on Node 24, validates archive contents and checksums, launches the packaged desktop for a read-only smoke check, and uploads both artifacts plus a source/verification manifest. Added a Windows quick start and reproducible package verifier. Verified the rebuilt portable against clean source cffe3b4 and assembled a portable test kit with its checksum, manifest and Windows instructions.
+
+Current cloud result: 79 backend checks passed, four Windows checks skipped; 12 browser journeys passed; native script syntax/layout and Linux desktop smoke passed. Portable archive checks passed. Windows CI results and real Windows behavior remain unverified. The local installer cannot finish because the supplied Wine runtime lacks kernel32.dll. See VALIDATION.md for current artifact identity.
+
+Next Windows stage: run the portable read-only first, compare inventory with Windows tools, test controlled temporary-file cleanup and one preference apply/restore, then run the full Windows release checklist and collect the native Actions results. Keep all settings/history in place for rollback.

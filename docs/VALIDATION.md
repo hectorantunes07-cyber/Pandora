@@ -30,3 +30,19 @@ Cleanup reports exact logical file sizes at scan time and logical bytes confirme
 - NSIS installer cross-build is blocked by the cloud Wine runtime failing to load its Windows system libraries. The incomplete output is not an installer download. Native Windows CI is configured but no remote CI result or Windows launch/install result has been verified here.
 
 The checksum above identifies this checkpoint only. Rebuilt artifacts receive a new checksum sidecar.
+
+## Current portable test build — 2026-10-12
+
+Source: `cffe3b4ba83b1cc70c0f982f284ee7777ba7cc93` (clean working tree at verification).
+
+- Production build and 79 backend tests passed; four Windows-only tests skipped.
+- All 12 Playwright journeys passed, including reviewed batch restoration and immediate hardware refresh. Restore page visually checked at 1280×720 with no horizontal overflow.
+- PowerShell/C# syntax and layout checks passed. Real Electron read-only smoke passed on Linux after activating the environment proxy for its deferred runtime download.
+- `scripts/verify-package.mjs --portable-only` passed archive integrity, x64 payload, tested source/assets and notice checks. It also correctly rejected the previous artifact when compared with the updated build.
+- `PANDORA-Portable-0.1.0-x64.exe`: **100,768,651 bytes**.
+- SHA256: `605e003d8eb768b9bc405b0539e4e9cab8c16413ca531a1ea68ecfaffb385666`. The launcher has no signing certificate.
+- The adjacent `verification.json` records the source commit, checksum and validation limits.
+
+Windows CI now builds both NSIS installer and portable, verifies artifacts, and runs a read-only launch check against the packaged desktop. Its remote outcome is **unverified**: this cloud environment's GitHub API connection returns an egress 403. Git pushes to the repository succeed. The local Wine bundle's missing kernel32.dll blocks the native installer generation step. A portable package is available; a completed Setup installer is not claimed.
+
+Hardware-provider accuracy, Win32 cleanup guards, registry shell effects, Windows launch, and install/uninstall remain real Windows checks.
