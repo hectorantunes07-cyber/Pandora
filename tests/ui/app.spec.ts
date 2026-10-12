@@ -96,7 +96,7 @@ test('all navigation routes render and the minimum desktop viewport does not ove
   await page.goto('/');
   for (const name of ['System Monitor', 'Optimizations', 'Game Profiles', 'PC Cleaner', 'Restore & History', 'Processes & Startup', 'Performance Lab', 'Network Diagnostics']) {
     await page.getByRole('navigation').getByRole('button', { name: new RegExp(name) }).click();
-    await expect(page.getByRole('main')).toBeVisible();
+    await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   }
   await page.getByRole('button', { name: 'Settings & About' }).click();
@@ -129,11 +129,12 @@ test('scanner displays returned hardware, keeps unavailable GPU metrics honest, 
 
 test('failed scan reports the provider error and never offers deletion', async ({ page }) => {
   await desktopFixture(page);
-  await page.addInitScript(() => {
-    const api = window.pandora!;
-    api.scanCleanup = async () => { throw new Error('The Windows provider is unavailable. No files changed.'); };
-  });
   await page.goto('/');
+  // Multiple addInitScript callbacks have no guaranteed execution order.
+  // Mutate the installed fixture only after the page has initialized it.
+  await page.evaluate(() => {
+    window.pandora!.scanCleanup = async () => { throw new Error('The Windows provider is unavailable. No files changed.'); };
+  });
   await page.getByRole('navigation').getByRole('button', { name: /PC Cleaner/ }).click();
   await page.getByRole('button', { name: 'Scan & Clean' }).click();
   await expect(page.getByRole('alert')).toContainText('The Windows provider is unavailable');
@@ -147,6 +148,7 @@ test('cleanup confirmations trap keyboard focus and Escape cancels without delet
   await page.getByRole('navigation').getByRole('button', { name: /PC Cleaner/ }).click();
   await page.getByRole('button', { name: 'Scan & Clean' }).click();
   await page.getByRole('button', { name: 'Clean selected' }).click();
+  await expect(page.getByRole('dialog')).toBeFocused();
   await page.keyboard.press('Shift+Tab');
   await expect(page.getByRole('button', { name: 'Confirm cleanup' })).toBeFocused();
   await page.keyboard.press('Tab');
