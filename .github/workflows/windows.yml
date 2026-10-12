@@ -1,0 +1,63 @@
+name: Windows build and checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install pinned dependencies
+        run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Unit and filesystem safety tests
+        run: npm test
+      - name: Disposable runner registry apply and exact restore
+        run: npx vitest run tests/tweaks.windows.test.ts
+        env:
+          PANDORA_TEST_WINDOWS_TWEAKS: '1'
+      - name: Install Chromium for UI tests
+        run: npx playwright install chromium
+      - name: UI smoke tests
+        run: npm run test:ui
+      - name: Build unsigned Windows installer
+        run: npm run dist:win
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - name: Hash installer
+        shell: pwsh
+        run: |
+          Get-ChildItem release/PANDORA-Setup-*.exe | ForEach-Object {
+            $hash = Get-FileHash $_.FullName -Algorithm SHA256
+            "$($hash.Hash.ToLower())  $($_.Name)" | Out-File -FilePath "$($_.FullName).sha256" -Encoding ascii
+          }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PANDORA-Windows-x64-unsigned
+          path: |
+            release/PANDORA-Setup-*.exe
+            release/PANDORA-Setup-*.exe.sha256
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-failure-details
+          path: |
+            playwright-report
+            test-results
+
+# Unit tests exercise isolated adapters and temporary fixtures. The explicit
+# opt-in registry check above changes and restores one HKCU value on the disposable
+# hosted runner; it does not verify every preference's Windows shell behavior.
+# Installation/uninstallation and physical sensors remain manual release gates.

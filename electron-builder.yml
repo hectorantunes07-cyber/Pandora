@@ -1,0 +1,49 @@
+appId: io.sonnier.pandora
+productName: PANDORA
+copyright: Copyright © 2026 Sonnier
+directories:
+  output: release
+  buildResources: build
+# PowerShell and C# helpers need real filesystem paths. The application is
+# intentionally inspectable; an ASAR archive is not a security boundary.
+asar: false
+npmRebuild: false
+files:
+  - dist/**/*
+  - dist-electron/**/*
+  - package.json
+  - build/icon.png
+  - LICENSE
+  - THIRD_PARTY_NOTICES.md
+  - CHANGELOG.md
+extraMetadata:
+  author: Sonnier
+  description: PANDORA — Created by Sonnier. Local PC diagnostics and reversible tuning.
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  icon: build/icon.ico
+  artifactName: PANDORA-Setup-${version}-${arch}.${ext}
+  publisherName: Sonnier
+  requestedExecutionLevel: asInvoker
+  # No certificate is configured. Publisher metadata is not a digital signature.
+nsis:
+  oneClick: false
+  perMachine: false
+  allowElevation: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: PANDORA
+  uninstallDisplayName: PANDORA — Created by Sonnier
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  installerHeaderIcon: build/icon.ico
+  include: build/installer.nsh
+  deleteAppDataOnUninstall: false
+linux:
+  target: dir
+  icon: build/icon.png
+  category: Utility
+  executableName: pandora
