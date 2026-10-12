@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { spawn } from 'node:child_process';
 import { randomInt, randomUUID } from 'node:crypto';
 import { createNativeCleanerAdapter, type Candidate, type FileOutcome } from '../electron/cleaner-native';
 
@@ -76,6 +77,35 @@ describe.skipIf(process.platform !== 'win32')('native Windows cleaner safety', (
       expect(forged[0].deleted).toBe(false);
       expect(await fs.readFile(protectedFiles[1], 'utf8')).toBe('private fixture');
     } finally { if (owned) await fs.rm(profile, { recursive: true, force: true }); }
+  }, 120_000);
+
+  it('preserves a file locked after scanning and reports zero deleted bytes', async () => {
+    const file = await create('locked.tmp', 'locked fixture');
+    const candidate = (await scan()).find(item => item.path.toLowerCase() === file.toLowerCase())!;
+    expect(candidate).toBeTruthy();
+    const executable = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
+    // The path is data in the child environment, never executable command text.
+    const command = "$ErrorActionPreference='Stop'; $handle=[IO.File]::Open($env:PANDORA_LOCK_FIXTURE,[IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]::None); try { [Console]::Out.WriteLine('fixture-locked'); [Console]::In.ReadLine() | Out-Null } finally { $handle.Dispose() }";
+    const child = spawn(executable, ['-NoProfile', '-NonInteractive', '-Command', command], { windowsHide: true, env: { ...process.env, PANDORA_LOCK_FIXTURE: file }, stdio: ['pipe', 'pipe', 'pipe'] });
+    const exited = new Promise<void>(resolve => { child.once('exit', () => resolve()); child.once('error', () => resolve()); });
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      await new Promise<void>((resolve, reject) => {
+        timer = setTimeout(() => reject(new Error('Exclusive lock fixture timed out.')), 15000);
+        child.once('error', reject);
+        child.once('exit', () => reject(new Error('Exclusive lock fixture exited before readiness.')));
+        let output = '';
+        child.stdout.on('data', chunk => { output += String(chunk); if (output.includes('fixture-locked')) { clearTimeout(timer); resolve(); } });
+      });
+      const outcome = await remove(candidate);
+      expect(outcome).toMatchObject({ deleted: false, bytes: 0 });
+      expect(outcome.reason).toBeTruthy();
+    } finally {
+      clearTimeout(timer);
+      child.kill(); // Only our isolated lock holder; releases its Windows handle.
+      await exited;
+    }
+    expect(await fs.readFile(file, 'utf8')).toBe('locked fixture');
   }, 120_000);
 
   it('refuses changed, missing, or replaced files after the scan', async () => {
