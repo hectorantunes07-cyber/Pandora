@@ -59,7 +59,28 @@ jobs:
           PANDORA_SMOKE_EXECUTABLE: release/win-unpacked/PANDORA.exe
       - name: Disposable Windows install, launch and uninstall
         shell: pwsh
-        run: ./scripts/test-installer.ps1
+        run: |
+          try { ./scripts/test-installer.ps1 }
+          catch {
+            $message = $_.Exception.Message.Replace('%', '%25').Replace("`r", '%0D').Replace("`n", '%0A')
+            Write-Output "::error title=Installer lifecycle::$message"
+            throw
+          }
+      - name: Record native validation and include testing instructions
+        shell: pwsh
+        run: |
+          $manifest = Get-Content release/verification.json -Raw | ConvertFrom-Json
+          $manifest.windowsLaunchVerified = $true
+          $manifest | Add-Member -NotePropertyName installerLifecycleVerified -NotePropertyValue $true
+          $manifest | Add-Member -NotePropertyName windowsValidation -NotePropertyValue @{
+            runner = $env:RUNNER_OS
+            runUrl = "$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
+            nativeCleanerFixtures = 'passed'
+            disposableRegistryApplyRestore = 'passed'
+            physicalHardwareTesting = 'still required'
+          }
+          $manifest | ConvertTo-Json -Depth 8 | Set-Content release/verification.json -Encoding utf8
+          Copy-Item docs/WINDOWS-QUICKSTART.md,docs/windows-validation.md,FEATURES.md -Destination release/
       - uses: actions/upload-artifact@v5
         with:
           name: PANDORA-Windows-x64-unsigned
@@ -69,6 +90,9 @@ jobs:
             release/PANDORA-Portable-*.exe
             release/PANDORA-Portable-*.exe.sha256
             release/verification.json
+            release/WINDOWS-QUICKSTART.md
+            release/windows-validation.md
+            release/FEATURES.md
           if-no-files-found: error
       - uses: actions/upload-artifact@v5
         if: failure()
@@ -82,4 +106,5 @@ jobs:
 # Unit tests exercise isolated adapters and temporary fixtures. The explicit
 # opt-in registry check above changes and restores one HKCU value on the disposable
 # hosted runner; it does not verify every preference's Windows shell behavior.
-# Installation/uninstallation and physical sensors remain manual release gates.
+# The lifecycle job verifies disposable per-user installation and preservation.
+# Physical hardware, GUI installation choices and upgrade paths remain manual gates.
