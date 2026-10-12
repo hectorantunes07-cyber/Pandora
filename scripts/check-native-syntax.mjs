@@ -36,6 +36,39 @@ foreach ($layout in @(@{Name='DISPOSITION';Size=1}, @{Name='INFO';Size=52}, @{Na
   if ($size -ne $layout.Size) { throw ('Incorrect Win32 structure layout: ' + $layout.Name) }
 }
 Write-Output 'Cleaner C# declarations and Win32 structure sizes verified. No Win32 API was invoked.'
+
+# Run the real inventory script against isolated cmdlet fixtures. These functions
+# shadow OS providers only in this temporary checker process; no WMI is queried.
+function Get-CimInstance {
+ param([string]$Namespace, [string]$ClassName, [string]$ErrorAction)
+ switch ($ClassName) {
+  'Win32_Processor' { [pscustomobject]@{ Name='Fixture CPU'; NumberOfCores=4 } }
+  'Win32_VideoController' { [pscustomobject]@{ Name='Fixture GPU'; DriverVersion='1'; CurrentHorizontalResolution=1920; CurrentVerticalResolution=1080; CurrentRefreshRate=144 } }
+  'Win32_PhysicalMemory' { [pscustomobject]@{ Capacity=17179869184; ConfiguredClockSpeed=3200 } }
+  'Win32_BaseBoard' { [pscustomobject]@{ Manufacturer='Fixture'; Product='Board' } }
+  'Win32_OperatingSystem' { [pscustomobject]@{ Caption='Windows fixture'; BuildNumber='26100'; LastBootUpTime=[DateTime]::UtcNow.AddDays(-1) } }
+  'Win32_LogicalDisk' { [pscustomobject]@{ DriveType=3; DeviceID='C:'; Size=1000000000000; FreeSpace=200000000000 } }
+  'Win32_PowerPlan' { [pscustomobject]@{ IsActive=$true; ElementName='Balanced' } }
+  'Win32_ComputerSystem' { [pscustomobject]@{ PCSystemType=2 } }
+  default { throw ('Unexpected provider in fixture: ' + $ClassName) }
+ }
+}
+function Get-PhysicalDisk {
+ param([string]$ErrorAction)
+ [pscustomobject]@{ FriendlyName='Fixture disk'; Size=1000000000000; MediaType='SSD'; BusType='NVMe'; HealthStatus='Healthy' }
+}
+function Get-NetAdapter {
+ param([switch]$Physical, [string]$ErrorAction)
+ if (-not $Physical) { throw 'Fixture expects physical adapter inventory.' }
+ [pscustomobject]@{ InterfaceDescription='Fixture adapter'; Status='Up'; LinkSpeed='1 Gbps'; TransmitLinkSpeed=1000000000 }
+}
+$inventory = (& ([scriptblock]::Create([string]$scripts.system))) | ConvertFrom-Json
+if ($inventory.cpu -ne 'Fixture CPU' -or $inventory.physicalCores -ne 4) { throw 'Inventory aggregation failed.' }
+if ($inventory.networkAdapters.Count -ne 1 -or $inventory.networkAdapters[0].linkSpeedBits -ne 1000000000) { throw 'Inventory must use numeric CIM rates, not the formatted LinkSpeed property.' }
+if ($inventory.physicalDisks[0].bus -ne 'NVMe' -or $inventory.installedRamBytes -ne 17179869184 -or $inventory.deviceType -ne 'Portable') { throw 'Extended inventory aggregation failed.' }
+if ($inventory.notes.Count -ne 0) { throw 'Unexpected provider failure in inventory fixture.' }
+Write-Output 'Inventory PowerShell runtime fixture passed, including formatted versus numeric link speed. No native provider was invoked.'
+
 `);
   const executable = process.env.PANDORA_PWSH || (process.platform === 'win32' ? 'powershell.exe' : 'pwsh');
   const { stdout } = await promisify(execFile)(executable, ['-NoLogo', '-NoProfile', '-NonInteractive', '-File', checker, '-InputFile', payload], { timeout: 60000, maxBuffer: 1024 * 1024 });
