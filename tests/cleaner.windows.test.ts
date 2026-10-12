@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import { randomUUID } from 'node:crypto';
+import { randomInt, randomUUID } from 'node:crypto';
 import { createNativeCleanerAdapter, type Candidate, type FileOutcome } from '../electron/cleaner-native';
 
 // These tests execute the real Win32 handle guard on a Windows runner. They only
@@ -42,6 +42,40 @@ describe.skipIf(process.platform !== 'win32')('native Windows cleaner safety', (
     await expect(fs.stat(eligible)).rejects.toThrow();
     expect(await fs.readFile(outsideFile, 'utf8')).toBe('personal');
     expect(await fs.readFile(document, 'utf8')).toBe('disposable test data');
+  }, 120_000);
+
+  it.skipIf(process.env.CI !== 'true' || process.env.RUNNER_ENVIRONMENT !== 'github-hosted')('cleans only browser cache and preserves passwords, cookies, history and recent files', async () => {
+    // A fake unregistered profile on a disposable hosted runner only. Never touch
+    // a developer's real browser profile, and never clean unfiltered scan results.
+    const profile = path.join(process.env.LOCALAPPDATA!, 'Google', 'Chrome', 'User Data', `Profile ${randomInt(100000000, 2000000000)}`);
+    let owned = false;
+    try {
+      await fs.mkdir(path.dirname(profile), { recursive: true });
+      await fs.mkdir(profile); owned = true; // Refuse an existing profile.
+      const cache = path.join(profile, 'Cache', 'Cache_Data');
+      await fs.mkdir(cache, { recursive: true });
+      await fs.mkdir(path.join(profile, 'Network'));
+      const protectedFiles = [path.join(profile, 'Login Data'), path.join(profile, 'History'), path.join(profile, 'Network', 'Cookies')];
+      for (const file of protectedFiles) { await fs.writeFile(file, 'private fixture'); await fs.utimes(file, old, old); }
+      const eligible = path.join(cache, 'stale-cache');
+      const recent = path.join(cache, 'recent-cache');
+      await fs.writeFile(eligible, '12345'); await fs.utimes(eligible, old, old);
+      await fs.writeFile(recent, 'keep recent');
+      await fs.link(protectedFiles[0], path.join(cache, 'linked-cache'));
+      const scanned = await adapter.scan('browser');
+      const candidates = scanned.groups.flatMap(group => group.files).filter(file => file.path.toLowerCase().startsWith(profile.toLowerCase() + path.sep));
+      expect(candidates.map(file => file.path.toLowerCase())).toEqual([eligible.toLowerCase()]);
+      const results: FileOutcome[] = [];
+      await adapter.remove('browser', candidates, result => results.push(result));
+      expect(results).toHaveLength(1); expect(results[0]).toMatchObject({ deleted: true, bytes: 5 });
+      await expect(fs.stat(eligible)).rejects.toThrow();
+      for (const file of protectedFiles) expect(await fs.readFile(file, 'utf8')).toBe('private fixture');
+      expect(await fs.readFile(recent, 'utf8')).toBe('keep recent');
+      const forged: FileOutcome[] = [];
+      await adapter.remove('browser', [{ ...candidates[0], path: protectedFiles[1] }], result => forged.push(result));
+      expect(forged[0].deleted).toBe(false);
+      expect(await fs.readFile(protectedFiles[1], 'utf8')).toBe('private fixture');
+    } finally { if (owned) await fs.rm(profile, { recursive: true, force: true }); }
   }, 120_000);
 
   it('refuses changed, missing, or replaced files after the scan', async () => {
