@@ -83,6 +83,15 @@ for (const kind of portableOnly ? ['Portable'] : ['Setup', 'Portable']) {
       assert.equal(await digest(join(extracted, 'PANDORA.exe')), await digest(join(release, 'win-unpacked/PANDORA.exe')), 'Embedded executable differs');
     } finally { await rm(temp, { recursive: true, force: true }); }
   }
+  if (kind === 'Setup') {
+    const temp = await mkdtemp(join(tmpdir(), 'pandora-installer-check-'));
+    try {
+      await exec(sevenZip, ['x', artifact, `-o${temp}`, '-y'], { timeout: 120000 });
+      await verifyPayload(temp);
+      assert.equal(await digest(join(temp, 'PANDORA.exe')), await digest(join(release, 'win-unpacked/PANDORA.exe')), 'Installer executable differs');
+      assert.ok((await stat(join(temp, 'Uninstall PANDORA.exe'))).size > 0, 'Installer must contain an uninstaller');
+    } finally { await rm(temp, { recursive: true, force: true }); }
+  }
   const sha256 = await digest(artifact);
   await writeFile(`${artifact}.sha256`, `${sha256}  ${filename}\n`);
   artifacts.push({ filename, bytes: info.size, sha256, launcherMachine: launcher.machine, certificateBytes: launcher.certificateBytes });
