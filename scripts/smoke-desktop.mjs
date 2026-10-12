@@ -2,17 +2,19 @@
 import { _electron as electron } from '@playwright/test';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 const root = fileURLToPath(new URL('..', import.meta.url));
 const directory = await mkdtemp(join(tmpdir(), 'pandora-desktop-smoke-'));
 const containerMode = process.env.PANDORA_CONTAINER_SMOKE === '1';
+const executablePath = process.env.PANDORA_SMOKE_EXECUTABLE ? resolve(root, process.env.PANDORA_SMOKE_EXECUTABLE) : undefined;
 if (containerMode && process.platform !== 'linux') throw new Error('Container flags are only for isolated Linux smoke tests.');
 let app;
 try {
   app = await electron.launch({
-    args: [...(containerMode ? ['--no-sandbox', '--ozone-platform=headless', '--disable-gpu'] : []), root],
+    executablePath,
+    args: [...(containerMode ? ['--no-sandbox', '--ozone-platform=headless', '--disable-gpu'] : []), `--user-data-dir=${join(directory, 'user-data')}`, ...(executablePath ? [] : [root])],
     env: { ...process.env, PANDORA_DEV_URL: '', XDG_CONFIG_HOME: join(directory, 'config'), XDG_CACHE_HOME: join(directory, 'cache') },
     timeout: 30000,
   });

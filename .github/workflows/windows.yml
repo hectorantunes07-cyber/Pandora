@@ -11,11 +11,12 @@ permissions:
 jobs:
   windows:
     runs-on: windows-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
           cache: npm
       - name: Install pinned dependencies
         run: npm ci
@@ -33,23 +34,25 @@ jobs:
         run: npx playwright install chromium
       - name: UI smoke tests
         run: npm run test:ui
-      - name: Build unsigned Windows installer
-        run: npm run dist:win
+      - name: Build unsigned installer and portable executable
+        run: npm run dist:windows
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
-      - name: Hash installer
-        shell: pwsh
-        run: |
-          Get-ChildItem release/PANDORA-Setup-*.exe | ForEach-Object {
-            $hash = Get-FileHash $_.FullName -Algorithm SHA256
-            "$($hash.Hash.ToLower())  $($_.Name)" | Out-File -FilePath "$($_.FullName).sha256" -Encoding ascii
-          }
+      - name: Verify package archives, architecture, bundled files and checksums
+        run: npm run verify:package
+      - name: Read-only packaged desktop smoke
+        run: node scripts/smoke-desktop.mjs
+        env:
+          PANDORA_SMOKE_EXECUTABLE: release/win-unpacked/PANDORA.exe
       - uses: actions/upload-artifact@v4
         with:
           name: PANDORA-Windows-x64-unsigned
           path: |
             release/PANDORA-Setup-*.exe
             release/PANDORA-Setup-*.exe.sha256
+            release/PANDORA-Portable-*.exe
+            release/PANDORA-Portable-*.exe.sha256
+            release/verification.json
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
         if: failure()

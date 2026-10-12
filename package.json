@@ -1,7 +1,7 @@
 {
   "name": "pandora-desktop",
   "version": "0.1.0",
-  "description": "PANDORA \u2014 local Windows diagnostics and reversible tuning. Created by Sonnier.",
+  "description": "PANDORA — local Windows diagnostics and reversible tuning. Created by Sonnier.",
   "author": "Sonnier",
   "private": true,
   "license": "UNLICENSED",
@@ -17,6 +17,8 @@
     "dist:win": "npm run build && electron-builder --win nsis --x64",
     "dist:linux": "npm run build && electron-builder --linux dir",
     "start": "electron .",
+    "dist:windows": "npm run build && electron-builder --win nsis portable --x64",
+    "verify:package": "node scripts/verify-package.mjs",
     "dist:portable": "npm run build && electron-builder --win portable --x64"
   },
   "dependencies": {

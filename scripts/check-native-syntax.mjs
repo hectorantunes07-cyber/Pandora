@@ -26,7 +26,7 @@ foreach ($property in $scripts.PSObject.Properties) {
   if ($errors.Count -gt 0) { throw ("PowerShell syntax error in " + $property.Name + ": " + ($errors.Message -join '; ')) }
   Write-Output ("Parsed PowerShell: " + $property.Name)
 }
-$source = [regex]::Match([string]$scripts.cleaner, "(?s)\$source = @'\r?\n(.*?)\r?\n'@")
+$source = [regex]::Match([string]$scripts.cleaner, '(?s)\$source = @''\r?\n(.*?)\r?\n''@')
 if (-not $source.Success) { throw 'Cleaner C# source not found.' }
 Add-Type -TypeDefinition $source.Groups[1].Value
 $sizeMethod = [System.Runtime.InteropServices.Marshal].GetMethod('SizeOf', [type[]]@([type]))

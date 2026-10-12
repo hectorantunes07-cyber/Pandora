@@ -26,7 +26,7 @@ commands or registry paths. Details are in [architecture.md](docs/architecture.m
 
 - Windows 11 x64 is the primary target. Windows 10 behavior is best effort and
   depends on the installed APIs, OS build, and organizational policy.
-- Use Node.js 22 LTS or newer supported LTS and npm. The committed lockfile pins
+- Use Node.js 24 LTS (or Node 22.12+ compatible LTS) and npm. The committed lockfile pins
   the dependency tree.
 - A normal user account is sufficient for the implemented per-user preferences.
   Do not launch the whole application as administrator.
@@ -66,7 +66,8 @@ PC; it is not needed for development.
 Run from a Windows machine after installing dependencies:
 
 ```powershell
-npm run dist:win
+npm run dist:windows
+npm run verify:package
 Get-FileHash .\release\PANDORA-Setup-0.1.0-x64.exe -Algorithm SHA256
 ```
 
@@ -76,8 +77,11 @@ PANDORA/Sonnier metadata. `release/win-unpacked/PANDORA.exe` is an unpacked buil
 keep its neighboring files with it. Build the single-file portable executable with
 `npm run dist:portable`; output is `release/PANDORA-Portable-0.1.0-x64.exe`.
 The portable package has been cross-built and integrity checked, but still needs
-a Windows launch test. The Windows workflow uploads artifacts without publishing
-a release.
+a Windows launch test. The Windows workflow builds both packages, verifies archives and bundled code,
+runs a read-only desktop smoke check, and uploads artifacts without publishing
+a release. Download the `PANDORA-Windows-x64-unsigned` artifact from a successful
+run in the repository’s Actions tab. An artifact is a testing build, not evidence
+that manual Windows release checks have passed.
 
 The artifact path above is a build output contract, not proof that an installer
 has been produced. Consult [docs/VALIDATION.md](docs/VALIDATION.md) for the
@@ -96,7 +100,7 @@ trusted code signing. Do not disable Windows security controls to run PANDORA.
 2. Open an optimization, review its exact target and tradeoffs, then confirm the
    selected changes. A durable original-value snapshot precedes every write.
 3. Open **Restore & History** to inspect results and
-   restore PANDORA-managed changes. A successful setting write is not evidence of
+   restore individual changes or review **Restore all managed**. A successful setting write is not evidence of
    an FPS improvement. Retest a comparable game workload yourself.
 4. Open **PC Cleaner**, choose **Scan & Clean**, review categories and measured
    candidate bytes, then confirm. Browser cache and Recycle Bin are separate
@@ -167,3 +171,15 @@ It never applies tweaks or deletes files. In an isolated Linux container only,
 `PANDORA_CONTAINER_SMOKE=1` uses headless Chromium test flags including
 `--no-sandbox`; those flags are never part of the normal app, installer or
 development launcher. Such a test does not validate Chromium’s OS sandbox.
+
+## Package verification and your first Windows test
+
+`npm run verify:package` requires 7-Zip (the Windows runner includes it). Set
+`PANDORA_7ZIP` to an explicit executable if needed. It checks PE architecture,
+both portable archive layers, packaged code against the production build and
+license notices, then writes SHA256 sidecars and `release/verification.json`.
+Use `npm run verify:package -- --portable-only` when only the portable exists.
+A mismatched, missing or incomplete package fails verification.
+
+See [the Windows quick start](docs/WINDOWS-QUICKSTART.md) for a short, ordered
+first test and [the full checklist](docs/windows-validation.md) for release gates.
