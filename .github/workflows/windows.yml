@@ -40,10 +40,9 @@ jobs:
           & npm.cmd run dist:windows 2>&1 | Tee-Object -FilePath build-windows.log
           $buildExit = $LASTEXITCODE
           if ($buildExit -ne 0) {
-            Get-Content build-windows.log -Tail 45 | ForEach-Object {
-              $line = $_.Replace('%', '%25').Replace("`r", '%0D').Replace("`n", '%0A')
-              Write-Output "::error title=Windows packaging::$line"
-            }
+            $tail = (Get-Content build-windows.log -Tail 90) -join "`n"
+            $annotation = $tail.Replace('%', '%25').Replace("`r", '%0D').Replace("`n", '%0A')
+            Write-Output "::error title=Windows packaging::$annotation"
             '### Windows packaging failure' >> $env:GITHUB_STEP_SUMMARY
             '```text' >> $env:GITHUB_STEP_SUMMARY
             Get-Content build-windows.log -Tail 70 >> $env:GITHUB_STEP_SUMMARY
