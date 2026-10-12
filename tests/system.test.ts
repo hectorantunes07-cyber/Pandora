@@ -74,6 +74,23 @@ describe('hardware inventory and telemetry', () => {
     await service.getMetrics();
     expect(runner).toHaveBeenCalledTimes(2);
   });
+
+  it('refreshes changed inventory immediately and shares the pending refresh with readers', async () => {
+    let release: (value: unknown) => void = () => {};
+    const runner = vi.fn().mockResolvedValueOnce({ powerPlan: 'Balanced' })
+      .mockImplementation(() => new Promise(resolve => { release = resolve; }));
+    const service = createSystemService(dependencies({ platform: 'win32', runWindows: runner }));
+    expect((await service.getSystem()).powerPlan).toBe('Balanced');
+    const refresh = service.getSystem(true);
+    const concurrent = service.getSystem();
+    release({ powerPlan: 'Power saver' });
+    expect((await refresh).powerPlan).toBe('Power saver');
+    expect((await concurrent).powerPlan).toBe('Power saver');
+    expect((await service.getSystem()).powerPlan).toBe('Power saver');
+    expect(runner).toHaveBeenCalledTimes(2);
+    await expect(service.getSystem('true' as any)).rejects.toThrow('Invalid hardware refresh');
+    expect(runner).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe('read-only process and startup inventories', () => {

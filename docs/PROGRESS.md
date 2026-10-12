@@ -29,3 +29,9 @@ Windows hardware/provider behavior, actual cleanup, and install/uninstall remain
 Built the unsigned portable Windows x64 executable and verified both archive layers, embedded architecture, bundled files, notices and SHA256. Added a dedicated portable build command and corrected obsolete installer schema metadata. A fresh locked dependency install, production build and backend suite passed again.
 
 The NSIS installer configuration is retained; Linux Wine cannot complete its final uninstaller-generation step. Use the Windows workflow for the native installer build. Real Windows launch, install/uninstall and native behavior remain unverified. See VALIDATION.md for artifact identity and measured results.
+
+## Stage 4 — fresh inventory and reviewed batch restoration
+
+Hardware refresh now bypasses the 30-second cache while concurrent readers share the new scan. The monitor displays the inventory timestamp and labels OS-usable memory accurately. Restore & History now previews all active saved originals, restores newest first after confirmation, and keeps every partial/conflict result visible. Cleaner result wording distinguishes skipped files from unconfirmed outcomes after interruption.
+
+Validation: production build passed; 79 backend tests passed with four Windows-only checks skipped; all 12 browser journeys passed, including cancellation before applying, reviewed batch rollback, busy close/Escape guards, external conflicts and refreshed storage readings.

@@ -56,19 +56,67 @@ export function Restore({ notify, refreshTweaks, onBusyChange }: { notify: (mess
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [selection, setSelection] = useState<HistoryEntry | null>(null);
-  const load = async () => { setLoading(true); setError(''); try { setEntries(await api.getHistory()); } catch (err) { setError(errorMessage(err)); } finally { setLoading(false); } };
+  const [selection, setSelection] = useState<HistoryEntry[] | null>(null);
+  const [results, setResults] = useState<OperationResult[]>([]);
+  const load = async () => {
+    setLoading(true); setError('');
+    try { setEntries(await api.getHistory()); }
+    catch (err) { setError(errorMessage(err)); }
+    finally { setLoading(false); }
+  };
   useEffect(() => { if (isDesktop) void load(); }, []);
+  const current = entries.filter(entry => ['applied', 'conflict', 'pending'].includes(entry.status))
+    .sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+  const review = (items: HistoryEntry[]) => { setSelection(items); setError(''); };
   const revert = async () => {
-    if (!selection) return;
-    setBusy(true); onBusyChange(true);
-    try { const results = await api.revertTweaks([selection.tweakId]); setSelection(null); await load(); await refreshTweaks(); for (const result of results) { if (result.success) notify(result.message); else setError(result.message); } }
-    catch (err) { setError(errorMessage(err)); setSelection(null); }
+    if (!selection?.length || busy) return;
+    setBusy(true); onBusyChange(true); setError(''); setResults([]);
+    try {
+      const next = await api.revertTweaks([...new Set(selection.map(entry => entry.tweakId))]);
+      setResults(next); setSelection(null);
+      await load(); await refreshTweaks();
+      notify(`${next.filter(result => result.success).length} of ${next.length} restorations completed. Review each result below.`);
+    } catch (err) { setError(errorMessage(err)); setSelection(null); }
     finally { setBusy(false); onBusyChange(false); }
   };
-  const exportHistory = async () => { try { const path = await api.exportReport('history'); if (path) notify(`History report saved to ${path}`); } catch (err) { setError(errorMessage(err)); } };
-  const current = entries.filter(entry => entry.status === 'applied' || entry.status === 'conflict' || entry.status === 'pending');
-  return <><PageHeading eyebrow="CONFIDENCE COMES WITH A WAY BACK" title="Restore & History" description="Your original settings and a clear record of every managed change."><button className="button secondary" disabled={loading || !isDesktop} onClick={() => void load()}><RefreshCw size={15} className={loading ? 'spin' : ''}/>Refresh</button><button className="button primary" disabled={!isDesktop} onClick={exportHistory}><History size={15}/>Export history</button></PageHeading><Notice>These are setting snapshots created by PANDORA, not Windows System Restore points. Restore only changes the selected managed preference. Deleted cleanup files cannot be restored here.</Notice>{error && <Notice tone="error">{error}</Notice>}<div className="history-summary"><IconBox icon={History}/><div><strong>{isDesktop ? current.length : '—'}</strong><span>managed settings with saved originals</span></div><div><ShieldCheck size={17}/><span>Saved locally on this PC</span></div></div><section className="panel"><PanelTitle icon={History} title="Change history" action={<Badge>{entries.length} RECORDS</Badge>}/>{loading ? <div className="panel-loading"><Spinner label="Reading your history…"/></div> : entries.length ? <div className="history-list">{[...entries].sort((a, b) => b.timestamp.localeCompare(a.timestamp)).map(entry => <div className="history-row" key={entry.id}><div className={`history-status-icon ${entry.status}`}><History size={18}/></div><div className="history-copy"><div><h3>{entry.title}</h3><Badge tone={entry.status === 'applied' ? 'purple' : entry.status === 'reverted' ? 'green' : 'amber'}>{entry.status}</Badge></div><p>{entry.message}</p><span>{formatDate(entry.timestamp)} <span className="footer-dot">·</span> Original: {entry.originalValue ?? 'not set'} → Applied: {entry.appliedValue}</span></div>{['applied', 'conflict', 'pending'].includes(entry.status) && <button className="button secondary compact" onClick={() => setSelection(entry)} disabled={busy}><RotateCcw size={14}/>Restore</button>}</div>)}</div> : <EmptyState icon={History} title={isDesktop ? 'Your history starts with your first change' : 'Your history belongs to your PC'} description={isDesktop ? 'When you apply a preference, its original setting and operation result will appear here.' : 'Open the Windows app to view locally saved changes and restore your original settings.'}/>}</section>{selection && <Modal title={`Restore ${selection.title}?`} description="PANDORA will compare the current setting with its saved change before restoring your original value." onClose={() => setSelection(null)} busy={busy} footer={<><button className="button secondary" disabled={busy} onClick={() => setSelection(null)}>Cancel</button><button className="button primary" disabled={busy} onClick={revert}>{busy ? <Spinner label="Restoring…"/> : <><RotateCcw size={15}/>Confirm restore</>}</button></>}><dl className="detail-list"><div><dt>Original value</dt><dd>{selection.originalValue ?? 'Not set (remove the added value)'}</dd></div><div><dt>PANDORA value</dt><dd>{selection.appliedValue}</dd></div><div><dt>Saved on</dt><dd>{formatDate(selection.timestamp)}</dd></div></dl><Notice>If the setting has since changed outside PANDORA, the restore will stop and report a conflict. You may need to reopen the affected app or sign out for the change to appear.</Notice></Modal>}</>;
+  const exportHistory = async () => {
+    try { const path = await api.exportReport('history'); if (path) notify(`History report saved to ${path}`); }
+    catch (err) { setError(errorMessage(err)); }
+  };
+  return <>
+    <PageHeading eyebrow="CONFIDENCE COMES WITH A WAY BACK" title="Restore & History" description="Your original settings and a clear record of every managed change.">
+      <button className="button secondary" disabled={loading || busy || !isDesktop} onClick={() => void load()}><RefreshCw size={15} className={loading ? 'spin' : ''}/>Refresh</button>
+      <button className="button secondary" disabled={busy || !isDesktop} onClick={exportHistory}><History size={15}/>Export history</button>
+      <button className="button primary" disabled={loading || busy || !current.length} onClick={() => review(current)}><RotateCcw size={15}/>Restore all managed</button>
+    </PageHeading>
+    <Notice>These are setting snapshots created by PANDORA, not Windows System Restore points. Restore changes only the reviewed managed preferences. Deleted cleanup files cannot be restored here.</Notice>
+    {error && <Notice tone="error">{error}</Notice>}
+    {results.length > 0 && <section className="panel operation-results" aria-label="Restoration results">
+      <PanelTitle icon={FileCheck2} title="Restoration results" action={<button className="icon-button" aria-label="Dismiss restoration results" onClick={() => setResults([])}><X size={15}/></button>}/>
+      {results.map(result => <div className={`operation-result ${result.success ? 'success' : 'warning'}`} key={result.id}>
+        {result.success ? <CheckCircle2 size={17}/> : <CircleAlert size={17}/>}
+        <div><strong>{entries.find(entry => entry.tweakId === result.id)?.title || result.id}</strong><p>{result.message}</p></div>
+      </div>)}
+    </section>}
+    <div className="history-summary"><IconBox icon={History}/><div><strong>{isDesktop ? current.length : '—'}</strong><span>managed settings with saved originals</span></div><div><ShieldCheck size={17}/><span>Saved locally on this PC</span></div></div>
+    <section className="panel">
+      <PanelTitle icon={History} title="Change history" action={<Badge>{entries.length} RECORDS</Badge>}/>
+      {loading ? <div className="panel-loading"><Spinner label="Reading your history…"/></div> : entries.length ? <div className="history-list">
+        {[...entries].sort((a, b) => b.timestamp.localeCompare(a.timestamp)).map(entry => <div className="history-row" key={entry.id}>
+          <div className={`history-status-icon ${entry.status}`}><History size={18}/></div>
+          <div className="history-copy"><div><h3>{entry.title}</h3><Badge tone={entry.status === 'applied' ? 'purple' : entry.status === 'reverted' ? 'green' : 'amber'}>{entry.status}</Badge></div><p>{entry.message}</p><span>{formatDate(entry.timestamp)} <span className="footer-dot">·</span> Original: {entry.originalValue ?? 'not set'} → Applied: {entry.appliedValue}</span></div>
+          {current.includes(entry) && <button className="button secondary compact" onClick={() => review([entry])} disabled={busy}><RotateCcw size={14}/>Restore</button>}
+        </div>)}
+      </div> : <EmptyState icon={History} title={isDesktop ? 'Your history starts with your first change' : 'Your history belongs to your PC'} description={isDesktop ? 'When you apply a preference, its original setting and operation result will appear here.' : 'Open the Windows app to view locally saved changes and restore your original settings.'}/>}
+    </section>
+    {selection && <Modal title={selection.length === 1 ? `Restore ${selection[0].title}?` : `Restore ${selection.length} managed settings?`} description="Review your saved originals. Each setting is checked before restoration; an external change is preserved and reported as a conflict." onClose={() => setSelection(null)} busy={busy} footer={<>
+      <button className="button secondary" disabled={busy} onClick={() => setSelection(null)}>Cancel</button>
+      <button className="button primary" disabled={busy} onClick={revert}>{busy ? <Spinner label="Restoring…"/> : <><RotateCcw size={15}/>Confirm restore</>}</button>
+    </>}>
+      {selection.map(entry => <section className="restore-preview" key={entry.id}><h3>{entry.title}</h3><dl className="detail-list"><div><dt>Original value</dt><dd>{entry.originalValue ?? 'Not set (remove the added value)'}</dd></div><div><dt>PANDORA value</dt><dd>{entry.appliedValue}</dd></div><div><dt>Saved on</dt><dd>{formatDate(entry.timestamp)}</dd></div></dl></section>)}
+      <Notice>Settings are restored from newest to oldest. A conflict on one preference does not overwrite external changes or hide other results. You may need to reopen the affected app or sign out for the change to appear.</Notice>
+    </Modal>}
+  </>;
 }
 
 export function GameProfiles({ games, tweaks, review }: { games: GameInfo[]; tweaks: TweakState[]; review: () => void }) {

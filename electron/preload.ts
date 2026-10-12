@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { AppApi, ProgressEvent } from '../shared/types';
 const api: AppApi = {
-  getSystem: () => ipcRenderer.invoke('pandora:system'),
+  getSystem: forceRefresh => ipcRenderer.invoke('pandora:system', forceRefresh),
   getMetrics: () => ipcRenderer.invoke('pandora:metrics'),
   getTweaks: () => ipcRenderer.invoke('pandora:tweaks'),
   applyTweaks: ids => ipcRenderer.invoke('pandora:apply', ids),

@@ -22,7 +22,7 @@ export interface CleanupResult { kind?: CleanupKind; deletedBytes: number; delet
 export interface ProgressEvent { operation: 'scan' | 'clean' | 'tweaks'; completed: number; total: number | null; message: string; }
 export interface AppSettings { reduceMotion: boolean; pollInterval: number; scanOnLaunch: boolean; }
 export interface AppApi {
-  getSystem(): Promise<SystemInfo>;
+  getSystem(forceRefresh?: boolean): Promise<SystemInfo>;
   getMetrics(): Promise<Metrics>;
   getTweaks(): Promise<TweakState[]>;
   applyTweaks(ids: string[]): Promise<OperationResult[]>;

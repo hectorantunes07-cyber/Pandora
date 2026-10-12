@@ -166,8 +166,10 @@ export function createSystemService(overrides: Partial<SystemDependencies> = {})
     return info;
   }
 
-  async function getSystem(): Promise<SystemInfo> {
-    if (inventory && deps.now() - inventory.at < 30_000) return inventory.value;
+  async function getSystem(forceRefresh = false): Promise<SystemInfo> {
+    if (typeof forceRefresh !== 'boolean') throw new Error('Invalid hardware refresh request.');
+    if (inventoryPending) return inventoryPending;
+    if (!forceRefresh && inventory && deps.now() - inventory.at < 30_000) return inventory.value;
     if (!inventoryPending) inventoryPending = loadSystem().finally(() => { inventoryPending = null; });
     return inventoryPending;
   }

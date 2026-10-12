@@ -149,3 +149,80 @@ test('cleanup confirmations trap keyboard focus and Escape cancels without delet
   await expect(page.getByRole('dialog')).toHaveCount(0);
   expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'clean'))).toHaveLength(0);
 });
+
+test('preference review explains the target and cancellation never applies a change', async ({ page }) => {
+  await desktopFixture(page);
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Optimizations', exact: true }).click();
+  await page.getByRole('button', { name: 'What changes?' }).click();
+  await expect(page.getByRole('dialog')).toContainText('Windows surfaces will look opaque.');
+  await expect(page.getByRole('dialog')).toContainText('HKCU\\Test\\Transparency');
+  await page.getByRole('button', { name: 'Review change', exact: true }).click();
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'apply'))).toHaveLength(0);
+  await page.getByRole('checkbox', { name: 'Select Reduce transparency' }).check();
+  await page.getByRole('button', { name: 'Review changes', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm & apply' }).click();
+  await expect(page.getByText('Applied and verified.', { exact: true })).toBeVisible();
+  expect(await page.evaluate(() => (window as any).__calls.find((c: any) => c.method === 'apply').args)).toEqual([['transparency']]);
+});
+
+test('restore all reviews only active originals and retains each partial result', async ({ page }) => {
+  await desktopFixture(page);
+  await page.goto('/');
+  await page.evaluate(() => {
+    const entries: import('../../shared/types').HistoryEntry[] = [
+      { id: 'old', tweakId: 'advertising-id', title: 'Already restored', timestamp: '2026-01-01T12:00:00Z', status: 'reverted', originalValue: 1, appliedValue: 0, message: 'Old history.' },
+      { id: 'a', tweakId: 'transparency', title: 'Reduce transparency', timestamp: '2026-01-02T12:00:00Z', status: 'applied', originalValue: null, appliedValue: 0, message: 'Original saved.' },
+      { id: 'b', tweakId: 'game-mode', title: 'Windows Game Mode', timestamp: '2026-01-03T12:00:00Z', status: 'conflict', originalValue: 0, appliedValue: 1, message: 'External change detected.' },
+      { id: 'failed', tweakId: 'file-extensions', title: 'Failed audit record', timestamp: '2026-01-04T12:00:00Z', status: 'failed', originalValue: 1, appliedValue: 0, message: 'No active change.' }
+    ];
+    window.pandora!.getHistory = async () => entries;
+    window.pandora!.revertTweaks = async ids => {
+      (window as any).__calls.push({ method: 'revert', args: [ids] });
+      await new Promise(resolve => { (window as any).__finishRestore = resolve; });
+      entries[1].status = 'reverted';
+      return [{ id: 'game-mode', success: false, message: 'External change preserved; original retained.' }, { id: 'transparency', success: true, message: 'Original absence restored and verified.' }];
+    };
+  });
+  await page.getByRole('navigation').getByRole('button', { name: 'Restore & History' }).click();
+  await page.getByRole('button', { name: 'Restore all managed' }).click();
+  await expect(page.getByRole('dialog')).toContainText('Restore 2 managed settings?');
+  await expect(page.getByRole('dialog')).toContainText('Not set (remove the added value)');
+  await expect(page.getByRole('dialog')).not.toContainText('Already restored');
+  await expect(page.getByRole('dialog')).not.toContainText('Failed audit record');
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'revert'))).toHaveLength(0);
+  await page.getByRole('button', { name: 'Restore all managed' }).click();
+  await page.getByRole('button', { name: 'Confirm restore' }).click();
+  await expect(page.getByRole('button', { name: 'Close window', exact: true })).toBeDisabled();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.evaluate(() => (window as any).__finishRestore());
+  const results = page.getByRole('region', { name: 'Restoration results' });
+  await expect(results).toContainText('External change preserved; original retained.');
+  await expect(results).toContainText('Original absence restored and verified.');
+  expect(await page.evaluate(() => (window as any).__calls.find((c: any) => c.method === 'revert').args)).toEqual([['game-mode', 'transparency']]);
+  await expect(page.getByRole('button', { name: 'Restore', exact: true })).toHaveCount(1);
+});
+
+test('hardware refresh requests a new inventory and displays updated storage', async ({ page }) => {
+  await desktopFixture(page);
+  await page.goto('/');
+  await expect(page.getByText('UI test processor').first()).toBeVisible();
+  await page.evaluate(() => {
+    const original = window.pandora!.getSystem;
+    window.pandora!.getSystem = async force => {
+      (window as any).__calls.push({ method: 'system', args: [force] });
+      const value = await original();
+      value.powerPlan = 'Power saver';
+      value.volumes[0].freeBytes = 7e11;
+      return value;
+    };
+  });
+  await page.getByRole('navigation').getByRole('button', { name: 'System Monitor', exact: true }).click();
+  await page.getByRole('button', { name: 'Refresh', exact: true }).click();
+  await expect(page.getByText('Power saver', { exact: true })).toBeVisible();
+  await expect(page.getByText('700.0 GB free of 1.0 TB')).toBeVisible();
+  expect(await page.evaluate(() => (window as any).__calls.find((c: any) => c.method === 'system').args)).toEqual([true]);
+});
