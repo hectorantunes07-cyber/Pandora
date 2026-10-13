@@ -274,3 +274,24 @@ test('Windows settings shortcuts open only their named destination', async ({ pa
   expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'windows-settings').map((c: any) => c.args))).toEqual([['power'], ['display'], ['startup']]);
   expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => ['apply', 'clean', 'revert'].includes(c.method)))).toHaveLength(0);
 });
+
+test('dashboard recommendations explain measured evidence and only navigate for review', async ({ page }) => {
+  await desktopFixture(page);
+  await page.goto('/');
+  await page.evaluate(() => {
+    const original = window.pandora!.getSystem;
+    window.pandora!.getSystem = async () => {
+      const data = await original();
+      data.volumes[0].freeBytes = 1e10;
+      data.physicalDisks![0].health = 'Warning';
+      return data;
+    };
+  });
+  await page.getByRole('button', { name: 'Refresh system' }).click();
+  const recommendations = page.getByRole('region', { name: 'Recommendations from your readings' });
+  await expect(recommendations).toContainText('1.0% free');
+  await expect(recommendations).toContainText('Cleaning files is not a repair');
+  await recommendations.getByRole('button', { name: 'Review temporary files' }).click();
+  await expect(page.getByRole('heading', { name: 'PC Cleaner', exact: true })).toBeVisible();
+  expect(await page.evaluate(() => (window as any).__calls.filter((call: any) => ['clean', 'apply', 'scan'].includes(call.method)))).toHaveLength(0);
+});
