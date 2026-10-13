@@ -85,3 +85,37 @@ Windows compatibility, anti-cheat approval or FPS improvement.
 - Import before and after runs with identical settings/scenario/capture method. Check review/cancel, source labels, persistence and CSV export.
 - Independently verify average FPS as frame count / sum of intervals in seconds, and 1% low as 1000 / mean of the slowest ceil(N × 0.01) intervals. Percentile FPS reported by some tools uses a different definition.
 - Confirm missing/malformed/mixed-stream input does not replace existing measurements. No captured intervals establish input latency or causation of a performance change.
+
+## Presets, power, pointer and launcher startup
+
+- Review each preset and Custom, cancel once, apply, switch, and turn it off.
+  Individually applied/pre-existing settings must stay separate from profile
+  ownership. Preserve saved custom choices across preset switches and relaunch.
+- For an existing alternate power plan, review the exact GUID and tradeoff,
+  apply, relaunch and restore the original. Test a device exposing only Balanced.
+  An external plan change or removed original plan must not be overwritten.
+- Test optional pointer acceleration only after recording current behavior.
+  Verify immediate Windows behavior and exact API thresholds/mode restoration;
+  test an external edit and provider denial. Raw-input games may be unaffected.
+- For each supported HKCU launcher entry, inspect the saved command/type,
+  disable, close/reopen and restore. Do not expect current processes to stop or
+  Windows StartupApproved/service/task entries to change. External replacements
+  must block automatic restoration.
+- Review all managed changes, cancel once, then confirm. Inspect every result.
+  Simulate one provider being unavailable and an external conflict; unrelated
+  valid changes may restore, while skipped originals must remain available.
+
+## Manual game paths and expanded network diagnostics
+
+- Choose a real custom-install game executable, cancel once, save and relaunch.
+  Move the executable temporarily to confirm missing-path status. Forget the
+  selection and verify no game file was modified or deleted.
+- Compare CPU reported clock and OS architecture with CIM, including missing
+  values. Reported clock is a scan snapshot, not live boost telemetry.
+- Inspect a physical Ethernet adapter, Wi-Fi and a VPN/virtual adapter. Compare
+  link rates and driver-reported EEE/interrupt-moderation options with Windows.
+  Power-management permission failures must stay unavailable, with no elevation
+  prompt, invented values, connection reset or applied change.
+- Check default-route indications against Windows; do not infer game routing.
+  Run DNS checks with working, cached, blocked and disconnected conditions.
+  DNS duration must never be presented as Fortnite server ping or input latency.

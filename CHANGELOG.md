@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.0 — Expanded Windows test build
+
+- Six reviewed presets with custom choices, ownership-aware switching and off.
+- Reversible existing power-plan selection, supported launcher startup controls,
+  optional Windows pointer acceleration, and combined managed restoration.
+- Manual game executable selection, CPU reported clock/architecture, expanded
+  storage/network inventory, and guidance for all six supported game pages.
+- Read-only physical/virtual adapter capabilities and on-request DNS testing.
+- Measured frame-interval CSV import, provenance and before/after PC snapshots.
+- Native Windows safety/roundtrip checks, installer lifecycle and data retention.
+
 ## 0.1.0 — Initial development release
 
 PANDORA — Created by Sonnier begins with an original purple-and-black desktop

@@ -5,8 +5,10 @@ limitations below before distributing or relying on its system operations.
 
 ## Privilege and trust boundaries
 
-- The GUI runs as the current user. Implemented settings use a fixed HKCU
-  registry catalog and require no elevation. There is no privileged service,
+- The GUI runs as the current user. Actions use a fixed HKCU registry catalog,
+  four allowlisted HKCU Run entries, installed power-plan GUIDs and documented
+  pointer APIs. The app does not request elevation; policy restrictions are
+  reported. There is no privileged service,
   driver, generic command executor, or machine-wide tweak pack.
 - Electron uses a sandboxed renderer, context isolation, disabled Node
   integration, a restricted preload bridge, and sender/frame checks. Navigation,
@@ -95,3 +97,29 @@ over IPC. Windows Settings shortcuts map four fixed IDs to approved ms-settings
 URIs; arbitrary URLs, paths and commands are rejected. The installer owns an exact
 build-generated file list, never recursively removes an installation folder, and
 leaves the user's application data and rollback journal intact.
+
+## Additional managed actions and local game metadata
+
+Power, startup and pointer snapshots are durably saved in separate bounded JSON
+journals before any write. Expiring review tokens bind startup/pointer/preset
+changes to reviewed state; power changes recheck the reviewed active GUID.
+Top-level mutations share a queue. Every service independently checks current
+state immediately before a write, verifies afterward, preserves later external
+changes, and retains originals when results cannot be confirmed. The pointer
+journal records effective SystemParametersInfo thresholds/mode, not original
+registry key/value presence. Profile ownership is separate from individually
+managed preferences; switching restores only the previous profile's changes.
+
+Combined restore reviews these journals together. A corrupt journal fails the
+review; an unavailable provider is shown as a skipped item with its original
+retained. Successful restoration of other items is reported independently.
+Same-user software can still race Windows APIs; these are not atomic OS-wide
+transactions or administrator-resistant backups.
+
+Manual game paths come only from the main-process native file picker. The
+renderer cannot provide an arbitrary path. Regular local `.exe` files need MZ
+and PE headers; this is not signature or game-identity verification. Files are
+never executed or modified. Paths stay in local app data and are not exported.
+Adapter inspection omits IP/MAC/gateway addresses and adapter names. DNS checks
+resolve one fixed public hostname using Windows and may use cached answers;
+no raw addresses are retained and no settings are changed.

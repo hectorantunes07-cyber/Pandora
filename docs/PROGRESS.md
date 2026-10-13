@@ -133,3 +133,9 @@ Local production/typecheck and full backend suite passed (147 tests, eight nativ
 - Added isolated roundtrip/race/corruption/interruption tests and an opt-in native apply/restore test restricted to a disposable GitHub-hosted Windows runner. Compiled the actual native declarations locally without invoking user32; four affected interface journeys passed.
 - Provider failures now keep power/pointer originals visible and let combined restore skip those unavailable items while restoring unrelated validated backups. Invalid/corrupt journal files still fail closed before a combined review.
 - Full local suite now passes 168 backend/safety tests; ten native-only cases are skipped locally. Windows run 35 (`38390664826`, source `5087875`) passed real read-only adapter inspection, 28 interface journeys, native safety checks and the complete build/install/launch/uninstall workflow.
+
+### Stage 16 — Release layout and operating instructions
+
+- Power and pointer controls share a responsive two-column layout, reducing scrolling before the preference catalog. Inspected the rendered control screenshot; narrow-layout navigation remains covered.
+- All 29 UI journeys passed locally, including the new pointer review/cancel/apply flow. Production build passed after the layout update. Backend results remain 168 passing / ten Windows-only skips.
+- Updated README, safety boundaries, changelog and physical-PC checklist for presets, combined recovery, manual game locations, native controls and network/DNS scope.

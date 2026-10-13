@@ -55,3 +55,5 @@
 .adapter-property small { flex-basis: 100%; color: var(--muted); overflow-wrap: anywhere; }
 .adapter-card .detail-list dt { overflow-wrap: anywhere; }
 .pointer-controls { margin-bottom: 24px; }
+.optimization-native-controls { align-items: stretch; }
+.optimization-native-controls > section { min-width: 0; }

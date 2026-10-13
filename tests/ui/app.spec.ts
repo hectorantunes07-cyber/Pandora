@@ -558,4 +558,5 @@ test('pointer acceleration reviews exact API values and cancel never changes Win
   await page.getByRole('button', { name: 'Confirm pointer change' }).click();
   await expect(page.getByText('Pointer change verified.', { exact: true })).toBeVisible();
   expect(await page.evaluate(() => (window as any).__calls.find((c: any) => c.method === 'pointer-change').args)).toEqual(['pointer-review-token', false]);
+  await page.locator('.optimization-native-controls').screenshot({ path: 'test-results/pandora-native-controls.png' });
 });

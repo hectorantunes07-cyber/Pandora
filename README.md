@@ -2,7 +2,8 @@
 
 PANDORA is a local Windows desktop utility with a purple-and-black interface,
 hardware diagnostics, live resource monitoring, explicit Windows preference
-changes, a rollback journal, a preview-first PC Cleaner, and local frame-capture analysis. It does not require
+changes, reviewed presets, reversible power/pointer/startup controls, combined rollback,
+a preview-first PC Cleaner, adapter/DNS diagnostics, and local frame-capture analysis. It does not require
 an account, collect analytics, or promise FPS improvements.
 
 This is an initial **0.1.0 development release**. The implementation and tests
@@ -56,10 +57,12 @@ adapters. It never tunes the development host. Passing these tests does not
 establish real Windows API compatibility. Browser tests verify UI behavior;
 they are separate from native desktop testing.
 
-The Windows workflow additionally opts into `tests/tweaks.windows.test.ts` with
-`PANDORA_TEST_WINDOWS_TWEAKS=1` on its disposable hosted runner. That check changes
-and restores one real per-user preference. Keep that opt-in off on your daily
-PC; it is not needed for development.
+The Windows workflow additionally opts into registry/profile, power-plan, launcher
+startup and pointer API roundtrips on its disposable GitHub-hosted runner. These
+mutation tests require explicit `PANDORA_TEST_WINDOWS_*` flags plus the hosted-runner
+identity checks. Keep those flags off on your daily PC; they are not needed for
+development. Read-only adapter inspection and guarded temporary filesystem
+fixtures also run on Windows.
 
 ## Build a Windows installer
 
@@ -109,8 +112,10 @@ trusted code signing. Do not disable Windows security controls to run PANDORA.
    irreversible and is not covered by preference backups.
 
 PANDORA stores settings and its rollback journal in Electron's per-user
-application-data directory, normally `%APPDATA%\PANDORA` on Windows. The journal
-is `backups\tweaks-v1.json`; settings are `settings.json`. Preserve the entire
+application-data directory, normally `%APPDATA%\PANDORA` on Windows. Backups
+include `backups\tweaks-v1.json`, `power-v1.json`, `startup-v1.json` and
+`pointer-v1.json`; settings are `settings.json` and manual game locations are
+`game-paths-v1.json`. Preserve the entire
 directory when backing up. Do not edit the journal or delete it while changes
 remain applied. PANDORA refuses to overwrite a later external preference change;
 a conflict needs manual review of the saved original and actual Windows setting.
@@ -119,6 +124,31 @@ Before uninstalling, revert changes you no longer want from inside PANDORA.
 Uninstalling does not revert Windows preferences and leaves user data in place,
 so a later installation can still find the rollback history. Preference backups
 are not Windows System Restore points or file backups.
+
+## Additional reviewed controls
+
+- **Game Profiles:** select Competitive FPS, Balanced, Streaming + Gaming, Creator,
+  Quiet/Everyday or Custom, then review the exact catalog changes. Profile off
+  restores profile-owned settings while preserving independent settings. These
+  profiles do not automatically edit game files or choose a power plan.
+- **Game locations:** choose the actual executable using the native file picker
+  for a missed custom installation. Manual paths are labeled as user selections;
+  PE headers are checked, but game identity is not inferred. Forget removes only
+  PANDORA metadata. The app never executes or injects into the selected file.
+- **Power and pointer:** review installed power plans or optional pointer
+  acceleration changes in Optimizations. Both save originals and support guarded
+  restoration. A different power plan may increase heat without improving FPS;
+  raw-input games may ignore desktop pointer acceleration.
+- **Processes & Startup:** inspect running processes and startup inventory.
+  Guarded disable/restore applies only to the four supported named HKCU Run
+  launcher entries. Other startup mechanisms remain read-only.
+- **Network Diagnostics:** inspect physical/virtual adapters and driver-reported
+  EEE, interrupt moderation and power capabilities. DNS testing uses the current
+  resolver on request. These diagnostics do not modify adapter settings or prove
+  which route carries a game, and DNS query duration is not game-server latency.
+- **Restore & History:** Review all managed changes combines preferences,
+  power, pointer, supported launcher entries and preset ownership. Individual
+  outcomes and skipped conflicts remain visible; cleanup cannot be undone.
 
 ## Compare a measured game run
 
