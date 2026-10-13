@@ -15,10 +15,6 @@ InstallDir "$LOCALAPPDATA\Programs\PANDORA"
 ShowInstDetails show
 ShowUninstDetails show
 CRCCheck on
-; Direct-file installers benefit from solid compression. Honor store-mode builds.
-!ifdef COMPRESS
-  SetCompressor /SOLID lzma
-!endif
 !define MUI_ABORTWARNING
 !ifndef MUI_ICON
   !define MUI_ICON "${BUILD_RESOURCES_DIR}\icon.ico"
