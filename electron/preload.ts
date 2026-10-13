@@ -1,6 +1,9 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { AppApi, ProgressEvent } from '../shared/types';
 const api: AppApi = {
+  getManualGames: () => ipcRenderer.invoke('pandora:manual-games'),
+  selectGameExecutable: id => ipcRenderer.invoke('pandora:game-select', id),
+  clearGameExecutable: id => ipcRenderer.invoke('pandora:game-clear', id),
   previewRestoreAll: () => ipcRenderer.invoke('pandora:restore-preview'),
   restoreAll: token => ipcRenderer.invoke('pandora:restore-all', token),
   getStartupControls: () => ipcRenderer.invoke('pandora:startup-controls'),

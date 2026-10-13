@@ -8,6 +8,7 @@ async function desktopFixture(page: Page) {
     const track = (method: string, ...args: unknown[]) => calls.push({ method, args });
     const states = [{ id: 'transparency', title: 'Reduce transparency', description: 'Use opaque Windows surfaces.', category: 'Quality of life' as const, risk: 'Low' as const, tradeoff: 'Windows surfaces will look opaque.', target: 'HKCU\\Test\\Transparency', desiredValue: 0, restart: 'Sign out may be required.', reference: 'https://support.microsoft.com/', state: 'available' as const, currentValue: 1, managed: false }];
     window.pandora = {
+      getManualGames: async () => [], selectGameExecutable: async id => { track('game-select', id); return null; }, clearGameExecutable: async id => { track('game-clear', id); },
       previewRestoreAll: async () => ({ token: 'all-review-token', items: [{ id: 'power', category: 'Power plan', title: 'Windows power plan', original: 'Balanced', current: 'High performance', eligible: true, reason: 'Saved original.' }, { id: 'startup:discord', category: 'Startup entry', title: 'Discord startup', original: 'Original command', current: 'External command', eligible: false, reason: 'External startup entry preserved.' }] }),
       restoreAll: async token => { track('restore-all', token); return [{ id: 'power', success: true, message: 'Original power plan restored and verified.' }, { id: 'startup:discord', success: false, message: 'External startup entry preserved.' }]; },
       getStartupControls: async () => [{ id: 'discord', name: 'Discord', current: 'fixture launcher command', original: null, managed: false, status: 'present', token: 'startup-review-token', reason: 'HKCU Run only.' }],
@@ -501,4 +502,26 @@ test('combined restoration reviews all categories, cancels safely and reports co
   await expect(results).toContainText('Original power plan restored and verified.');
   await expect(results).toContainText('External startup entry preserved.');
   expect(await page.evaluate(() => (window as any).__calls.find((c: any) => c.method === 'restore-all').args)).toEqual(['all-review-token']);
+});
+
+test('manual game locations support picker cancellation, missing paths and forgetting without game changes', async ({ page }) => {
+  await desktopFixture(page);
+  await page.addInitScript(() => {
+    let entry: { id: string; executable: string; available: boolean } | null = null, cancel = true;
+    window.pandora!.getManualGames = async () => entry ? [entry] : [];
+    window.pandora!.selectGameExecutable = async id => {
+      if (cancel) { cancel = false; return null; }
+      entry = { id, executable: 'C:\\Games\\Fortnite.exe', available: false }; return entry;
+    };
+    window.pandora!.clearGameExecutable = async () => { entry = null; };
+  });
+  await page.goto('/'); await page.getByRole('navigation').getByRole('button', { name: /Game Profiles/ }).click();
+  await page.getByRole('button', { name: 'Choose executable', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Forget saved path' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Choose executable', exact: true }).click();
+  await expect(page.getByText('The saved executable is missing', { exact: false })).toBeVisible();
+  await expect(page.getByText('C:\\Games\\Fortnite.exe', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Forget saved path' }).click();
+  await expect(page.getByText('C:\\Games\\Fortnite.exe', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Choose executable', exact: true })).toBeVisible();
 });

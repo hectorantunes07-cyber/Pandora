@@ -8,6 +8,7 @@ import { createCleanerService } from './cleaner';
 import { createStartupService } from './startup';
 import { createPowerService } from './power';
 import { createRestoreService } from './restore-all';
+import { createGamePathService, validateGameId } from './game-paths';
 import { createNetworkService } from './network';
 import { createSettingsService } from './settings';
 import { cleanupKind, validateIds, isTrustedRenderer, externalDocumentation, windowsSettingsUri } from './validation';
@@ -40,6 +41,16 @@ function registerServices() {
     });
   }
   const startup = createStartupService(app.getPath('userData'));
+  const gamePaths = createGamePathService(app.getPath('userData'));
+  handle('manual-games', () => gamePaths.list());
+  handle('game-clear', (id: unknown) => gamePaths.clear(id));
+  handle('game-select', async (id: unknown) => {
+    const key = validateGameId(id);
+    if (!window || process.platform !== 'win32') throw new Error('Choose game executables from the Windows app.');
+    const result = await dialog.showOpenDialog(window, { title: 'Choose the game executable — saved as a manual location only', properties: ['openFile'], filters: [{ name: 'Windows executable', extensions: ['exe'] }] });
+    if (result.canceled || !result.filePaths[0]) return null;
+    return gamePaths.select(key, result.filePaths[0]);
+  });
   handle('startup-controls', () => startup.getControls());
   handle('startup-change', (token: unknown, restore: unknown) => startup.change(token, restore));
   const power = createPowerService(app.getPath('userData'));
@@ -86,7 +97,7 @@ function registerServices() {
     if (!window) return null;
     // Fixed schema intentionally excludes usernames, network addresses, serials, paths and hardware IDs.
     const info = kind === 'system' ? await getSystem() : null;
-    const report = info ? { product: 'PANDORA', version: app.getVersion(), createdBy: 'Sonnier', timestamp: info.timestamp, platform: info.platform, cpu: info.cpu, logicalCores: info.logicalCores, physicalCores: info.physicalCores, gpu: info.gpu, gpuDriver: info.gpuDriver, ramBytes: info.ramBytes, installedRamBytes: info.installedRamBytes, deviceType: info.deviceType, physicalDisks: info.physicalDisks, networkAdapters: info.networkAdapters, ramSpeedMHz: info.ramSpeedMHz, os: info.os, motherboard: info.motherboard, volumes: info.volumes.map(v => ({ totalBytes: v.totalBytes, freeBytes: v.freeBytes })), monitors: info.monitors.map(m => ({ width: m.width, height: m.height, refreshHz: m.refreshHz })) } : { product: 'PANDORA', timestamp: new Date().toISOString(), history: (await tweaks.getHistory()).map(h => ({ tweakId: h.tweakId, title: h.title, timestamp: h.timestamp, status: h.status, originalValue: h.originalValue, appliedValue: h.appliedValue })) };
+    const report = info ? { product: 'PANDORA', version: app.getVersion(), createdBy: 'Sonnier', timestamp: info.timestamp, platform: info.platform, cpu: info.cpu, logicalCores: info.logicalCores, physicalCores: info.physicalCores, cpuReportedMHz: info.cpuReportedMHz, architecture: info.architecture, gpu: info.gpu, gpuDriver: info.gpuDriver, ramBytes: info.ramBytes, installedRamBytes: info.installedRamBytes, deviceType: info.deviceType, physicalDisks: info.physicalDisks, networkAdapters: info.networkAdapters, ramSpeedMHz: info.ramSpeedMHz, os: info.os, motherboard: info.motherboard, volumes: info.volumes.map(v => ({ totalBytes: v.totalBytes, freeBytes: v.freeBytes })), monitors: info.monitors.map(m => ({ width: m.width, height: m.height, refreshHz: m.refreshHz })) } : { product: 'PANDORA', timestamp: new Date().toISOString(), history: (await tweaks.getHistory()).map(h => ({ tweakId: h.tweakId, title: h.title, timestamp: h.timestamp, status: h.status, originalValue: h.originalValue, appliedValue: h.appliedValue })) };
     const result = await dialog.showSaveDialog(window, { title: 'Save privacy-filtered PANDORA report', defaultPath: `PANDORA-${kind}-${new Date().toISOString().slice(0, 10)}.json`, filters: [{ name: 'JSON report', extensions: ['json'] }] });
     if (result.canceled || !result.filePath) return null;
     await fs.writeFile(result.filePath, JSON.stringify(report, null, 2), { mode: 0o600 });

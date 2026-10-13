@@ -39,3 +39,8 @@
 .startup-control-row > div { min-width: 0; }
 .startup-control-row > button { flex-shrink: 0; }
 @media (max-width: 700px) { .startup-control-row { align-items: flex-start; flex-direction: column; } }
+
+.global-restore, .manual-game-location { margin-bottom: 24px; }
+.global-restore > .button { margin-top: 16px; }
+.manual-game-location .button-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
+.manual-game-location .game-path { display: block; overflow-wrap: anywhere; padding: 14px; border: 1px solid var(--line); border-radius: 9px; background: #090714; }

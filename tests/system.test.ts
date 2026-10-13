@@ -17,12 +17,13 @@ function dependencies(extra: Partial<SystemDependencies> = {}): Partial<SystemDe
 describe('hardware inventory and telemetry', () => {
   it('reports physical storage, installed RAM and network adapters without sensitive fields', async () => {
     const service = createSystemService(dependencies({ platform: 'win32', runWindows: async () => ({
-      installedRamBytes: 32e9, deviceType: 'Portable', bootTime: '1970-01-01T00:05:00Z',
+      cpuReportedMHz: 4200, architecture: '64-bit', installedRamBytes: 32e9, deviceType: 'Portable', bootTime: '1970-01-01T00:05:00Z',
       physicalDisks: [{ model: 'NVMe test drive', bytes: 1e12, media: 'SSD', bus: 'NVMe', health: 'Healthy', serialNumber: 'private' }, { model: '', bytes: -1 }],
       networkAdapters: [{ description: 'Test Ethernet', status: 'Up', linkSpeedBits: 2.5e9, macAddress: 'private', ip: 'private' }],
     }) }));
     const info = await service.getSystem();
     expect(info.installedRamBytes).toBe(32e9);
+    expect(info.cpuReportedMHz).toBe(4200); expect(info.architecture).toBe('64-bit');
     expect(info.deviceType).toBe('Portable');
     expect(info.bootTime).toBe('1970-01-01T00:05:00.000Z');
     expect(info.physicalDisks).toEqual([{ model: 'NVMe test drive', bytes: 1e12, media: 'SSD', bus: 'NVMe', health: 'Healthy' }]);
@@ -32,11 +33,11 @@ describe('hardware inventory and telemetry', () => {
 
   it('keeps invalid extended hardware readings unavailable', async () => {
     const service = createSystemService(dependencies({ platform: 'win32', runWindows: async () => ({
-      installedRamBytes: -1, deviceType: 'fabricated', bootTime: '2099-01-01T00:00:00Z',
+      cpuReportedMHz: -1, architecture: '', installedRamBytes: -1, deviceType: 'fabricated', bootTime: '2099-01-01T00:00:00Z',
       physicalDisks: [{ model: 'Disk', bytes: Infinity }], networkAdapters: [{ description: 'Adapter', linkSpeedBits: -1 }],
     }) }));
     const info = await service.getSystem();
-    expect(info).toMatchObject({ installedRamBytes: null, deviceType: 'Unknown', bootTime: null });
+    expect(info).toMatchObject({ cpuReportedMHz: null, architecture: null, installedRamBytes: null, deviceType: 'Unknown', bootTime: null });
     expect(info.physicalDisks?.[0]).toMatchObject({ bytes: null, media: 'Unknown', health: null });
     expect(info.networkAdapters?.[0].linkSpeedBits).toBeNull();
   });

@@ -39,6 +39,8 @@ if ($computer.Count -gt 0) { if ($computer[0].PCSystemType -eq 2) { $deviceType=
 [pscustomobject]@{
  cpu = ($cpu | ForEach-Object Name) -join ' + '
  physicalCores = ($cpu | Measure-Object NumberOfCores -Sum).Sum
+ cpuReportedMHz = ($cpu | Where-Object { $_.CurrentClockSpeed -gt 0 } | Measure-Object CurrentClockSpeed -Minimum).Minimum
+ architecture = ($osInfo | ForEach-Object OSArchitecture) -join ', '
  gpu = ($gpu | ForEach-Object Name) -join ' + '
  gpuDriver = ($gpu | ForEach-Object DriverVersion) -join ' + '
  ramSpeedMHz = ($ram | ForEach-Object { if ($_.ConfiguredClockSpeed -gt 0) { $_.ConfiguredClockSpeed } else { $_.Speed } } | Measure-Object -Minimum).Minimum
@@ -173,6 +175,8 @@ export function createSystemService(overrides: Partial<SystemDependencies> = {})
         const data = records(raw)[0] || {};
         info.cpu = safeText(data.cpu) || info.cpu;
         info.physicalCores = positive(data.physicalCores);
+        info.cpuReportedMHz = positive(data.cpuReportedMHz);
+        info.architecture = safeText(data.architecture);
         info.gpu = safeText(data.gpu); info.gpuDriver = safeText(data.gpuDriver);
         info.ramSpeedMHz = positive(data.ramSpeedMHz);
         info.os = safeText(data.os) || info.os; info.motherboard = safeText(data.motherboard);

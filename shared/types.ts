@@ -8,6 +8,8 @@ export interface SystemInfo {
   installedRamBytes?: number | null;
   deviceType?: 'Desktop' | 'Portable' | 'Unknown';
   bootTime?: string | null;
+  cpuReportedMHz?: number | null;
+  architecture?: string | null;
   physicalDisks?: { model: string; bytes: number | null; media: string; bus: string; health: string | null }[];
   networkAdapters?: { description: string; status: string; linkSpeedBits: number | null }[];
   notes: string[];
@@ -17,6 +19,7 @@ export interface ProcessInfo { pid: number; name: string; memoryBytes: number; c
 export interface StartupEntry { name: string; location: string; status: string; }
 export interface StartupControl { id: string; name: string; current: string | null; original: string | null; managed: boolean; status: 'disabled' | 'original-present' | 'conflict' | 'not-present' | 'present' | 'unavailable'; token: string | null; reason: string; }
 export interface GameInfo { id: string; name: string; installed: boolean; path: string | null; }
+export interface ManualGamePath { id: string; executable: string; available: boolean; }
 export interface TweakDefinition { id: string; title: string; description: string; category: 'Gaming' | 'Privacy' | 'Quality of life'; risk: 'Low' | 'Moderate'; tradeoff: string; target: string; desiredValue: number; restart: string; reference: string; }
 export interface TweakState extends TweakDefinition { state: 'available' | 'applied' | 'already-set' | 'unsupported' | 'unknown' | 'conflict'; currentValue: number | null; managed: boolean; reason?: string; }
 export interface OperationResult { id: string; success: boolean; message: string; }
@@ -37,6 +40,9 @@ export interface NetworkResult {
   received: number; lossPercent: number; averageMs: number | null; minMs: number | null; maxMs: number | null; jitterMs: number | null;
 }
 export interface AppApi {
+  getManualGames(): Promise<ManualGamePath[]>;
+  selectGameExecutable(id: string): Promise<ManualGamePath | null>;
+  clearGameExecutable(id: string): Promise<void>;
   previewRestoreAll(): Promise<RestoreReview>;
   restoreAll(token: string): Promise<OperationResult[]>;
   getStartupControls(): Promise<StartupControl[]>;

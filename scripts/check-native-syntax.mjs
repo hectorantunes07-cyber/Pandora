@@ -42,11 +42,11 @@ Write-Output 'Cleaner C# declarations and Win32 structure sizes verified. No Win
 function Get-CimInstance {
  param([string]$Namespace, [string]$ClassName, [string]$ErrorAction)
  switch ($ClassName) {
-  'Win32_Processor' { [pscustomobject]@{ Name='Fixture CPU'; NumberOfCores=4 } }
+  'Win32_Processor' { [pscustomobject]@{ Name='Fixture CPU'; NumberOfCores=4; CurrentClockSpeed=4200 } }
   'Win32_VideoController' { [pscustomobject]@{ Name='Fixture GPU'; DriverVersion='1'; CurrentHorizontalResolution=1920; CurrentVerticalResolution=1080; CurrentRefreshRate=144 } }
   'Win32_PhysicalMemory' { [pscustomobject]@{ Capacity=17179869184; ConfiguredClockSpeed=3200 } }
   'Win32_BaseBoard' { [pscustomobject]@{ Manufacturer='Fixture'; Product='Board' } }
-  'Win32_OperatingSystem' { [pscustomobject]@{ Caption='Windows fixture'; BuildNumber='26100'; LastBootUpTime=[DateTime]::UtcNow.AddDays(-1) } }
+  'Win32_OperatingSystem' { [pscustomobject]@{ OSArchitecture='64-bit'; Caption='Windows fixture'; BuildNumber='26100'; LastBootUpTime=[DateTime]::UtcNow.AddDays(-1) } }
   'Win32_LogicalDisk' { [pscustomobject]@{ DriveType=3; DeviceID='C:'; Size=1000000000000; FreeSpace=200000000000 } }
   'Win32_PowerPlan' { [pscustomobject]@{ IsActive=$true; ElementName='Balanced' } }
   'Win32_ComputerSystem' { [pscustomobject]@{ PCSystemType=2 } }
@@ -66,6 +66,7 @@ $inventory = (& ([scriptblock]::Create([string]$scripts.system))) | ConvertFrom-
 if ($inventory.cpu -ne 'Fixture CPU' -or $inventory.physicalCores -ne 4) { throw 'Inventory aggregation failed.' }
 if ($inventory.networkAdapters.Count -ne 1 -or $inventory.networkAdapters[0].linkSpeedBits -ne 1000000000) { throw 'Inventory must use numeric CIM rates, not the formatted LinkSpeed property.' }
 if ($inventory.physicalDisks[0].bus -ne 'NVMe' -or $inventory.installedRamBytes -ne 17179869184 -or $inventory.deviceType -ne 'Portable') { throw 'Extended inventory aggregation failed.' }
+if ($inventory.cpuReportedMHz -ne 4200 -or $inventory.architecture -ne '64-bit') { throw 'CPU clock and architecture aggregation failed.' }
 if ($inventory.notes.Count -ne 0) { throw 'Unexpected provider failure in inventory fixture.' }
 Write-Output 'Inventory PowerShell runtime fixture passed, including formatted versus numeric link speed. No native provider was invoked.'
 

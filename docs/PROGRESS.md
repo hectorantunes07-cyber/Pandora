@@ -110,3 +110,10 @@ Local production/typecheck and full backend suite passed (147 tests, eight nativ
 - Top-level mutations now share a queue, preventing a competing IPC mutation from interleaving the combined restore. Each underlying operation still rechecks external state before writing.
 - Multiple individually reviewed startup tokens can be consumed in one batch without invalidating unrelated entries. Corrupt backup files stop combined review instead of silently omitting a category.
 - Local build and 152 unit/safety tests passed; eight native-only cases skipped locally. Windows run 32 exposed a missing HKCU Run key in its disposable startup fixture. The fixture now prepares and removes that key only when needed; production continues refusing to recreate a missing key.
+
+### Stage 13 — Manual game locations and reported CPU clock
+
+- Native file picker for the six supported game pages; validates regular local `.exe` files and MZ/PE headers without executing them. Manual selection is explicitly not automatic game-identity verification. Saved paths survive relaunch, missing/unreadable files remain visible, and forgetting a path deletes only PANDORA metadata.
+- CPU CIM-reported clock and OS architecture added to inventory, display and privacy-filtered export. Clock is labeled an inventory snapshot, not live boost telemetry. Missing values remain unavailable.
+- Build, 19 focused backend tests and five affected UI journeys passed. Native-script validation is delegated to Windows CI; a local PowerShell initialization retry was interrupted before completion.
+- Windows run 33 (`38359170921`, source `a82fc5f`) passed the corrected disposable startup fixture, exact registry/profile/power restoration, native cleanup fixtures, 26 UI journeys, packaging, launch and installer lifecycle. The missing-key correction stayed confined to its disposable fixture.
