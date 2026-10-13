@@ -338,6 +338,11 @@ export function createSystemService(overrides: Partial<SystemDependencies> = {})
         }
       } catch { /* Unmounted game libraries are ignored. */ }
     }
+    // Default Riot installation only; custom locations can remain undetected.
+    try {
+      const executable = path.win32.join((deps.env.SystemDrive || 'C:') + '\\', 'Riot Games', 'VALORANT', 'live', 'ShooterGame', 'Binaries', 'Win64', 'VALORANT-Win64-Shipping.exe');
+      if ((await deps.stat(executable)).isFile()) games.set('valorant', { id: 'valorant', name: 'VALORANT', installed: true, path: executable });
+    } catch { /* No installation claim without the real executable. */ }
     if (!games.has('fortnite')) {
       const root = deps.env.ProgramFiles || 'C:\\Program Files';
       const executable = path.win32.join(root, 'Epic Games', 'Fortnite', 'FortniteGame', 'Binaries', 'Win64', 'FortniteClient-Win64-Shipping.exe');

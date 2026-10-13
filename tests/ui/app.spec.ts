@@ -8,6 +8,8 @@ async function desktopFixture(page: Page) {
     const track = (method: string, ...args: unknown[]) => calls.push({ method, args });
     const states = [{ id: 'transparency', title: 'Reduce transparency', description: 'Use opaque Windows surfaces.', category: 'Quality of life' as const, risk: 'Low' as const, tradeoff: 'Windows surfaces will look opaque.', target: 'HKCU\\Test\\Transparency', desiredValue: 0, restart: 'Sign out may be required.', reference: 'https://support.microsoft.com/', state: 'available' as const, currentValue: 1, managed: false }];
     window.pandora = {
+      getStartupControls: async () => [{ id: 'discord', name: 'Discord', current: 'fixture launcher command', original: null, managed: false, status: 'present', token: 'startup-review-token', reason: 'HKCU Run only.' }],
+      changeStartup: async (token, restore) => { track('startup-change', token, restore); return { id: 'discord', success: true, message: 'Startup entry change verified.' }; },
       getPower: async () => ({ supported: true, currentId: '381b4222-f694-41f0-9685-ff5bb260df2e', plans: [{ id: '381b4222-f694-41f0-9685-ff5bb260df2e', name: 'Balanced' }, { id: '8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c', name: 'High performance' }], backup: null, conflict: false }),
       applyPower: async (id, expected) => { track('power-apply', id, expected); return { id: 'power-plan', success: true, message: 'Power plan selected and verified.' }; },
       restorePower: async expected => { track('power-restore', expected); return { id: 'power-plan', success: true, message: 'Original power plan restored.' }; },
@@ -200,14 +202,14 @@ test('restore all reviews only active originals and retains each partial result'
     };
   });
   await page.getByRole('navigation').getByRole('button', { name: 'Restore & History' }).click();
-  await page.getByRole('button', { name: 'Restore all managed' }).click();
+  await page.getByRole('button', { name: 'Restore all preferences' }).click();
   await expect(page.getByRole('dialog')).toContainText('Restore 2 managed settings?');
   await expect(page.getByRole('dialog')).toContainText('Not set (remove the added value)');
   await expect(page.getByRole('dialog')).not.toContainText('Already restored');
   await expect(page.getByRole('dialog')).not.toContainText('Failed audit record');
   await page.getByRole('button', { name: 'Cancel', exact: true }).click();
   expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'revert'))).toHaveLength(0);
-  await page.getByRole('button', { name: 'Restore all managed' }).click();
+  await page.getByRole('button', { name: 'Restore all preferences' }).click();
   await page.getByRole('button', { name: 'Confirm restore' }).click();
   await expect(page.getByRole('button', { name: 'Close window', exact: true })).toBeDisabled();
   await page.keyboard.press('Escape');
@@ -449,4 +451,37 @@ test('custom preset review includes only selected preferences and original power
   await page.getByRole('navigation').getByRole('button', { name: 'Restore & History', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Restore original power plan', exact: true })).toBeDisabled();
   await expect(page.getByText('Another app or user changed the active power plan.', { exact: false })).toBeVisible();
+});
+
+test('startup controls require confirmation and distinguish disable from exact restoration', async ({ page }) => {
+  await desktopFixture(page); await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Processes & Startup', exact: true }).click();
+  await page.getByRole('button', { name: 'Startup apps', exact: true }).click();
+  await page.getByRole('button', { name: 'Disable Discord startup', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('fixture launcher command');
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'startup-change'))).toHaveLength(0);
+  await page.getByRole('button', { name: 'Disable Discord startup', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm startup disable', exact: true }).click();
+  await expect(page.getByText('Startup entry change verified.', { exact: true })).toBeVisible();
+  expect(await page.evaluate(() => (window as any).__calls.find((c: any) => c.method === 'startup-change').args)).toEqual(['startup-review-token', false]);
+  await page.evaluate(() => { window.pandora!.getStartupControls = async () => [{ id: 'discord', name: 'Discord', current: null, original: 'original fixture command', managed: true, status: 'disabled', token: 'startup-restore-token', reason: 'Original saved.' }]; });
+  await page.getByRole('button', { name: 'Refresh startup controls', exact: true }).click();
+  await page.getByRole('button', { name: 'Restore Discord startup', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('original fixture command');
+  await page.getByRole('button', { name: 'Confirm startup restore', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'startup-change').at(-1).args)).toEqual(['startup-restore-token', true]);
+});
+
+test('game guidance covers supported titles and keeps GTA VI explicitly unavailable', async ({ page }) => {
+  await desktopFixture(page); await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Game Profiles', exact: true }).click();
+  await page.getByRole('button', { name: /Apex Legends/ }).click();
+  await expect(page.getByText(/repeatable firing-range route/)).toBeVisible();
+  await page.getByRole('button', { name: /Call of Duty \/ Warzone/ }).click();
+  await expect(page.getByText(/does not prove the Warzone content pack/)).toBeVisible();
+  await expect(page.getByLabel('GTA VI planned, unavailable')).toContainText('no verified PC profile');
+  await expect(page.getByRole('button', { name: /Grand Theft Auto VI/ })).toHaveCount(0);
+  await page.screenshot({ path: 'test-results/pandora-profiles.png', fullPage: true });
 });

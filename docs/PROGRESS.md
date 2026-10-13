@@ -92,3 +92,14 @@ Implemented all six named Windows presets using the verified preference catalog,
 Implemented installed power-plan enumeration, explicit plan selection, durable original-GUID backup, verification, relaunch restoration and external-change refusal using fixed powercfg arguments. No schemes are created or deleted. Controls appear in Optimizations and Restore & History; profiles are in Game Profiles and have separate restore controls. Active-operation counting preserves the navigation/close guard when independent operations overlap.
 
 Production build and typecheck passed. Local backend suite passed 138 tests with seven native checks skipped; an additional after-review external-change regression passed with the 37 existing preference tests. All 23 UI journeys passed. Native CI adds a disposable hosted-runner power-plan roundtrip and a custom-profile apply/off test using the existing per-user preference fixture. These native results are pending this stage's Windows run; do not infer physical-PC compatibility from local tests.
+
+
+Stage 10 native confirmation: Windows run 31 (`38356714698`, source `05a03d8`) passed all 23 UI journeys, the new real power-plan change/restore, native custom preset apply/off, cleaner fixtures, package checks and installer lifecycle. These controls remain subject to physical-PC/policy testing.
+
+## Stage 11 — guarded launcher startup and broader game guidance
+
+Added explicit disable/restore for four known per-user launcher Run entry names (Discord, Steam, Epic Games Launcher, Spotify). The service preserves unexpanded String/ExpandString data, durably records originals before writes, uses expiring opaque review tokens, rejects external replacements, and reports unconfirmed outcomes without blind recovery writes. It never executes a saved command or modifies StartupApproved, services, tasks, HKLM or other applications. A new disposable hosted-Windows test covers native quotes/environment-variable preservation through disable and restoration.
+
+Game guidance now covers all six supported requested titles, with known Steam identity matching and the default verified VALORANT executable path. GTA VI remains visibly planned and noninteractive. Native detection is still limited to supported locations; no game files are modified. Updated the preference batch-restore label to distinguish it from the separate power/startup restore controls.
+
+Local production/typecheck and full backend suite passed (147 tests, eight native checks skipped). New startup safety and game-identity tests passed; the four affected startup/profile/game UI journeys passed. Native startup verification is pending the new workflow run.

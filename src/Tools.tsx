@@ -2,13 +2,14 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import { Activity, ArrowDown, ArrowRight, ArrowUp, ChartNoAxesCombined, Check, Download, FlaskConical, Layers, Monitor, RefreshCw, Save, Search, Settings, ShieldCheck, Sparkles, Trash2 } from 'lucide-react';
 import type { AppSettings, ProcessInfo, StartupEntry } from '../shared/types';
 import { api, errorMessage, formatBytes, isDesktop, unsupportedMessage } from './api';
+import { StartupControls } from './StartupControls';
 import { BenchmarkConfiguration } from './BenchmarkConfiguration';
 import { contextDifferences, contextRows, validBenchmarkContext, type BenchmarkContext } from '../shared/benchmark-context';
 import { FrameImport, CaptureSummary } from './FrameImport';
 import { validFrameCapture, type FrameCapture } from '../shared/frame-capture';
 import { Badge, EmptyState, Modal, Notice, PageHeading, PanelTitle, Spinner, Toggle } from './components';
 
-export function Processes() {
+export function Processes({ onBusyChange }: { onBusyChange: (busy: boolean) => void }) {
   const [tab, setTab] = useState<'processes' | 'startup'>('processes');
   const [processes, setProcesses] = useState<ProcessInfo[]>([]);
   const [startup, setStartup] = useState<StartupEntry[]>([]);
@@ -41,7 +42,8 @@ export function Processes() {
       <button className={`tab ${tab === 'processes' ? 'active' : ''}`} onClick={() => { setTab('processes'); setSearch(''); }}><Activity size={16}/>Running processes</button>
       <button className={`tab ${tab === 'startup' ? 'active' : ''}`} onClick={() => { setTab('startup'); setSearch(''); }}><Layers size={16}/>Startup apps</button>
     </div>
-    <Notice>{tab === 'processes' ? 'This view is read-only. Memory is each process’s working set; CPU time is its cumulative processor time, not a live percentage.' : 'Review startup apps here. Use Windows Task Manager → Startup apps to change them. Scheduled tasks and Windows services are not included.'}</Notice>
+    <Notice>{tab === 'processes' ? 'This view is read-only. Memory is each process’s working set; CPU time is its cumulative processor time, not a live percentage.' : 'The inventory below is read-only. Manage supported launcher entries with the reviewed controls, or use Windows startup settings for other apps. Scheduled tasks and Windows services are not included.'}</Notice>
+    {tab === 'startup' && <StartupControls onBusyChange={onBusyChange}/>}
     {!isDesktop ? <section className="panel"><EmptyState icon={Monitor} title="Meet the apps behind your PC" description={unsupportedMessage}/></section> : <section className="panel">
       <PanelTitle icon={tab === 'processes' ? Activity : Layers} title={tab === 'processes' ? 'Running on your PC' : 'Configured startup apps'} action={<Badge>{count} {tab === 'processes' ? 'PROCESSES' : 'APPS'}</Badge>}/>
       <div className="process-toolbar">

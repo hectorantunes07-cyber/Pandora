@@ -15,6 +15,7 @@ export interface SystemInfo {
 export interface Metrics { timestamp: string; cpuPercent: number | null; ramUsedBytes: number; ramTotalBytes: number; gpuPercent: number | null; processCount: number | null; }
 export interface ProcessInfo { pid: number; name: string; memoryBytes: number; cpuSeconds: number | null; }
 export interface StartupEntry { name: string; location: string; status: string; }
+export interface StartupControl { id: string; name: string; current: string | null; original: string | null; managed: boolean; status: 'disabled' | 'original-present' | 'conflict' | 'not-present' | 'present' | 'unavailable'; token: string | null; reason: string; }
 export interface GameInfo { id: string; name: string; installed: boolean; path: string | null; }
 export interface TweakDefinition { id: string; title: string; description: string; category: 'Gaming' | 'Privacy' | 'Quality of life'; risk: 'Low' | 'Moderate'; tradeoff: string; target: string; desiredValue: number; restart: string; reference: string; }
 export interface TweakState extends TweakDefinition { state: 'available' | 'applied' | 'already-set' | 'unsupported' | 'unknown' | 'conflict'; currentValue: number | null; managed: boolean; reason?: string; }
@@ -35,6 +36,8 @@ export interface NetworkResult {
   received: number; lossPercent: number; averageMs: number | null; minMs: number | null; maxMs: number | null; jitterMs: number | null;
 }
 export interface AppApi {
+  getStartupControls(): Promise<StartupControl[]>;
+  changeStartup(token: string, restore: boolean): Promise<OperationResult>;
   getPower(): Promise<PowerInfo>;
   applyPower(id: string, expectedCurrent: string): Promise<OperationResult>;
   restorePower(expectedCurrent: string): Promise<OperationResult>;

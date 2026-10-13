@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { getSystem, getMetrics, getProcesses, getStartup, getGames } from './system';
 import { createTweakService } from './tweaks';
 import { createCleanerService } from './cleaner';
+import { createStartupService } from './startup';
 import { createPowerService } from './power';
 import { createNetworkService } from './network';
 import { createSettingsService } from './settings';
@@ -28,11 +29,14 @@ function registerServices() {
   function handle(name: string, fn: (...args: any[]) => unknown) {
     ipcMain.handle(`pandora:${name}`, async (event, ...args) => {
       checkSender(event);
-      const mutates = ['apply', 'revert', 'clean', 'profile-apply', 'power-apply', 'power-restore'].includes(name);
+      const mutates = ['apply', 'revert', 'clean', 'profile-apply', 'power-apply', 'power-restore', 'startup-change'].includes(name);
       if (mutates) activeMutations++;
       try { return await fn(...args); } finally { if (mutates) activeMutations--; }
     });
   }
+  const startup = createStartupService(app.getPath('userData'));
+  handle('startup-controls', () => startup.getControls());
+  handle('startup-change', (token: unknown, restore: unknown) => startup.change(token, restore));
   const power = createPowerService(app.getPath('userData'));
   handle('power', () => power.getInfo());
   handle('power-apply', (id: unknown, expected: unknown) => power.apply(id, expected));

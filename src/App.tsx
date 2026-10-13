@@ -73,7 +73,7 @@ export default function App() {
     {page === 'Game Profiles' && <GameProfiles games={games} tweaks={tweaks} review={quick} refreshTweaks={refreshTweaks} onBusyChange={setOperationBusy}/>}
     <div hidden={page !== 'PC Cleaner'}><Cleaner notify={notify} onBusyChange={setOperationBusy}/></div>
     {page === 'Restore & History' && <Restore tweaks={tweaks} notify={notify} refreshTweaks={refreshTweaks} onBusyChange={setOperationBusy}/>}
-    {page === 'Processes & Startup' && <Processes/>}
+    {page === 'Processes & Startup' && <Processes onBusyChange={setOperationBusy}/>}
     <div hidden={page !== 'Network Diagnostics'}><NetworkDiagnostics/></div>
     {page === 'Performance Lab' && <PerformanceLab notify={notify}/>}
     {page === 'Settings' && <Preferences settings={settings} setSettings={setSettings} notify={notify}/>}

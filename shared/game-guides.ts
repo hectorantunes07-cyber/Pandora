@@ -1,0 +1,14 @@
+import type { GameInfo } from './types';
+export const GAME_GUIDES = [
+  { id: 'fortnite', name: 'Fortnite', genre: 'BUILD. BATTLE. REPEAT.', initials: 'F', ids: ['fortnite'], names: ['fortnite'], guidance: 'Compare Performance Mode and DirectX 12 in the same replay or scene; shader compilation can affect early runs. Review NVIDIA Reflex only when the game exposes it for your hardware. Keep your chosen frame cap and resolution constant.' },
+  { id: 'valorant', name: 'VALORANT', genre: 'EVERY FRAME MATTERS.', initials: 'V', ids: ['valorant'], names: ['valorant'], guidance: 'Review the in-game multithreaded-rendering option when available, and compare the same practice-range scenario. Leave Vanguard and Windows security enabled. Use the game’s latency counters without treating network RTT as input latency.' },
+  { id: 'cs2', name: 'Counter-Strike 2', genre: 'PRECISION IN EVERY ROUND.', initials: 'CS', ids: ['steam:730'], names: ['counter-strike 2'], guidance: 'Keep the same map, bot load, resolution and frame cap between runs. Review the game’s exposed latency-reduction option if supported. Avoid launch-option packs, timer changes and game-file modifications.' },
+  { id: 'apex', name: 'Apex Legends', genre: 'A STEADIER NEXT DROP.', initials: 'A', ids: ['steam:1172470'], names: ['apex legends'], guidance: 'Use a repeatable firing-range route and the same field of view, resolution and texture budget. Compare frame-time stability after warm-up. Choose latency-reduction settings only through options exposed by the game.' },
+  { id: 'warzone', name: 'Call of Duty / Warzone', genre: 'REPEAT. MEASURE. REFINE.', initials: 'W', ids: ['steam:1938090'], names: ['call of duty', 'call of duty hq', 'call of duty: warzone'], guidance: 'A detected Call of Duty HQ install does not prove the Warzone content pack is installed. Finish shader preloading, keep texture-streaming settings constant and compare the same benchmark or route. Do not disable anti-cheat or security protections.' },
+  { id: 'gta5', name: 'Grand Theft Auto V', genre: 'A SMOOTHER DRIVE.', initials: 'V', ids: ['steam:271590', 'steam:3240220'], names: ['grand theft auto v', 'grand theft auto v legacy', 'grand theft auto v enhanced'], guidance: 'Keep Legacy and Enhanced results separate. Use the built-in benchmark when available with identical population, distance-scaling and graphics settings. Online session variability is not a controlled benchmark.' },
+] as const;
+export function findInstalledGame(id: string, games: GameInfo[]): GameInfo | undefined {
+  const guide = GAME_GUIDES.find(g => g.id === id);
+  if (!guide) return undefined;
+  return games.find(game => game.installed && ((guide.ids as readonly string[]).includes(game.id) || (guide.names as readonly string[]).includes(game.name.toLowerCase().replace(/[™®]/g, '').trim())));
+}
