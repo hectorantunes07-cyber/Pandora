@@ -5,7 +5,7 @@ This is an unsigned 0.1.0 development build. Use Windows 11 x64, initially on a 
 ## Get and verify the build
 
 1. Download the Setup installer or portable `.exe` and its matching `.sha256` together, or download `PANDORA-Windows-x64-unsigned` from a successful repository **Actions → Windows build and checks** run. Extract an Actions artifact ZIP first.
-2. In PowerShell, run `Get-FileHash .\PANDORA-Portable-0.1.0-x64.exe -Algorithm SHA256` (replace `Portable` with `Setup` for the installer) and compare the entire hash with the sidecar. An updated build has a different hash; always use its matching sidecar. The hash establishes file identity, not publisher trust.
+2. In PowerShell, run `Get-FileHash .\PANDORA-Portable-0.1.0-x64.exe -Algorithm SHA256` (replace `Portable` with `Setup` for the installer) and compare the entire hash with the sidecar; letter case does not matter. An updated build has a different hash; always use its matching sidecar. The hash establishes file identity, not publisher trust.
 3. Launch as a normal user. Windows may report an unknown publisher because this build is unsigned. Do not turn off Windows security protections. If your PC or organization blocks it, record the message and test through an approved environment.
 4. The portable extracts its runtime temporarily but saves settings and history under `%APPDATA%\PANDORA`. It is not a leave-no-trace application. Preserve that folder if you want to retain rollback history. The installer uses the same history. Install it with the Setup executable; it does not need administrator privileges.
 

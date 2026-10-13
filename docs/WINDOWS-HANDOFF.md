@@ -25,7 +25,7 @@ Unsupported functions are not represented by working toggles. No FPS gain has be
 
 ## Get the executable
 
-Use the `PANDORA-Windows-x64-unsigned` artifact from a **successful** [Windows build and checks run](https://github.com/hectorantunes07-cyber/Pandora/actions/workflows/windows.yml). Sign in to GitHub if required. Extract the downloaded ZIP first.
+Use the `PANDORA-Windows-x64-unsigned` artifact from [verified Windows run 28](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/38335432899), or a later successful Windows build and checks run. Sign in to GitHub if required. Extract the downloaded ZIP first.
 
 - `PANDORA-Setup-0.1.0-x64.exe`: installs PANDORA for your current Windows account, with shortcuts and an uninstaller.
 - `PANDORA-Portable-0.1.0-x64.exe`: runs without installation. It still saves settings and rollback history under `%APPDATA%\PANDORA`.

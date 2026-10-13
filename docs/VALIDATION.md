@@ -86,3 +86,20 @@ The current locally cross-built files are:
 | `PANDORA-Portable-0.1.0-x64.exe` | 116914172 | `5cb604978e102625d769ccb0368299c2dd0d5b4b2f971de671981895ccff2e24` |
 
 The adjacent manifest records archive extraction and code comparison against the current production output. Local package hashes differ from native CI package hashes; use only the matching sidecars. The local manifest does not claim these exact cross-built bytes were executed on Windows. Use the successful CI artifact for packages built and launched by the Windows runner.
+
+## Current recommendations and scaling build — Windows testing ready
+
+Application and packaging source: `a65d6a9`. [Windows run 28](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/38335432899) completed successfully with the final configuration. All 17 UI journeys passed, along with type checking, native syntax/runtime fixtures, backend checks, five real Win32 cleaner safety cases, the opt-in registry roundtrip, both package builds and verification, actual desktop hardware/bridge launch, installed launch, uninstall and data preservation. The browser-cache test preserves password/cookie/history fixtures, and the exclusive-lock test confirms zero deleted bytes with a reported failure.
+
+Local validation: 93 backend tests passed, six native cases skipped on Linux. Seventeen distinct browser journeys were validated, including scaled compact navigation. The real Linux desktop smoke and native-script/runtime fixture checks passed. Local archives were extracted, their x64 payloads and bundled code/assets compared with the tested production output, licenses checked, and installer/portable checksums generated from a clean working tree.
+
+| Current local artifact | Bytes | SHA256 |
+| --- | ---: | --- |
+| `PANDORA-Setup-0.1.0-x64.exe` | 158199987 | `ea284fbbe42a099879acd311020d21a8924ffc17ea673703f2fc765b734b91e8` |
+| `PANDORA-Portable-0.1.0-x64.exe` | 111462380 | `3ee8bbd522b0767d2279aaddeb5d0982c523ba53ee9b1a0a4aca73d1476b7dec` |
+
+The final file list contains 85 owned files instead of 4489, because already bundled UI dependencies are excluded from distribution. An attempted solid-compression change exceeded the builder's four-minute compiler budget; the final build uses the standard compressor and passes both local and Windows builds without modifying the tool timeout.
+
+`verification.json` identifies the exact local files and keeps `windowsLaunchVerified: false`: these cross-built bytes were archive-verified, while the successful Windows runner built and launched its own artifacts from the same source. Download that run's `PANDORA-Windows-x64-unsigned` artifact for native-built files and their native validation manifest. The local Windows test kit includes both local executables, sidecars, manifest, CI evidence and guides. Hashes from different builds are not interchangeable.
+
+This is a Windows test handoff, not complete implementation of the entire master specification or production certification. Physical hardware accuracy, every preference's visible Windows effect, interactive/standard-account installation and upgrade paths, optional Recycle Bin behavior and broader machine compatibility still need manual testing. Missing features are listed separately in WINDOWS-HANDOFF.md and FEATURES.md.
