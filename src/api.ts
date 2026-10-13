@@ -9,6 +9,7 @@ const browserSettings = (): AppSettings => {
   catch { return defaultSettings; }
 };
 export const api: AppApi = window.pandora ?? {
+  inspectNetwork: unavailable, testDns: unavailable,
   getManualGames: unavailable, selectGameExecutable: unavailable, clearGameExecutable: unavailable,
   previewRestoreAll: unavailable, restoreAll: unavailable,
   getStartupControls: unavailable, changeStartup: unavailable,

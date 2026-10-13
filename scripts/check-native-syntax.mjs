@@ -12,10 +12,10 @@ const root = fileURLToPath(new URL('..', import.meta.url));
 const directory = await mkdtemp(join(tmpdir(), 'pandora-native-syntax-'));
 try {
   const bundle = join(directory, 'scripts.cjs');
-  await build({ stdin: { contents: "export {CLEANER_SCRIPT} from './electron/cleaner-native'; export {WINDOWS_QUERIES} from './electron/system'; export {NETWORK_SCRIPT} from './electron/network';", resolveDir: root }, outfile: bundle, bundle: true, platform: 'node', format: 'cjs', logLevel: 'silent' });
-  const { CLEANER_SCRIPT, WINDOWS_QUERIES, NETWORK_SCRIPT } = createRequire(import.meta.url)(bundle);
+  await build({ stdin: { contents: "export {CLEANER_SCRIPT} from './electron/cleaner-native'; export {WINDOWS_QUERIES} from './electron/system'; export {NETWORK_SCRIPT} from './electron/network'; export {ADAPTER_INSPECTION_SCRIPT, DNS_INSPECTION_SCRIPT} from './electron/network-inspection';", resolveDir: root }, outfile: bundle, bundle: true, platform: 'node', format: 'cjs', logLevel: 'silent' });
+  const { CLEANER_SCRIPT, WINDOWS_QUERIES, NETWORK_SCRIPT, ADAPTER_INSPECTION_SCRIPT, DNS_INSPECTION_SCRIPT } = createRequire(import.meta.url)(bundle);
   const payload = join(directory, 'scripts.json');
-  await writeFile(payload, JSON.stringify({ cleaner: CLEANER_SCRIPT, network: NETWORK_SCRIPT, ...WINDOWS_QUERIES }));
+  await writeFile(payload, JSON.stringify({ cleaner: CLEANER_SCRIPT, network: NETWORK_SCRIPT, adapterInspection: ADAPTER_INSPECTION_SCRIPT, dnsInspection: DNS_INSPECTION_SCRIPT, ...WINDOWS_QUERIES }));
   const checker = join(directory, 'check.ps1');
   await writeFile(checker, String.raw`param([string]$InputFile)
 $ErrorActionPreference = 'Stop'
@@ -69,6 +69,37 @@ if ($inventory.physicalDisks[0].bus -ne 'NVMe' -or $inventory.installedRamBytes 
 if ($inventory.cpuReportedMHz -ne 4200 -or $inventory.architecture -ne '64-bit') { throw 'CPU clock and architecture aggregation failed.' }
 if ($inventory.notes.Count -ne 0) { throw 'Unexpected provider failure in inventory fixture.' }
 Write-Output 'Inventory PowerShell runtime fixture passed, including formatted versus numeric link speed. No native provider was invoked.'
+
+function Get-NetAdapter {
+ param([switch]$IncludeHidden, [string]$ErrorAction)
+ if(-not $IncludeHidden){throw 'Expected hidden interfaces too.'}
+ [pscustomobject]@{Name='Physical fixture';ifIndex=7;InterfaceDescription='Fixture Ethernet';Status='Up';HardwareInterface=$true;TransmitLinkSpeed=5000000000}
+ [pscustomobject]@{Name='Virtual fixture';ifIndex=8;InterfaceDescription='Fixture VPN';Status='Up';HardwareInterface=$false;TransmitLinkSpeed=1000000000}
+}
+function Get-NetAdapterAdvancedProperty {
+ param([string]$Name,[switch]$AllProperties,[switch]$IncludeHidden,[string]$ErrorAction)
+ [pscustomobject]@{Name='Physical fixture';RegistryKeyword='*EEE';DisplayName='Energy Efficient Ethernet';DisplayValue='Enabled';RegistryValue=@('1');ValidDisplayValues=@('Disabled','Enabled')}
+}
+function Get-NetAdapterPowerManagement {
+ param([string]$Name,[switch]$IncludeHidden,[string]$ErrorAction)
+ [pscustomobject]@{Name='Physical fixture';SelectiveSuspend='Disabled'}
+}
+function Get-NetRoute {
+ param([string]$ErrorAction)
+ [pscustomobject]@{InterfaceIndex=7;DestinationPrefix='0.0.0.0/0'}
+}
+$network = (& ([scriptblock]::Create([string]$scripts.adapterInspection))) | ConvertFrom-Json
+if($network.adapters.Count -ne 2 -or -not $network.adapters[0].physical -or $network.adapters[1].physical -or $network.adapters[1].defaultRoute){throw 'Physical/virtual/default-route classification failed.'}
+if($network.adapters[0].advanced[0].keyword -ne '*EEE' -or $network.adapters[0].power[0].value -ne 'Disabled'){throw 'Driver capability extraction failed.'}
+function Resolve-DnsName {
+ param([string]$Name,[string]$Type,[switch]$DnsOnly,[switch]$NoHostsFile,[switch]$QuickTimeout,[string]$ErrorAction)
+ if($Name -ne 'www.microsoft.com' -or $Type -ne 'A' -or -not $DnsOnly -or -not $NoHostsFile){throw 'Unexpected DNS request.'}
+ [pscustomobject]@{Type='A';IPAddress='192.0.2.1'}
+}
+$dns = (& ([scriptblock]::Create([string]$scripts.dnsInspection))) | ConvertFrom-Json
+if(-not $dns.resolved -or $dns.answerCount -ne 1 -or $dns.elapsedMs -lt 0){throw 'DNS resolution fixture failed.'}
+Write-Output 'Adapter capabilities and DNS scripts passed isolated runtime fixtures; no network request or setting change was made.'
+
 
 `);
   const executable = process.env.PANDORA_PWSH || (process.platform === 'win32' ? 'powershell.exe' : 'pwsh');

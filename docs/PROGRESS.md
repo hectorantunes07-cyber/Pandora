@@ -117,3 +117,11 @@ Local production/typecheck and full backend suite passed (147 tests, eight nativ
 - CPU CIM-reported clock and OS architecture added to inventory, display and privacy-filtered export. Clock is labeled an inventory snapshot, not live boost telemetry. Missing values remain unavailable.
 - Build, 19 focused backend tests and five affected UI journeys passed. Native-script validation is delegated to Windows CI; a local PowerShell initialization retry was interrupted before completion.
 - Windows run 33 (`38359170921`, source `a82fc5f`) passed the corrected disposable startup fixture, exact registry/profile/power restoration, native cleanup fixtures, 26 UI journeys, packaging, launch and installer lifecycle. The missing-key correction stayed confined to its disposable fixture.
+
+### Stage 14 — Network capabilities and DNS diagnostics
+
+- Added explicit read-only inspection of physical/virtual/hidden adapters, negotiated rates, default-route presence, recognized EEE/interrupt-moderation properties and available power-management features. A virtual interface or default route is never claimed to carry game traffic. Address, MAC, gateway and adapter-name fields are excluded.
+- Added a fixed-host DNS check using the configured Windows resolver. Query duration and answer count are measured; cache use and provider failures are explained, with no server changes or claimed game-ping benefit.
+- Consulted MicrosoftDocs' Get-NetAdapter, Get-NetAdapterAdvancedProperty and Get-NetAdapterPowerManagement sources on GitHub after learn.microsoft.com was blocked. Power-management access may require elevation; diagnostics report unavailable instead of elevating the UI.
+- Build, four backend diagnostics tests, four affected interface journeys, and actual PowerShell parser/runtime fixtures passed locally. Added native read-only adapter integration to Windows CI.
+- Stable test checkpoint `8b08397` passed Windows run 34 (`38389470636`), including 27 UI tests and installer lifecycle. Locally generated installer and portable archives passed x64 payload/code/checksum verification and are bundled in `release/PANDORA-Windows-Test-Kit-0.1.0-x64.zip`. These exact local bytes remain distinct from CI-built/Windows-launched packages.

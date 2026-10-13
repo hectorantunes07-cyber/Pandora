@@ -8,6 +8,8 @@ async function desktopFixture(page: Page) {
     const track = (method: string, ...args: unknown[]) => calls.push({ method, args });
     const states = [{ id: 'transparency', title: 'Reduce transparency', description: 'Use opaque Windows surfaces.', category: 'Quality of life' as const, risk: 'Low' as const, tradeoff: 'Windows surfaces will look opaque.', target: 'HKCU\\Test\\Transparency', desiredValue: 0, restart: 'Sign out may be required.', reference: 'https://support.microsoft.com/', state: 'available' as const, currentValue: 1, managed: false }];
     window.pandora = {
+      inspectNetwork: async () => { track('network-inspect'); return { timestamp: new Date().toISOString(), notes: [], adapters: [{ index: 7, description: 'Radmin VPN test adapter', status: 'Up', physical: false, defaultRoute: false, linkSpeedBits: 1e9, advanced: [], power: [] }, { index: 8, description: 'Realtek test Ethernet', status: 'Up', physical: true, defaultRoute: true, linkSpeedBits: 5e9, advanced: [{ keyword: '*InterruptModeration', name: 'Interrupt Moderation', value: 'Enabled', options: ['Disabled', 'Enabled'] }], power: [] }] }; },
+      testDns: async () => { track('dns-test'); return { timestamp: new Date().toISOString(), hostname: 'www.microsoft.com', resolved: true, elapsedMs: 12, answerCount: 2 }; },
       getManualGames: async () => [], selectGameExecutable: async id => { track('game-select', id); return null; }, clearGameExecutable: async id => { track('game-clear', id); },
       previewRestoreAll: async () => ({ token: 'all-review-token', items: [{ id: 'power', category: 'Power plan', title: 'Windows power plan', original: 'Balanced', current: 'High performance', eligible: true, reason: 'Saved original.' }, { id: 'startup:discord', category: 'Startup entry', title: 'Discord startup', original: 'Original command', current: 'External command', eligible: false, reason: 'External startup entry preserved.' }] }),
       restoreAll: async token => { track('restore-all', token); return [{ id: 'power', success: true, message: 'Original power plan restored and verified.' }, { id: 'startup:discord', success: false, message: 'External startup entry preserved.' }]; },
@@ -524,4 +526,20 @@ test('manual game locations support picker cancellation, missing paths and forge
   await page.getByRole('button', { name: 'Forget saved path' }).click();
   await expect(page.getByText('C:\\Games\\Fortnite.exe', { exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Choose executable', exact: true })).toBeVisible();
+});
+
+test('adapter capabilities distinguish VPNs and DNS runs only on explicit request', async ({ page }) => {
+  await desktopFixture(page); await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: /Network Diagnostics/ }).click();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => ['network-inspect', 'dns-test'].includes(c.method)))).toHaveLength(0);
+  await page.getByRole('button', { name: 'Inspect adapters' }).click();
+  await expect(page.getByText('Radmin VPN test adapter')).toBeVisible();
+  await expect(page.getByText('VIRTUAL / SOFTWARE', { exact: true })).toBeVisible();
+  await expect(page.getByText('No default route reported', { exact: true })).toBeVisible();
+  await expect(page.getByText('5.0 Gbps', { exact: true })).toBeVisible();
+  await page.getByText('Driver settings and power-management support', { exact: true }).last().click();
+  await expect(page.getByText('Interrupt Moderation', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Check DNS resolution' }).click();
+  await expect(page.getByRole('region', { name: 'DNS results' })).toContainText('2 IPv4 answers, 12.0 ms query duration.');
+  await page.screenshot({ path: 'test-results/pandora-network-capabilities.png', fullPage: true });
 });

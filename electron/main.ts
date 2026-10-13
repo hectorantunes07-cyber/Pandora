@@ -10,6 +10,7 @@ import { createPowerService } from './power';
 import { createRestoreService } from './restore-all';
 import { createGamePathService, validateGameId } from './game-paths';
 import { createNetworkService } from './network';
+import { createNetworkInspection } from './network-inspection';
 import { createSettingsService } from './settings';
 import { cleanupKind, validateIds, isTrustedRenderer, externalDocumentation, windowsSettingsUri } from './validation';
 import type { ProgressEvent } from '../shared/types';
@@ -64,6 +65,9 @@ function registerServices() {
   handle('profile-preview', (id: unknown, custom: unknown) => tweaks.previewProfile(id, custom));
   handle('profile-apply', (token: unknown) => tweaks.applyProfile(token));
   const network = createNetworkService();
+  const inspection = createNetworkInspection();
+  handle('network-inspect', () => inspection.inspect());
+  handle('dns-test', () => inspection.dns());
   handle('network-test', (target: unknown) => network.testNetwork(target));
   handle('windows-settings', async (page: unknown) => {
     const uri = windowsSettingsUri(page);

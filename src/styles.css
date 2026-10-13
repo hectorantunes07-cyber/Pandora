@@ -44,3 +44,13 @@
 .global-restore > .button { margin-top: 16px; }
 .manual-game-location .button-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
 .manual-game-location .game-path { display: block; overflow-wrap: anywhere; padding: 14px; border: 1px solid var(--line); border-radius: 9px; background: #090714; }
+
+.adapter-inspection { margin-bottom: 24px; }
+.adapter-inspection > .button { margin: 16px 0; }
+.adapter-card { padding: 20px 0; border-top: 1px solid var(--line); }
+.adapter-card-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.adapter-card h3 { font-size: 14px; overflow-wrap: anywhere; }
+.adapter-card summary { cursor: pointer; color: #cab7f2; font-size: 12px; padding: 12px 0; }
+.adapter-property { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 0; font-size: 12px; }
+.adapter-property small { flex-basis: 100%; color: var(--muted); overflow-wrap: anywhere; }
+.adapter-card .detail-list dt { overflow-wrap: anywhere; }

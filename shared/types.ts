@@ -40,6 +40,8 @@ export interface NetworkResult {
   received: number; lossPercent: number; averageMs: number | null; minMs: number | null; maxMs: number | null; jitterMs: number | null;
 }
 export interface AppApi {
+  inspectNetwork(): Promise<NetworkInspection>;
+  testDns(): Promise<DnsResult>;
   getManualGames(): Promise<ManualGamePath[]>;
   selectGameExecutable(id: string): Promise<ManualGamePath | null>;
   clearGameExecutable(id: string): Promise<void>;
@@ -73,3 +75,8 @@ export interface AppApi {
   windowAction(action: 'minimize' | 'maximize' | 'close'): void;
 }
 declare global { interface Window { pandora?: AppApi } }
+export interface NetworkInspection {
+  timestamp: string; notes: string[];
+  adapters: { index: number; description: string; status: string; physical: boolean | null; defaultRoute: boolean | null; linkSpeedBits: number | null; advanced: { keyword: string; name: string; value: string; options: string[] }[]; power: { name: string; value: string }[] }[];
+}
+export interface DnsResult { hostname: string; timestamp: string; resolved: boolean; elapsedMs: number; answerCount: number; }

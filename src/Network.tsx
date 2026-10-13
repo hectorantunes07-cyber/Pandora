@@ -3,6 +3,7 @@ import { Activity, Globe, Radio, ShieldCheck, Wifi } from 'lucide-react';
 import type { NetworkResult, NetworkTarget } from '../shared/types';
 import { api, errorMessage, isDesktop } from './api';
 import { Badge, Notice, PageHeading, PanelTitle, Spinner } from './components';
+import { NetworkInspection } from './NetworkInspection';
 const ms = (value: number | null) => value === null ? 'Unavailable' : `${value.toFixed(1)} ms`;
 export function NetworkDiagnostics() {
   const [target, setTarget] = useState<NetworkTarget>('cloudflare');
@@ -18,6 +19,7 @@ export function NetworkDiagnostics() {
   };
   return <>
     <PageHeading eyebrow="MEASURE YOUR CONNECTION" title="Network Diagnostics" description="Actual round-trip measurements. A clearer starting point for troubleshooting."/>
+    <NetworkInspection/>
     <section className="panel network-test">
       <PanelTitle icon={Wifi} title="Connection check" action={<Badge tone="purple">READ ONLY</Badge>}/>
       <p>Send eight small ICMP requests to a public diagnostic destination. Tests run only when you choose Start test. No DNS, adapter or Windows settings are changed.</p>
