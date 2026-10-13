@@ -139,3 +139,7 @@ Local production/typecheck and full backend suite passed (147 tests, eight nativ
 - Power and pointer controls share a responsive two-column layout, reducing scrolling before the preference catalog. Inspected the rendered control screenshot; narrow-layout navigation remains covered.
 - All 29 UI journeys passed locally, including the new pointer review/cancel/apply flow. Production build passed after the layout update. Backend results remain 168 passing / ten Windows-only skips.
 - Updated README, safety boundaries, changelog and physical-PC checklist for presets, combined recovery, manual game locations, native controls and network/DNS scope.
+
+## Stage 17 — professional copy and supported game list
+
+Removed the GTA VI placeholder entirely; the six supported guides and their navigation remain intact. Rewrote homepage, section headings, sidebar and game descriptions in direct software language. Retained the purple visual design and reviewed the rendered overview screenshot. Build and all 29 UI journeys pass; native Windows CI run 38392114551 passed the preceding backend/installer revision.

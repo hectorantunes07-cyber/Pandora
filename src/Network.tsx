@@ -18,7 +18,7 @@ export function NetworkDiagnostics() {
     finally { setBusy(false); }
   };
   return <>
-    <PageHeading eyebrow="MEASURE YOUR CONNECTION" title="Network Diagnostics" description="Actual round-trip measurements. A clearer starting point for troubleshooting."/>
+    <PageHeading eyebrow="CONNECTION TESTS" title="Network Diagnostics" description="Check network adapters, DNS resolution, and connection latency."/>
     <NetworkInspection/>
     <section className="panel network-test">
       <PanelTitle icon={Wifi} title="Connection check" action={<Badge tone="purple">READ ONLY</Badge>}/>

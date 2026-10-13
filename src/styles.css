@@ -31,7 +31,6 @@
 .profile-custom input { accent-color: #a78bfa; width: 17px; height: 17px; }
 .profile-custom small { margin-left: auto; color: var(--muted, #aaa3bc); }
 
-.planned-game { opacity: .55; cursor: default; }
 
 .startup-controls { margin-bottom: 24px; }
 .startup-control-row { display: flex; align-items: center; gap: 16px; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid var(--border, #302640); }

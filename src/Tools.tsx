@@ -34,7 +34,7 @@ export function Processes({ onBusyChange }: { onBusyChange: (busy: boolean) => v
   const count = tab === 'processes' ? filteredProcesses.length : filteredStartup.length;
 
   return <>
-    <PageHeading eyebrow="LESS MYSTERY. MORE CLARITY." title="Processes & Startup" description="See what is running now and what starts with Windows.">
+    <PageHeading eyebrow="APPLICATIONS" title="Processes & Startup" description="See what is running now and what starts with Windows.">
       {tab === 'startup' && <button className="button primary" disabled={!isDesktop} onClick={() => api.openWindowsSettings('startup').catch(err => setError(errorMessage(err)))}>Open Windows startup settings<ArrowRight size={16}/></button>}
       <button className="button secondary" onClick={() => void refresh()} disabled={!isDesktop || loading}><RefreshCw size={16} className={loading ? 'spin' : ''}/>Refresh list</button>
     </PageHeading>
@@ -141,7 +141,7 @@ export function PerformanceLab({ notify }: { notify: (message: string) => void }
   };
 
   return <>
-    <PageHeading eyebrow="MEASURE WHAT MATTERS" title="Performance Lab" description="Change one thing. Repeat your test. See what actually improved.">
+    <PageHeading eyebrow="BENCHMARKS" title="Performance Lab" description="Record benchmarks and compare measured performance.">
       <button className="button secondary" onClick={exportCsv} disabled={!hasAny}><Download size={16}/>Export CSV</button>
     </PageHeading>
     <Notice>Enter measurements or import a recorded frame-time CSV. PANDORA analyzes your capture locally; it does not record game frames, infer input latency or predict performance gains.</Notice>
@@ -189,7 +189,7 @@ export function Preferences({ settings, setSettings, notify }: { settings: AppSe
     finally { setSaving(false); }
   };
   return <>
-    <PageHeading eyebrow="MAKE YOURSELF AT HOME" title="Settings & About" description="A quieter experience, built around the way you use your PC."/>
+    <PageHeading eyebrow="PREFERENCES" title="Settings & About" description="Configure PANDORA and view application information."/>
     {error && <Notice tone="error">{error}</Notice>}
     <div className="two-columns"><div className="stack"><section className="panel"><PanelTitle icon={Settings} title="Your preferences"/>
       <div className="setting-row"><div><strong>Reduce motion</strong><p>Use a calmer interface with fewer animations.</p></div><Toggle label="Reduce motion" checked={settings.reduceMotion} onChange={value => void update({ reduceMotion: value })} disabled={saving}/></div>
@@ -197,6 +197,6 @@ export function Preferences({ settings, setSettings, notify }: { settings: AppSe
       <div className="setting-row"><div><strong>Detect hardware on launch</strong><p>Read your system information when PANDORA opens. This does not apply optimizations or clean files.</p></div><Toggle label="Detect hardware on launch" checked={settings.scanOnLaunch} onChange={value => void update({ scanOnLaunch: value })} disabled={saving}/></div>
       {saving && <Spinner label="Saving preferences…"/>}
     </section><Notice>System changes always require your review. Cleanup deletions are permanent; optimization history keeps original values so managed tweaks can be reverted.</Notice></div>
-    <section className="panel settings-about"><div className="about-mark"><img src="./logo.svg" alt=""/></div><span className="eyebrow">UNLOCK YOUR PC’S POTENTIAL</span><h2>PANDORA</h2><p>Created by Sonnier</p><Badge>VERSION 0.1.0</Badge><div className="about-divider"/><p>A thoughtful toolkit for understanding your PC, freeing up space and testing reversible Windows settings.</p><dl className="detail-list"><div><dt>Application</dt><dd>PANDORA — Created by Sonnier</dd></div><div><dt>Session</dt><dd>{isDesktop ? 'Local desktop app' : 'Browser preview'}</dd></div><div><dt>Designed for</dt><dd>Windows 10 / 11 · x64</dd></div><div><dt>Performance promises</dt><dd>Measured, never invented</dd></div></dl><div className="local-privacy"><ShieldCheck size={16}/><span>Hardware readings and configuration history stay on your device.</span></div></section></div>
+    <section className="panel settings-about"><div className="about-mark"><img src="./logo.svg" alt=""/></div><span className="eyebrow">WINDOWS PC UTILITY</span><h2>PANDORA</h2><p>Created by Sonnier</p><Badge>VERSION 0.1.0</Badge><div className="about-divider"/><p>Hardware monitoring, storage cleanup, and reversible Windows settings.</p><dl className="detail-list"><div><dt>Application</dt><dd>PANDORA — Created by Sonnier</dd></div><div><dt>Session</dt><dd>{isDesktop ? 'Local desktop app' : 'Browser preview'}</dd></div><div><dt>Designed for</dt><dd>Windows 10 / 11 · x64</dd></div><div><dt>Performance promises</dt><dd>Based on your measurements</dd></div></dl><div className="local-privacy"><ShieldCheck size={16}/><span>Hardware readings and configuration history stay on your device.</span></div></section></div>
   </>;
 }

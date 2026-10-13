@@ -481,14 +481,15 @@ test('startup controls require confirmation and distinguish disable from exact r
   expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'startup-change').at(-1).args)).toEqual(['startup-restore-token', true]);
 });
 
-test('game guidance covers supported titles and keeps GTA VI explicitly unavailable', async ({ page }) => {
+test('game guidance preserves all six supported titles without planned placeholders', async ({ page }) => {
   await desktopFixture(page); await page.goto('/');
   await page.getByRole('navigation').getByRole('button', { name: 'Game Profiles', exact: true }).click();
   await page.getByRole('button', { name: /Apex Legends/ }).click();
   await expect(page.getByText(/repeatable firing-range route/)).toBeVisible();
   await page.getByRole('button', { name: /Call of Duty \/ Warzone/ }).click();
   await expect(page.getByText(/does not prove the Warzone content pack/)).toBeVisible();
-  await expect(page.getByLabel('GTA VI planned, unavailable')).toContainText('no verified PC profile');
+  await expect(page.locator('.game-cards .game-card')).toHaveCount(6);
+  await expect(page.getByText(/GTA VI|Grand Theft Auto VI/)).toHaveCount(0);
   await expect(page.getByRole('button', { name: /Grand Theft Auto VI/ })).toHaveCount(0);
   await page.screenshot({ path: 'test-results/pandora-profiles.png', fullPage: true });
 });
