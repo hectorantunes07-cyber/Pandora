@@ -21,7 +21,7 @@ try {
   const page = await app.firstWindow();
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
-  const openNavigation = page.getByRole('button', { name: 'Open navigation', exact: true });
+  const openNavigation = page.getByRole('button', { name: 'Open navigation', exact: true, includeHidden: true });
   await openNavigation.waitFor({ state: 'attached' });
   if (await openNavigation.isVisible()) await openNavigation.click();
   await page.getByRole('navigation', { name: 'Main navigation' }).waitFor();
