@@ -26,10 +26,11 @@ jobs:
         run: node scripts/check-native-syntax.mjs
       - name: Unit and filesystem safety tests
         run: npm test
-      - name: Disposable runner registry apply and exact restore
-        run: npx vitest run tests/tweaks.windows.test.ts
+      - name: Disposable runner registry, profile and power-plan exact restore
+        run: npx vitest run tests/tweaks.windows.test.ts tests/power.windows.test.ts
         env:
           PANDORA_TEST_WINDOWS_TWEAKS: '1'
+          PANDORA_TEST_WINDOWS_POWER: '1'
       - name: Install Chromium for UI tests
         run: npx playwright install chromium
       - name: UI smoke tests

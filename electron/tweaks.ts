@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import type { HistoryEntry, OperationResult, TweakState } from '../shared/types';
+import { PROFILE_DEFINITIONS, type ProfileSelection, type ProfileStatus, type ProfilePreview } from '../shared/profiles';
 import { TWEAK_CATALOG, TWEAKS_BY_ID, type RegistryTweak } from './tweak-catalog';
 
 export type RegistryValue = { kind: 'absent' } | { kind: 'dword'; value: number } | { kind: 'unsupported'; type: string };
@@ -14,8 +15,8 @@ export interface RegistryAdapter {
   write(tweak: RegistryTweak, value: Exclude<RegistryValue, { kind: 'unsupported' }>): Promise<void>;
 }
 type Snapshot = Exclude<RegistryValue, { kind: 'unsupported' }>;
-interface RecordEntry { entry: HistoryEntry; original: Snapshot; intent: 'apply' | 'revert'; }
-interface Journal { version: 1; records: RecordEntry[] }
+interface RecordEntry { entry: HistoryEntry; original: Snapshot; intent: 'apply' | 'revert'; profileManaged?: boolean; }
+interface Journal { version: 1; records: RecordEntry[]; profile?: ProfileSelection | null; customIds?: string[] }
 interface ServiceOptions { adapter?: RegistryAdapter; now?: () => Date }
 const execute = promisify(execFile);
 const MAX_RECORDS = 10_000;
@@ -69,12 +70,14 @@ function isSnapshot(value: unknown): value is Snapshot {
 function parseJournal(raw: string): Journal {
   const journal = JSON.parse(raw) as Journal;
   if (journal?.version !== 1 || !Array.isArray(journal.records) || journal.records.length > MAX_RECORDS) throw new Error('Invalid backup journal format.');
+  if (journal.profile != null && (!PROFILE_DEFINITIONS.some(p => p.id === journal.profile!.id) || !Array.isArray(journal.profile.ids) || journal.profile.ids.length > TWEAK_CATALOG.length || journal.profile.ids.some(id => !TWEAKS_BY_ID.has(id)) || new Set(journal.profile.ids).size !== journal.profile.ids.length)) throw new Error('Invalid saved profile; backup preserved.');
+  if (journal.customIds !== undefined && (!Array.isArray(journal.customIds) || journal.customIds.length > TWEAK_CATALOG.length || journal.customIds.some(id => !TWEAKS_BY_ID.has(id)) || new Set(journal.customIds).size !== journal.customIds.length)) throw new Error('Invalid saved custom profile; backup preserved.');
   const ids = new Set<string>();
   for (const record of journal.records) {
     const e = record?.entry, tweak = TWEAKS_BY_ID.get(e?.tweakId);
     if (!e || !tweak || typeof e.id !== 'string' || ids.has(e.id) || !/^[a-zA-Z0-9-]{1,80}$/.test(e.id) ||
         typeof e.title !== 'string' || typeof e.timestamp !== 'string' || Number.isNaN(Date.parse(e.timestamp)) || typeof e.message !== 'string' ||
-        !['pending', 'applied', 'reverted', 'failed', 'conflict'].includes(e.status) || !['apply', 'revert'].includes(record.intent) ||
+        !['pending', 'applied', 'reverted', 'failed', 'conflict'].includes(e.status) || !['apply', 'revert'].includes(record.intent) || (record.profileManaged !== undefined && typeof record.profileManaged !== 'boolean') ||
         e.appliedValue !== tweak.desiredValue || !isSnapshot(record.original) ||
         e.originalValue !== (record.original.kind === 'dword' ? record.original.value : null)) throw new Error('Backup journal failed validation; it will not be overwritten.');
     ids.add(e.id);
@@ -203,9 +206,10 @@ export function createTweakService(dataDir: string, options: ServiceOptions = {}
     return { id: tweak.id, success: false, message: record.entry.message };
   }
 
-  async function applyOne(tweak: RegistryTweak): Promise<OperationResult> {
+  async function applyOne(tweak: RegistryTweak, profileManaged = false, reviewed?: Snapshot): Promise<OperationResult> {
     const existing = activeRecord(tweak.id);
     const current = await adapter.read(tweak);
+    if (reviewed && !same(current, reviewed)) return { id: tweak.id, success: false, message: 'The preference changed after review. No write was performed; review the profile again.' };
     if (existing) {
       if (existing.entry.status === 'applied' && same(current, desired(tweak))) return { id: tweak.id, success: true, message: 'Already applied and verified; original backup preserved.' };
       return { id: tweak.id, success: false, message: 'A previous managed change requires review or revert before applying again. No setting was overwritten.' };
@@ -214,7 +218,7 @@ export function createTweakService(dataDir: string, options: ServiceOptions = {}
     if (same(current, desired(tweak))) return { id: tweak.id, success: true, message: 'Already set outside PANDORA; no ownership or backup was claimed.' };
     if (journal.records.length >= MAX_RECORDS) throw new Error('The backup journal is full. Export and archive it before making further changes.');
     const record: RecordEntry = {
-      original: { ...current }, intent: 'apply', entry: {
+      original: { ...current }, intent: 'apply', profileManaged, entry: {
         id: randomUUID(), tweakId: tweak.id, title: tweak.title, timestamp: now().toISOString(), status: 'pending',
         originalValue: current.kind === 'dword' ? current.value : null, appliedValue: tweak.desiredValue,
         message: 'Original preference saved before applying the change.',
@@ -282,8 +286,7 @@ export function createTweakService(dataDir: string, options: ServiceOptions = {}
     return results;
   }
 
-  return {
-    getTweaks: (): Promise<TweakState[]> => serialized(async () => {
+  async function readTweaks(): Promise<TweakState[]> {
       await initialize();
       return Promise.all(TWEAK_CATALOG.map(async tweak => {
         const { key: _key, valueName: _name, requireExistingValue: _existing, ...definition } = tweak;
@@ -300,7 +303,75 @@ export function createTweakService(dataDir: string, options: ServiceOptions = {}
           return { ...definition, state: same(current, desired(tweak)) ? 'already-set' as const : 'available' as const, managed: false, currentValue, reason: current.kind === 'absent' ? 'No explicit value is set. Windows uses its default; PANDORA will restore the absence on revert.' : undefined };
         } catch (error) { return { ...definition, state: 'unknown' as const, managed: Boolean(record), currentValue: null, reason: readableError(error) }; }
       }));
-    }),
+  }
+  let preview: { value: ProfilePreview; fingerprint: string; expires: number } | null = null;
+  function selectionFor(id: unknown, customIds: unknown): ProfileSelection | null {
+    if (id === null) return null;
+    const definition = PROFILE_DEFINITIONS.find(p => p.id === id);
+    if (!definition) throw new Error('Unknown profile.');
+    const ids = definition.id === 'custom' ? validateIds(customIds as string[]) : [...definition.ids];
+    if (ids.some(tweakId => !TWEAKS_BY_ID.has(tweakId))) throw new Error('Custom profiles can use only catalog preferences.');
+    return { id: definition.id, ids };
+  }
+  async function makePreview(selection: ProfileSelection | null): Promise<Omit<ProfilePreview, 'token'>> {
+    const states = await readTweaks();
+    const requested = new Set(selection?.ids ?? []);
+    const changes: ProfilePreview['changes'] = [];
+    for (const state of states) {
+      const record = activeRecord(state.id);
+      if (record?.profileManaged && !requested.has(state.id)) {
+        let canRestore = state.state === 'applied';
+        if (!canRestore) { try { canRestore = same(await adapter.read(TWEAKS_BY_ID.get(state.id)!), record.original); } catch { /* preserve unreadable state */ } }
+        changes.push({ id: state.id, title: state.title, action: canRestore ? 'restore' : 'conflict', reason: canRestore ? 'Restore the exact original saved by the previous profile.' : 'A previous profile setting changed or cannot be read. Resolve it before switching.', target: state.target, from: state.currentValue, to: record.entry.originalValue, restart: state.restart });
+      } else if (requested.has(state.id)) {
+        const action = state.state === 'available' ? 'apply' : ['applied', 'already-set'].includes(state.state) ? 'keep' : state.managed ? 'conflict' : 'skip';
+        changes.push({ id: state.id, title: state.title, action, reason: action === 'apply' ? state.tradeoff : action === 'keep' ? record?.profileManaged ? 'Keep the existing profile change and its original backup.' : 'Already configured; preserve manual ownership and any existing backup.' : state.reason ?? 'Unavailable on this PC; no change will be attempted.', target: state.target, from: state.currentValue, to: state.desiredValue, restart: state.restart });
+      }
+    }
+    return { selection, changes, blocked: changes.some(c => c.action === 'conflict') };
+  }
+  async function getProfile(): Promise<ProfileStatus> {
+    const states = await readTweaks();
+    const ownedIds = states.filter(t => activeRecord(t.id)?.profileManaged).map(t => t.id);
+    const selection = journal.profile ?? null;
+    const complete = selection ? selection.ids.every(id => states.some(t => t.id === id && ['applied', 'already-set'].includes(t.state))) && ownedIds.every(id => selection.ids.includes(id)) : ownedIds.length === 0;
+    return { selection: selection ? { ...selection, ids: [...selection.ids] } : null, ownedIds, customIds: [...(journal.customIds ?? [])], complete };
+  }
+  async function previewProfile(id: unknown, customIds?: unknown): Promise<ProfilePreview> {
+    await initialize();
+    const value = { ...await makePreview(selectionFor(id, customIds)), token: randomUUID() };
+    preview = { value, fingerprint: JSON.stringify({ ...value, token: '', previous: journal.profile ?? null }), expires: now().getTime() + 5 * 60_000 };
+    return structuredClone(value);
+  }
+  async function applyProfile(token: unknown): Promise<OperationResult[]> {
+    await initialize();
+    const approved = preview; preview = null;
+    if (!approved || typeof token !== 'string' || token !== approved.value.token || now().getTime() > approved.expires) throw new Error('This profile review expired. Review again before applying.');
+    const fresh = await makePreview(approved.value.selection);
+    if (fresh.blocked || JSON.stringify({ ...fresh, token: '', previous: journal.profile ?? null }) !== approved.fingerprint) throw new Error('Preference state changed since your review, or a conflict remains. Review again; no changes were made.');
+    journal.profile = fresh.selection;
+    if (fresh.selection?.id === 'custom') journal.customIds = [...fresh.selection.ids];
+    await persist(); // Record the requested profile before its first individual backup/write.
+    const results: OperationResult[] = [];
+    for (const change of fresh.changes.filter(c => c.action === 'restore')) {
+      try { results.push(await revertOne(TWEAKS_BY_ID.get(change.id)!)); }
+      catch (error) { results.push({ id: change.id, success: false, message: readableError(error) }); }
+      if (!initialized || !results.at(-1)!.success) return [...results, { id: 'profile', success: false, message: 'Profile switch stopped before new changes because a previous setting could not be restored. Original backups remain in Restore & History.' }];
+    }
+    for (const change of fresh.changes.filter(c => c.action !== 'restore')) {
+      if (!initialized) { results.push({ id: change.id, success: false, message: 'Not attempted because the backup journal needs review.' }); continue; }
+      if (change.action === 'apply') {
+        try { results.push(await applyOne(TWEAKS_BY_ID.get(change.id)!, true, change.from === null ? { kind: 'absent' } : { kind: 'dword', value: change.from })); }
+        catch (error) { results.push({ id: change.id, success: false, message: readableError(error) }); }
+      } else results.push({ id: change.id, success: change.action === 'keep', message: change.reason });
+    }
+    return results.length ? results : [{ id: 'profile', success: true, message: 'Profile selection saved. No Windows preferences needed changing.' }];
+  }
+  return {
+    getTweaks: () => serialized(readTweaks),
+    getProfile: () => serialized(getProfile),
+    previewProfile: (id: unknown, customIds?: unknown) => serialized(() => previewProfile(id, customIds)),
+    applyProfile: (token: unknown) => serialized(() => applyProfile(token)),
     applyTweaks: (ids: string[]) => serialized(() => mutate(ids, 'apply')),
     revertTweaks: (ids: string[]) => serialized(() => mutate(ids, 'revert')),
     getHistory: (): Promise<HistoryEntry[]> => serialized(async () => { await initialize(); return journal.records.map(record => ({ ...record.entry })).reverse(); }),

@@ -8,6 +8,12 @@ async function desktopFixture(page: Page) {
     const track = (method: string, ...args: unknown[]) => calls.push({ method, args });
     const states = [{ id: 'transparency', title: 'Reduce transparency', description: 'Use opaque Windows surfaces.', category: 'Quality of life' as const, risk: 'Low' as const, tradeoff: 'Windows surfaces will look opaque.', target: 'HKCU\\Test\\Transparency', desiredValue: 0, restart: 'Sign out may be required.', reference: 'https://support.microsoft.com/', state: 'available' as const, currentValue: 1, managed: false }];
     window.pandora = {
+      getPower: async () => ({ supported: true, currentId: '381b4222-f694-41f0-9685-ff5bb260df2e', plans: [{ id: '381b4222-f694-41f0-9685-ff5bb260df2e', name: 'Balanced' }, { id: '8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c', name: 'High performance' }], backup: null, conflict: false }),
+      applyPower: async (id, expected) => { track('power-apply', id, expected); return { id: 'power-plan', success: true, message: 'Power plan selected and verified.' }; },
+      restorePower: async expected => { track('power-restore', expected); return { id: 'power-plan', success: true, message: 'Original power plan restored.' }; },
+      getProfile: async () => ({ selection: null, ownedIds: [], complete: true }),
+      previewProfile: async (id, custom) => { track('profile-preview', id, custom); return { token: 'review-token', selection: id ? { id, ids: custom ?? ['game-mode'] } : null, blocked: false, changes: [{ id: 'game-mode', title: 'Windows Game Mode', action: 'apply', reason: 'May offer no measurable benefit.', target: 'HKCU test setting', from: 0, to: 1, restart: 'Reopen game.' }] }; },
+      applyProfile: async token => { track('profile-apply', token); return [{ id: 'game-mode', success: true, message: 'Applied and verified.' }]; },
       openWindowsSettings: async page => { track('windows-settings', page); },
       testNetwork: async target => { track('network', target); return { target, address: target === 'google' ? '8.8.8.8' : '1.1.1.1', timestamp: new Date().toISOString(), samples: [10, 20, null, 10, 20, 10, 20, 10], received: 7, lossPercent: 12.5, averageMs: 14.3, minMs: 10, maxMs: 20, jitterMs: 10 }; },
       getSystem: async () => ({ platform: 'win32', timestamp: new Date().toISOString(), cpu: 'UI test processor', logicalCores: 8, physicalCores: 4, gpu: 'UI test graphics', gpuDriver: 'test-driver', ramBytes: 16e9, ramSpeedMHz: 3200, os: 'Windows test fixture', motherboard: 'UI test board', installedRamBytes: 32e9, deviceType: 'Portable', physicalDisks: [{ model: 'Test NVMe drive', bytes: 1e12, media: 'SSD', bus: 'NVMe', health: 'Healthy' }], networkAdapters: [{ description: 'Test Ethernet adapter', status: 'Up', linkSpeedBits: 2.5e9 }], powerPlan: 'Balanced', volumes: [{ name: 'C:', totalBytes: 1e12, freeBytes: 6e11 }], monitors: [{ name: 'Test display', width: 1920, height: 1080, refreshHz: 144 }], notes: [] }),
@@ -394,4 +400,53 @@ test('benchmark PC snapshots preserve observed configuration and flag comparison
   await page.getByRole('button', { name: 'Clear measurements', exact: true }).click();
   await expect(page.getByText(/Recorded conditions differ:/)).toHaveCount(0);
   expect(await page.evaluate(() => localStorage.getItem('pandora.benchmark.v1'))).toBeNull();
+});
+
+test('power-plan review cancels without writing and sends the reviewed original when confirmed', async ({ page }) => {
+  await desktopFixture(page); await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Optimizations', exact: true }).click();
+  await page.getByLabel('Power plan', { exact: true }).selectOption('8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c');
+  await page.getByRole('button', { name: 'Review power-plan change', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('battery life');
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'power-apply'))).toHaveLength(0);
+  await page.getByRole('button', { name: 'Review power-plan change', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm power-plan change', exact: true }).click();
+  await expect(page.getByText('Power plan selected and verified.', { exact: true })).toBeVisible();
+  expect(await page.evaluate(() => (window as any).__calls.find((c: any) => c.method === 'power-apply').args)).toEqual(['8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c', '381b4222-f694-41f0-9685-ff5bb260df2e']);
+});
+
+test('preset switching requires a fresh reviewed token and blocked conflicts cannot be confirmed', async ({ page }) => {
+  await desktopFixture(page); await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Game Profiles', exact: true }).click();
+  await page.getByLabel('Windows preset').selectOption('competitive');
+  await page.getByRole('button', { name: 'Review preset', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('Review Competitive FPS');
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'profile-apply'))).toHaveLength(0);
+  await page.getByRole('button', { name: 'Review preset', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm preset changes', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Profile results' })).toContainText('Applied and verified.');
+  expect(await page.evaluate(() => (window as any).__calls.find((c: any) => c.method === 'profile-apply').args)).toEqual(['review-token']);
+  await page.evaluate(() => { const original = window.pandora!.previewProfile; window.pandora!.previewProfile = async (id, custom) => ({ ...await original(id, custom), blocked: true }); });
+  await page.getByRole('button', { name: 'Review preset', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Confirm preset changes', exact: true })).toBeDisabled();
+  await expect(page.getByRole('dialog')).toContainText('Resolve the listed conflicts');
+});
+
+test('custom preset review includes only selected preferences and original power-plan conflicts stay protected', async ({ page }) => {
+  await desktopFixture(page); await page.goto('/');
+  await page.evaluate(() => {
+    const original = window.pandora!.getPower;
+    window.pandora!.getPower = async () => ({ ...await original(), conflict: true, backup: { version: 1, originalId: '381b4222-f694-41f0-9685-ff5bb260df2e', appliedId: '8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c', status: 'applied', intent: 'apply', timestamp: new Date().toISOString() } });
+  });
+  await page.getByRole('navigation').getByRole('button', { name: 'Game Profiles', exact: true }).click();
+  await page.getByLabel('Windows preset').selectOption('custom');
+  await page.getByRole('checkbox', { name: 'Custom profile: Reduce transparency' }).check();
+  await page.getByRole('button', { name: 'Review preset', exact: true }).click();
+  expect(await page.evaluate(() => (window as any).__calls.find((c: any) => c.method === 'profile-preview').args)).toEqual(['custom', ['transparency']]);
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await page.getByRole('navigation').getByRole('button', { name: 'Restore & History', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Restore original power plan', exact: true })).toBeDisabled();
+  await expect(page.getByText('Another app or user changed the active power plan.', { exact: false })).toBeVisible();
 });

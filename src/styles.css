@@ -21,3 +21,12 @@
 .capture-help summary { cursor: pointer; color: var(--text, #ede9f7); font-weight: 600; }
 .capture-help p { margin-top: 12px; }
 .capture-help code { color: #c4b5fd; overflow-wrap: anywhere; }
+
+.power-controls, .profile-controls { margin-bottom: 24px; }
+.power-actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 18px 0; }
+.power-guid { display: block; color: var(--muted, #aaa3bc); overflow-wrap: anywhere; margin-top: 4px; font-size: 11px; }
+.profile-controls > p { color: var(--muted, #aaa3bc); font-size: 13px; line-height: 1.7; margin-top: 12px; }
+.profile-custom { display: grid; gap: 10px; margin-top: 16px; }
+.profile-custom label { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.profile-custom input { accent-color: #a78bfa; width: 17px; height: 17px; }
+.profile-custom small { margin-left: auto; color: var(--muted, #aaa3bc); }

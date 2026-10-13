@@ -30,6 +30,14 @@ describe.skipIf(!allowed)('native Windows registry roundtrip (explicit disposabl
       expect((await reopened.revertTweaks([tweak.id]))[0].success).toBe(true);
       expect(await adapter.read(tweak)).toEqual(baseline);
       expect((await reopened.getHistory())[0].status).toBe('reverted');
+      // The custom preset uses the same reviewed ownership and native adapter.
+      const review = await reopened.previewProfile('custom', [tweak.id]);
+      expect((await reopened.applyProfile(review.token)).every(r => r.success)).toBe(true);
+      expect((await reopened.getProfile()).ownedIds).toEqual([tweak.id]);
+      const relaunched = createTweakService(directory, { adapter });
+      const off = await relaunched.previewProfile(null);
+      expect((await relaunched.applyProfile(off.token)).every(r => r.success)).toBe(true);
+      expect(await adapter.read(tweak)).toEqual(baseline);
     } finally {
       await adapter.write(tweak, original);
       expect(await adapter.read(tweak), 'The actual pre-test preference must be restored').toEqual(original);

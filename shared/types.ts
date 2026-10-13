@@ -19,6 +19,8 @@ export interface GameInfo { id: string; name: string; installed: boolean; path: 
 export interface TweakDefinition { id: string; title: string; description: string; category: 'Gaming' | 'Privacy' | 'Quality of life'; risk: 'Low' | 'Moderate'; tradeoff: string; target: string; desiredValue: number; restart: string; reference: string; }
 export interface TweakState extends TweakDefinition { state: 'available' | 'applied' | 'already-set' | 'unsupported' | 'unknown' | 'conflict'; currentValue: number | null; managed: boolean; reason?: string; }
 export interface OperationResult { id: string; success: boolean; message: string; }
+export interface PowerSnapshot { version: 1; originalId: string; appliedId: string; status: 'pending' | 'applied' | 'reverted' | 'conflict' | 'failed'; intent: 'apply' | 'restore'; timestamp: string; }
+export interface PowerInfo { supported: boolean; currentId: string | null; plans: { id: string; name: string }[]; backup: PowerSnapshot | null; conflict: boolean; }
 export interface HistoryEntry { id: string; tweakId: string; title: string; timestamp: string; status: 'pending' | 'applied' | 'reverted' | 'failed' | 'conflict'; originalValue: number | null; appliedValue: number; message: string; }
 export type CleanupKind = 'safe' | 'browser' | 'recycle';
 export interface CleanupCategory { id: string; title: string; description: string; bytes: number; fileCount: number; paths: string[]; }
@@ -33,6 +35,12 @@ export interface NetworkResult {
   received: number; lossPercent: number; averageMs: number | null; minMs: number | null; maxMs: number | null; jitterMs: number | null;
 }
 export interface AppApi {
+  getPower(): Promise<PowerInfo>;
+  applyPower(id: string, expectedCurrent: string): Promise<OperationResult>;
+  restorePower(expectedCurrent: string): Promise<OperationResult>;
+  getProfile(): Promise<import('./profiles').ProfileStatus>;
+  previewProfile(id: import('./profiles').ProfileId | null, customIds?: string[]): Promise<import('./profiles').ProfilePreview>;
+  applyProfile(token: string): Promise<OperationResult[]>;
   openWindowsSettings(page: WindowsSettingsPage): Promise<void>;
   testNetwork(target: NetworkTarget): Promise<NetworkResult>;
   getSystem(forceRefresh?: boolean): Promise<SystemInfo>;

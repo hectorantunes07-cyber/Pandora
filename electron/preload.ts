@@ -1,6 +1,12 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { AppApi, ProgressEvent } from '../shared/types';
 const api: AppApi = {
+  getPower: () => ipcRenderer.invoke('pandora:power'),
+  applyPower: (id, expected) => ipcRenderer.invoke('pandora:power-apply', id, expected),
+  restorePower: expected => ipcRenderer.invoke('pandora:power-restore', expected),
+  getProfile: () => ipcRenderer.invoke('pandora:profile'),
+  previewProfile: (id, custom) => ipcRenderer.invoke('pandora:profile-preview', id, custom),
+  applyProfile: token => ipcRenderer.invoke('pandora:profile-apply', token),
   openWindowsSettings: page => ipcRenderer.invoke('pandora:windows-settings', page),
   testNetwork: target => ipcRenderer.invoke('pandora:network-test', target),
   getSystem: forceRefresh => ipcRenderer.invoke('pandora:system', forceRefresh),

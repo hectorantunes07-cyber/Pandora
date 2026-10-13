@@ -9,6 +9,7 @@ const browserSettings = (): AppSettings => {
   catch { return defaultSettings; }
 };
 export const api: AppApi = window.pandora ?? {
+  getPower: unavailable, applyPower: unavailable, restorePower: unavailable, getProfile: unavailable, previewProfile: unavailable, applyProfile: unavailable,
   openWindowsSettings: unavailable, testNetwork: unavailable, getSystem: unavailable, getMetrics: unavailable, getTweaks: unavailable,
   applyTweaks: unavailable, revertTweaks: unavailable, getHistory: unavailable,
   scanCleanup: unavailable, clean: unavailable, getProcesses: unavailable,

@@ -24,7 +24,9 @@ export default function App() {
   const [notice, setNotice] = useState('');
   const [menu, setMenu] = useState(false);
   const [quickReview, setQuickReview] = useState(false);
-  const [operationBusy, setOperationBusy] = useState(false);
+  const [operationCount, setOperationCount] = useState(0);
+  const operationBusy = operationCount > 0;
+  const setOperationBusy = useCallback((busy: boolean) => setOperationCount(count => Math.max(0, count + (busy ? 1 : -1))), []);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const notify = useCallback((message: string) => setNotice(message), []);
   const refreshTweaks = useCallback(async () => { try { setTweaks(await api.getTweaks()); } catch (error) { notify(errorMessage(error)); } }, [notify]);
@@ -68,9 +70,9 @@ export default function App() {
     {page === 'Overview' && <Overview system={system} metrics={metrics} samples={samples} loading={loading} error={systemError} applied={applied} tweaks={tweaks} quick={quick} navigate={navigate} refresh={refresh}/>}
     {page === 'System Monitor' && <SystemMonitor system={system} metrics={metrics} samples={samples} loading={loading} error={systemError} refresh={refresh} notify={notify}/>}
     {page === 'Optimizations' && <Optimizations tweaks={tweaks} refresh={refreshTweaks} notify={notify} quickReview={quickReview} onQuickReviewed={() => setQuickReview(false)} onBusyChange={setOperationBusy}/>}
-    {page === 'Game Profiles' && <GameProfiles games={games} tweaks={tweaks} review={quick}/>}
+    {page === 'Game Profiles' && <GameProfiles games={games} tweaks={tweaks} review={quick} refreshTweaks={refreshTweaks} onBusyChange={setOperationBusy}/>}
     <div hidden={page !== 'PC Cleaner'}><Cleaner notify={notify} onBusyChange={setOperationBusy}/></div>
-    {page === 'Restore & History' && <Restore notify={notify} refreshTweaks={refreshTweaks} onBusyChange={setOperationBusy}/>}
+    {page === 'Restore & History' && <Restore tweaks={tweaks} notify={notify} refreshTweaks={refreshTweaks} onBusyChange={setOperationBusy}/>}
     {page === 'Processes & Startup' && <Processes/>}
     <div hidden={page !== 'Network Diagnostics'}><NetworkDiagnostics/></div>
     {page === 'Performance Lab' && <PerformanceLab notify={notify}/>}

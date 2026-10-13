@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { getSystem, getMetrics, getProcesses, getStartup, getGames } from './system';
 import { createTweakService } from './tweaks';
 import { createCleanerService } from './cleaner';
+import { createPowerService } from './power';
 import { createNetworkService } from './network';
 import { createSettingsService } from './settings';
 import { cleanupKind, validateIds, isTrustedRenderer, externalDocumentation, windowsSettingsUri } from './validation';
@@ -27,11 +28,18 @@ function registerServices() {
   function handle(name: string, fn: (...args: any[]) => unknown) {
     ipcMain.handle(`pandora:${name}`, async (event, ...args) => {
       checkSender(event);
-      const mutates = ['apply', 'revert', 'clean'].includes(name);
+      const mutates = ['apply', 'revert', 'clean', 'profile-apply', 'power-apply', 'power-restore'].includes(name);
       if (mutates) activeMutations++;
       try { return await fn(...args); } finally { if (mutates) activeMutations--; }
     });
   }
+  const power = createPowerService(app.getPath('userData'));
+  handle('power', () => power.getInfo());
+  handle('power-apply', (id: unknown, expected: unknown) => power.apply(id, expected));
+  handle('power-restore', (expected: unknown) => power.restore(expected));
+  handle('profile', () => tweaks.getProfile());
+  handle('profile-preview', (id: unknown, custom: unknown) => tweaks.previewProfile(id, custom));
+  handle('profile-apply', (token: unknown) => tweaks.applyProfile(token));
   const network = createNetworkService();
   handle('network-test', (target: unknown) => network.testNetwork(target));
   handle('windows-settings', async (page: unknown) => {
