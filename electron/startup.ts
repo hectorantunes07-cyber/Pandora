@@ -67,7 +67,7 @@ export function createStartupService(directory: string, adapter = createWindowsS
   }
   async function change(token: unknown, restore: unknown): Promise<OperationResult> {
     const review = typeof token === 'string' ? reviews.get(token) : undefined;
-    reviews.clear();
+    if (typeof token === 'string') reviews.delete(token);
     if (!adapter.supported || !review || review.expires < Date.now() || typeof restore !== 'boolean') throw new Error('Refresh startup controls and review the entry again.');
     const app = APPS.find(a => a.id === review.id)!;
     const current = await adapter.read(app);

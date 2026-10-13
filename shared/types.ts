@@ -20,6 +20,7 @@ export interface GameInfo { id: string; name: string; installed: boolean; path: 
 export interface TweakDefinition { id: string; title: string; description: string; category: 'Gaming' | 'Privacy' | 'Quality of life'; risk: 'Low' | 'Moderate'; tradeoff: string; target: string; desiredValue: number; restart: string; reference: string; }
 export interface TweakState extends TweakDefinition { state: 'available' | 'applied' | 'already-set' | 'unsupported' | 'unknown' | 'conflict'; currentValue: number | null; managed: boolean; reason?: string; }
 export interface OperationResult { id: string; success: boolean; message: string; }
+export interface RestoreReview { token: string; items: { id: string; category: string; title: string; original: string; current: string; eligible: boolean; reason: string }[]; }
 export interface PowerSnapshot { version: 1; originalId: string; appliedId: string; status: 'pending' | 'applied' | 'reverted' | 'conflict' | 'failed'; intent: 'apply' | 'restore'; timestamp: string; }
 export interface PowerInfo { supported: boolean; currentId: string | null; plans: { id: string; name: string }[]; backup: PowerSnapshot | null; conflict: boolean; }
 export interface HistoryEntry { id: string; tweakId: string; title: string; timestamp: string; status: 'pending' | 'applied' | 'reverted' | 'failed' | 'conflict'; originalValue: number | null; appliedValue: number; message: string; }
@@ -36,6 +37,8 @@ export interface NetworkResult {
   received: number; lossPercent: number; averageMs: number | null; minMs: number | null; maxMs: number | null; jitterMs: number | null;
 }
 export interface AppApi {
+  previewRestoreAll(): Promise<RestoreReview>;
+  restoreAll(token: string): Promise<OperationResult[]>;
   getStartupControls(): Promise<StartupControl[]>;
   changeStartup(token: string, restore: boolean): Promise<OperationResult>;
   getPower(): Promise<PowerInfo>;

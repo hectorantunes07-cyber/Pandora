@@ -1,6 +1,8 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { AppApi, ProgressEvent } from '../shared/types';
 const api: AppApi = {
+  previewRestoreAll: () => ipcRenderer.invoke('pandora:restore-preview'),
+  restoreAll: token => ipcRenderer.invoke('pandora:restore-all', token),
   getStartupControls: () => ipcRenderer.invoke('pandora:startup-controls'),
   changeStartup: (token, restore) => ipcRenderer.invoke('pandora:startup-change', token, restore),
   getPower: () => ipcRenderer.invoke('pandora:power'),

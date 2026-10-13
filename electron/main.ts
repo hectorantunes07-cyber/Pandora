@@ -7,6 +7,7 @@ import { createTweakService } from './tweaks';
 import { createCleanerService } from './cleaner';
 import { createStartupService } from './startup';
 import { createPowerService } from './power';
+import { createRestoreService } from './restore-all';
 import { createNetworkService } from './network';
 import { createSettingsService } from './settings';
 import { cleanupKind, validateIds, isTrustedRenderer, externalDocumentation, windowsSettingsUri } from './validation';
@@ -26,18 +27,25 @@ function registerServices() {
   const tweaks = createTweakService(app.getPath('userData'));
   const cleaner = createCleanerService(progress);
   const settings = createSettingsService(app.getPath('userData'));
+  let mutationQueue: Promise<unknown> = Promise.resolve();
   function handle(name: string, fn: (...args: any[]) => unknown) {
     ipcMain.handle(`pandora:${name}`, async (event, ...args) => {
       checkSender(event);
-      const mutates = ['apply', 'revert', 'clean', 'profile-apply', 'power-apply', 'power-restore', 'startup-change'].includes(name);
-      if (mutates) activeMutations++;
-      try { return await fn(...args); } finally { if (mutates) activeMutations--; }
+      const mutates = ['apply', 'revert', 'clean', 'profile-apply', 'power-apply', 'power-restore', 'startup-change', 'restore-all'].includes(name);
+      if (!mutates) return fn(...args);
+      activeMutations++;
+      const result = mutationQueue.then(() => fn(...args));
+      mutationQueue = result.catch(() => undefined);
+      try { return await result; } finally { activeMutations--; }
     });
   }
   const startup = createStartupService(app.getPath('userData'));
   handle('startup-controls', () => startup.getControls());
   handle('startup-change', (token: unknown, restore: unknown) => startup.change(token, restore));
   const power = createPowerService(app.getPath('userData'));
+  const recovery = createRestoreService({ tweaks, power, startup });
+  handle('restore-preview', () => recovery.preview());
+  handle('restore-all', (token: unknown) => recovery.restore(token));
   handle('power', () => power.getInfo());
   handle('power-apply', (id: unknown, expected: unknown) => power.apply(id, expected));
   handle('power-restore', (expected: unknown) => power.restore(expected));

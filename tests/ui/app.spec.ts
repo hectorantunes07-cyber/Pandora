@@ -8,6 +8,8 @@ async function desktopFixture(page: Page) {
     const track = (method: string, ...args: unknown[]) => calls.push({ method, args });
     const states = [{ id: 'transparency', title: 'Reduce transparency', description: 'Use opaque Windows surfaces.', category: 'Quality of life' as const, risk: 'Low' as const, tradeoff: 'Windows surfaces will look opaque.', target: 'HKCU\\Test\\Transparency', desiredValue: 0, restart: 'Sign out may be required.', reference: 'https://support.microsoft.com/', state: 'available' as const, currentValue: 1, managed: false }];
     window.pandora = {
+      previewRestoreAll: async () => ({ token: 'all-review-token', items: [{ id: 'power', category: 'Power plan', title: 'Windows power plan', original: 'Balanced', current: 'High performance', eligible: true, reason: 'Saved original.' }, { id: 'startup:discord', category: 'Startup entry', title: 'Discord startup', original: 'Original command', current: 'External command', eligible: false, reason: 'External startup entry preserved.' }] }),
+      restoreAll: async token => { track('restore-all', token); return [{ id: 'power', success: true, message: 'Original power plan restored and verified.' }, { id: 'startup:discord', success: false, message: 'External startup entry preserved.' }]; },
       getStartupControls: async () => [{ id: 'discord', name: 'Discord', current: 'fixture launcher command', original: null, managed: false, status: 'present', token: 'startup-review-token', reason: 'HKCU Run only.' }],
       changeStartup: async (token, restore) => { track('startup-change', token, restore); return { id: 'discord', success: true, message: 'Startup entry change verified.' }; },
       getPower: async () => ({ supported: true, currentId: '381b4222-f694-41f0-9685-ff5bb260df2e', plans: [{ id: '381b4222-f694-41f0-9685-ff5bb260df2e', name: 'Balanced' }, { id: '8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c', name: 'High performance' }], backup: null, conflict: false }),
@@ -484,4 +486,19 @@ test('game guidance covers supported titles and keeps GTA VI explicitly unavaila
   await expect(page.getByLabel('GTA VI planned, unavailable')).toContainText('no verified PC profile');
   await expect(page.getByRole('button', { name: /Grand Theft Auto VI/ })).toHaveCount(0);
   await page.screenshot({ path: 'test-results/pandora-profiles.png', fullPage: true });
+});
+
+test('combined restoration reviews all categories, cancels safely and reports conflicts separately', async ({ page }) => {
+  await desktopFixture(page); await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: /Restore & History/ }).click();
+  await page.getByRole('button', { name: 'Review all managed changes' }).click();
+  await expect(page.getByRole('dialog')).toContainText('External startup entry preserved.');
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'restore-all'))).toHaveLength(0);
+  await page.getByRole('button', { name: 'Review all managed changes' }).click();
+  await page.getByRole('button', { name: 'Restore eligible changes' }).click();
+  const results = page.getByRole('region', { name: 'Complete restoration results' });
+  await expect(results).toContainText('Original power plan restored and verified.');
+  await expect(results).toContainText('External startup entry preserved.');
+  expect(await page.evaluate(() => (window as any).__calls.find((c: any) => c.method === 'restore-all').args)).toEqual(['all-review-token']);
 });

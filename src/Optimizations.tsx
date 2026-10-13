@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, ArrowUpRight, Check, CheckCircle2, ChevronRight, CircleAlert, FileCheck2, Gamepad2, History, Info, ListFilter, RefreshCw, RotateCcw, Search, ShieldCheck, SlidersHorizontal, Sparkles, X, Zap } from 'lucide-react';
 import type { GameInfo, HistoryEntry, OperationResult, TweakState } from '../shared/types';
 import { StartupControls } from './StartupControls';
+import { RestoreAll } from './RestoreAll';
 import { GAME_GUIDES, findInstalledGame } from '../shared/game-guides';
 import { PowerControls } from './PowerControls';
 import { ProfileControls } from './ProfileControls';
@@ -57,6 +58,7 @@ export function Optimizations({ tweaks, refresh, notify, quickReview, onQuickRev
 }
 
 export function Restore({ tweaks, notify, refreshTweaks, onBusyChange }: { tweaks: TweakState[]; notify: (message: string) => void; refreshTweaks: () => Promise<void>; onBusyChange: (busy: boolean) => void }) {
+  const [revision, setRevision] = useState(0);
   const [entries, setEntries] = useState<HistoryEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -94,9 +96,10 @@ export function Restore({ tweaks, notify, refreshTweaks, onBusyChange }: { tweak
       <button className="button secondary" disabled={busy || !isDesktop} onClick={exportHistory}><History size={15}/>Export history</button>
       <button className="button primary" disabled={loading || busy || !current.length} onClick={() => review(current)}><RotateCcw size={15}/>Restore all preferences</button>
     </PageHeading>
-    <ProfileControls tweaks={tweaks} refreshTweaks={refreshTweaks} onBusyChange={onBusyChange} restoreOnly/>
-    <PowerControls onBusyChange={onBusyChange} restoreOnly/>
-    <StartupControls onBusyChange={onBusyChange} restoreOnly/>
+    <RestoreAll onBusyChange={onBusyChange} onRestored={async () => { await load(); await refreshTweaks(); setRevision(n => n + 1); }}/>
+    <ProfileControls key={`profile-${revision}`} tweaks={tweaks} refreshTweaks={refreshTweaks} onBusyChange={onBusyChange} restoreOnly/>
+    <PowerControls key={`power-${revision}`} onBusyChange={onBusyChange} restoreOnly/>
+    <StartupControls key={`startup-${revision}`} onBusyChange={onBusyChange} restoreOnly/>
     <Notice>These are setting snapshots created by PANDORA, not Windows System Restore points. Restore changes only the reviewed managed preferences. Deleted cleanup files cannot be restored here.</Notice>
     {error && <Notice tone="error">{error}</Notice>}
     {results.length > 0 && <section className="panel operation-results" aria-label="Restoration results">

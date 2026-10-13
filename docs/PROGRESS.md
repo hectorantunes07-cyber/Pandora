@@ -103,3 +103,10 @@ Added explicit disable/restore for four known per-user launcher Run entry names 
 Game guidance now covers all six supported requested titles, with known Steam identity matching and the default verified VALORANT executable path. GTA VI remains visibly planned and noninteractive. Native detection is still limited to supported locations; no game files are modified. Updated the preference batch-restore label to distinguish it from the separate power/startup restore controls.
 
 Local production/typecheck and full backend suite passed (147 tests, eight native checks skipped). New startup safety and game-identity tests passed; the four affected startup/profile/game UI journeys passed. Native startup verification is pending the new workflow run.
+
+### Stage 12 — Reviewed restore across managed features
+
+- Added one review covering saved preference originals, original power plan, disabled supported launcher entries, and preset ownership. Conflicts are itemized and skipped; partial results remain visible. Custom preset choices are retained.
+- Top-level mutations now share a queue, preventing a competing IPC mutation from interleaving the combined restore. Each underlying operation still rechecks external state before writing.
+- Multiple individually reviewed startup tokens can be consumed in one batch without invalidating unrelated entries. Corrupt backup files stop combined review instead of silently omitting a category.
+- Local build and 152 unit/safety tests passed; eight native-only cases skipped locally. Windows run 32 exposed a missing HKCU Run key in its disposable startup fixture. The fixture now prepares and removes that key only when needed; production continues refusing to recreate a missing key.
