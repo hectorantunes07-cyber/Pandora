@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { CpuInfo } from 'node:os';
 import path from 'node:path';
-import { createSystemService, type SystemDependencies, type WindowsQuery } from '../electron/system';
+import { createSystemService, WindowsProviderError, type SystemDependencies, type WindowsQuery } from '../electron/system';
 
 function cpu(user = 100, idle = 900): CpuInfo[] {
   return [{ model: 'Test CPU', speed: 3200, times: { user, idle, sys: 0, nice: 0, irq: 0 } }];
@@ -68,6 +68,13 @@ describe('hardware inventory and telemetry', () => {
     expect(info.gpu).toBeNull();
     expect(info.notes.join(' ')).toContain('query failed');
     expect(await service.getMetrics()).toMatchObject({ gpuPercent: null, processCount: null });
+  });
+
+  it('explains bounded provider failures without leaking arbitrary process errors', async () => {
+    const timed = createSystemService(dependencies({ platform: 'win32', runWindows: async () => { throw new WindowsProviderError('system', 'timeout'); } }));
+    expect((await timed.getSystem()).notes).toContain('Windows system provider timed out.');
+    const privateError = createSystemService(dependencies({ platform: 'win32', runWindows: async () => { throw new Error('C:\\Users\\private-user\\secret'); } }));
+    expect(JSON.stringify(await privateError.getSystem())).not.toContain('private-user');
   });
 
   it('validates Windows measurements and caches expensive inventory queries', async () => {

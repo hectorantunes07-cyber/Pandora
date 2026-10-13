@@ -119,17 +119,24 @@ const positive = (value: unknown): number | null => typeof value === 'number' &&
 const nonnegative = (value: unknown): number | null => typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null;
 const records = (value: unknown): Record<string, unknown>[] => (Array.isArray(value) ? value : value && typeof value === 'object' ? [value] : []).filter(v => v && typeof v === 'object');
 
+export class WindowsProviderError extends Error {
+  constructor(query: WindowsQuery, failure: 'timeout' | 'exit' | 'response') {
+    super(`Windows ${query} provider ${failure === 'timeout' ? 'timed out' : failure === 'response' ? 'returned an unreadable response' : 'could not complete'}.`);
+    this.name = 'WindowsProviderError';
+  }
+}
+
 function runWindows(query: WindowsQuery): Promise<unknown> {
   const root = process.env.SystemRoot || 'C:\\Windows';
   const executable = path.win32.join(root, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
   const script = "$ErrorActionPreference = 'Stop'; [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false); " + WINDOWS_QUERIES[query];
   return new Promise((resolve, reject) => {
     execFile(executable, ['-NoLogo', '-NoProfile', '-NonInteractive', '-Command', script], {
-      windowsHide: true, timeout: query === 'system' ? 20_000 : 10_000, maxBuffer: 4 * 1024 * 1024, encoding: 'utf8',
+      windowsHide: true, timeout: query === 'system' ? 45_000 : 10_000, maxBuffer: 4 * 1024 * 1024, encoding: 'utf8',
     }, (error, stdout) => {
-      if (error) return reject(new Error(`Windows ${query} provider is unavailable.`));
+      if (error) return reject(new WindowsProviderError(query, error.killed ? 'timeout' : 'exit'));
       try { resolve(stdout.trim() ? JSON.parse(stdout.replace(/^\uFEFF/, '').trim()) : []); }
-      catch { reject(new Error(`Windows ${query} provider returned an unreadable response.`)); }
+      catch { reject(new WindowsProviderError(query, 'response')); }
     });
   });
 }
@@ -191,7 +198,10 @@ export function createSystemService(overrides: Partial<SystemDependencies> = {})
           return name && width && height ? [{ name, width, height, refreshHz: positive(monitor.refreshHz) }] : [];
         });
         if (Array.isArray(data.notes)) info.notes.push(...data.notes.map(safeText).filter((n): n is string => n !== null));
-      } catch { info.notes.push('Windows hardware query failed. CPU and memory come from the operating system; unavailable fields are left blank.'); }
+      } catch (error) {
+        if (error instanceof WindowsProviderError) info.notes.push(error.message);
+        info.notes.push('Windows hardware query failed. CPU and memory come from the operating system; unavailable fields are left blank.');
+      }
       if (!info.monitors.length) info.notes.push('Display mode is not exposed by this Windows provider.');
       else info.notes.push('Display modes are reported per active video controller; external monitors may not be enumerated separately.');
       info.notes.push('GPU usage, when available, is the busiest Windows 3D engine. Temperatures require a separate supported sensor provider and are unavailable.');
