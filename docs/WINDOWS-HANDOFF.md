@@ -10,7 +10,7 @@ PANDORA 0.1.0 is a development build, not a signed production release. The full 
 - PC Cleaner with measured candidate sizes, selected-category review, guarded deletion, progress and failure reporting; separate browser-cache and Recycle Bin confirmations.
 - Eight narrow per-user preferences with original-value backups, verification, history, individual restore and reviewed batch restore. External changes are preserved and reported as conflicts.
 - Read-only process/startup inventory, supported game detection and reviewable game guidance.
-- User-initiated network latency, jitter and loss measurements; before/after benchmark comparisons, local frame-time CSV analysis with explicit calculation methods, capture provenance and exports.
+- User-initiated network latency, jitter and loss measurements; before/after benchmark comparisons, local frame-time CSV analysis with explicit calculation methods, capture provenance, PC-configuration snapshots, changed-condition notices and exports.
 - Local settings, privacy-filtered reports, packaged portable application and per-user installer with uninstall/data-preservation checks.
 
 ## Still incomplete or deliberately unavailable

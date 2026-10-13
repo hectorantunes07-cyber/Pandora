@@ -49,12 +49,24 @@ try {
     await page.getByRole('button', { name: 'Scan & Clean' }).click();
     await page.getByText(/PC Cleaner requires the Windows desktop app/).first().waitFor();
   }
+  if (await openNavigation.isVisible()) await openNavigation.click();
+  await page.getByRole('navigation').getByRole('button', { name: 'Performance Lab', exact: true }).click();
+  // Synthetic input only in this disposable test; no benchmark values ship in
+  // the application. Exercise File.text() in the real sandboxed packaged renderer.
+  await page.getByLabel('Choose before frame capture').setInputFiles({
+    name: 'disposable-smoke.csv', mimeType: 'text/csv', buffer: Buffer.from(`frame_time_ms\n${Array(100).fill('10').join('\n')}`),
+  });
+  await page.getByRole('dialog').waitFor();
+  await page.getByRole('button', { name: 'Use captured results' }).click();
+  assert.equal(await page.getByRole('spinbutton', { name: 'Before Average FPS', exact: true }).inputValue(), '100.00');
+  assert.equal(await page.getByRole('spinbutton', { name: 'Before 1% low FPS', exact: true }).inputValue(), '100.00');
+  assert.equal(await page.getByRole('spinbutton', { name: 'Before Latency', exact: true }).inputValue(), '');
   assert.deepEqual(errors, []);
   const sandboxConfigured = await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences().sandbox);
   assert.equal(sandboxConfigured, true);
   console.log(JSON.stringify({ passed: true, platform: info.platform, realHardwareRead: true,
     bridgeLoaded: true, rendererNodeAccess: false, unavailableWindowsActionsGuarded: process.platform !== 'win32',
-    containerTestFlags: containerMode }, null, 2));
+    frameCaptureFixtureVerified: true, containerTestFlags: containerMode }, null, 2));
 } catch (error) {
   if (process.env.GITHUB_ACTIONS === 'true') {
     const message = String(error).replaceAll('%', '%25').replaceAll('\r', '%0D').replaceAll('\n', '%0A');

@@ -366,3 +366,32 @@ test('invalid capture preserves measurements and valid after import yields a com
   expect(exported).toContain('Manual entry; never inferred from frame intervals');
   await page.screenshot({ path: 'test-results/pandora-performance-import.png', fullPage: true });
 });
+
+
+test('benchmark PC snapshots preserve observed configuration and flag comparison differences', async ({ page }) => {
+  await desktopFixture(page);
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Performance Lab', exact: true }).click();
+  await page.getByRole('button', { name: 'Capture before PC configuration' }).click();
+  await expect(page.getByText('Before PC snapshot', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: 'Save measurements' }).click();
+  const before = await page.evaluate(() => JSON.parse(localStorage.getItem('pandora.benchmark.v1')!).before.context);
+  expect(before.cpu).toBe('UI test processor');
+  expect(before.powerPlan).toBe('Balanced');
+  expect(before.preferences[0].id).toBe('transparency');
+  expect(before).not.toHaveProperty('volumes');
+  await page.evaluate(() => {
+    const get = window.pandora!.getSystem;
+    window.pandora!.getSystem = async force => ({ ...await get(force), gpuDriver: 'different-driver', powerPlan: 'Power saver' });
+  });
+  await page.getByRole('button', { name: 'Capture after PC configuration' }).click();
+  await expect(page.getByText(/Recorded conditions differ: GPU driver, Power plan/)).toBeVisible();
+  await page.getByRole('button', { name: 'Save measurements' }).click();
+  await page.reload();
+  await page.getByRole('navigation').getByRole('button', { name: 'Performance Lab', exact: true }).click();
+  await expect(page.getByText(/Recorded conditions differ: GPU driver, Power plan/)).toBeVisible();
+  await page.getByRole('button', { name: 'Clear', exact: true }).click();
+  await page.getByRole('button', { name: 'Clear measurements', exact: true }).click();
+  await expect(page.getByText(/Recorded conditions differ:/)).toHaveCount(0);
+  expect(await page.evaluate(() => localStorage.getItem('pandora.benchmark.v1'))).toBeNull();
+});

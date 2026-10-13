@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import { Activity, ArrowDown, ArrowRight, ArrowUp, ChartNoAxesCombined, Check, Download, FlaskConical, Layers, Monitor, RefreshCw, Save, Search, Settings, ShieldCheck, Sparkles, Trash2 } from 'lucide-react';
 import type { AppSettings, ProcessInfo, StartupEntry } from '../shared/types';
 import { api, errorMessage, formatBytes, isDesktop, unsupportedMessage } from './api';
+import { BenchmarkConfiguration } from './BenchmarkConfiguration';
+import { contextDifferences, contextRows, validBenchmarkContext, type BenchmarkContext } from '../shared/benchmark-context';
 import { FrameImport, CaptureSummary } from './FrameImport';
 import { validFrameCapture, type FrameCapture } from '../shared/frame-capture';
 import { Badge, EmptyState, Modal, Notice, PageHeading, PanelTitle, Spinner, Toggle } from './components';
@@ -55,7 +57,7 @@ export function Processes() {
   </>;
 }
 
-type Measurement = { average: string; low: string; latency: string; capture?: FrameCapture };
+type Measurement = { average: string; low: string; latency: string; capture?: FrameCapture; context?: BenchmarkContext };
 type Benchmark = { game: string; notes: string; before: Measurement; after: Measurement; savedAt: string | null };
 const STORAGE_KEY = 'pandora.benchmark.v1';
 const blankMeasurement = (): Measurement => ({ average: '', low: '', latency: '' });
@@ -88,6 +90,7 @@ function readBenchmark(): Benchmark {
     for (const phase of ['before', 'after'] as const) {
       const measurement = value[phase]!;
       if (!validFrameCapture(measurement.capture) || measurement.average !== measurement.capture.averageFps.toFixed(2) || measurement.low !== measurement.capture.lowFps.toFixed(2)) delete measurement.capture;
+      if (!validBenchmarkContext(measurement.context)) delete measurement.context;
     }
     const result: Benchmark = { game: value.game.slice(0, 120), notes: value.notes.slice(0, 1200), before: value.before, after: value.after, savedAt };
     return benchmarkErrors(result).length ? blankBenchmark() : result;
@@ -99,12 +102,13 @@ export function PerformanceLab({ notify }: { notify: (message: string) => void }
   const [errors, setErrors] = useState<string[]>([]);
   const [clearOpen, setClearOpen] = useState(false);
   const [dirty, setDirty] = useState(false);
-  const hasAny = (['before', 'after'] as const).some(phase => measurementFields.some(field => benchmark[phase][field.key].trim()));
+  const hasAny = (['before', 'after'] as const).some(phase => Boolean(benchmark[phase].context) || measurementFields.some(field => benchmark[phase][field.key].trim()));
+  const differences = contextDifferences(benchmark.before.context, benchmark.after.context);
   const change = (phase: 'before' | 'after', key: 'average' | 'low' | 'latency', value: string) => { setBenchmark(previous => ({ ...previous, [phase]: { ...previous[phase], [key]: value, capture: key === 'latency' ? previous[phase].capture : undefined } })); setDirty(true); setErrors([]); };
   const save = (event: FormEvent) => {
     event.preventDefault();
     const issues = benchmarkErrors(benchmark);
-    if (!hasAny) issues.push('Add at least one measured result before saving.');
+    if (!hasAny) issues.push('Add a measured result or PC configuration snapshot before saving.');
     if (issues.length) { setErrors(issues); return; }
     const updated = { ...benchmark, savedAt: new Date().toISOString() };
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(updated)); setBenchmark(updated); setDirty(false); setErrors([]); notify('Your measured results are saved on this device.'); }
@@ -125,6 +129,7 @@ export function PerformanceLab({ notify }: { notify: (message: string) => void }
       }),
       ['1% low method for imports', '1000 / mean of slowest ceil(frame count * 0.01) intervals in ms'],
       ['Latency source', 'Manual entry; never inferred from frame intervals'],
+      ...(['before', 'after'] as const).flatMap(phase => benchmark[phase].context ? contextRows(benchmark[phase].context!).map(([key, value]) => [`${phase} ${key}`, value]) : [[`${phase} PC configuration`, 'Not captured']]),
       ['Metric', 'Before', 'After', 'Unit'], ...measurementFields.map(field => [field.title, benchmark.before[field.key], benchmark.after[field.key], field.unit])];
     const blob = new Blob([rows.map(row => row.map(cell).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob), anchor = document.createElement('a');
@@ -148,6 +153,7 @@ export function PerformanceLab({ notify }: { notify: (message: string) => void }
       <div className="two-columns">
         {(['before', 'after'] as const).map((phase, index) => <section className="panel" key={phase}>
           <PanelTitle icon={index ? Sparkles : Activity} title={index ? 'After your change' : 'Before your change'} action={<Badge>{index ? '02 / COMPARE' : '01 / BASELINE'}</Badge>}/>
+          <BenchmarkConfiguration phase={phase} context={benchmark[phase].context} onCapture={context => { setBenchmark(previous => ({ ...previous, [phase]: { ...previous[phase], context } })); setDirty(true); setErrors([]); }}/>
           <FrameImport phase={phase} onImport={capture => { setBenchmark(previous => ({ ...previous, [phase]: { ...previous[phase], average: capture.averageFps.toFixed(2), low: capture.lowFps.toFixed(2), capture } })); setDirty(true); setErrors([]); notify('Captured FPS results added. Save measurements to keep them.'); }}/>
           {benchmark[phase].capture && <details className="capture-help"><summary>Imported capture details</summary><CaptureSummary capture={benchmark[phase].capture!}/></details>}
           <div className="stack">{measurementFields.map(field => <label className="field" key={field.key}>{field.title}<span className="input-unit"><input className="input" type="number" inputMode="decimal" min="0.001" max="100000" step="any" aria-label={`${phase === 'before' ? 'Before' : 'After'} ${field.title}`} placeholder="Not measured" value={benchmark[phase][field.key]} onChange={event => change(phase, field.key, event.target.value)}/><span>{field.unit}</span></span><small className="muted">{field.help}</small></label>)}</div>
@@ -157,6 +163,7 @@ export function PerformanceLab({ notify }: { notify: (message: string) => void }
       <div className="benchmark-actions"><span className="muted">{dirty ? 'Unsaved measurements' : benchmark.savedAt ? `Saved ${new Date(benchmark.savedAt).toLocaleString()}` : 'Your measurements stay on this device.'}</span><div><button type="button" className="button secondary" onClick={() => setClearOpen(true)} disabled={!hasAny && !benchmark.game && !benchmark.notes}><Trash2 size={16}/>Clear</button><button type="submit" className="button primary"><Save size={16}/>Save measurements</button></div></div>
     </form>
     <div className="section-heading"><h2>Your comparison</h2><span className="muted">Based on your measurements</span></div>
+    {differences.length > 0 && <Notice tone="warning">Recorded conditions differ: {differences.join(', ')}. These differences may affect your comparison; they do not establish what caused a change in performance.</Notice>}
     <div className="benchmark-grid">{measurementFields.map(field => {
       const before = numberOrNull(benchmark.before[field.key]), after = numberOrNull(benchmark.after[field.key]);
       const valid = benchmarkErrors(benchmark).length === 0;
