@@ -291,7 +291,23 @@ test('dashboard recommendations explain measured evidence and only navigate for 
   const recommendations = page.getByRole('region', { name: 'Recommendations from your readings' });
   await expect(recommendations).toContainText('1.0% free');
   await expect(recommendations).toContainText('Cleaning files is not a repair');
+  await recommendations.screenshot({ path: 'test-results/pandora-insights.png' });
   await recommendations.getByRole('button', { name: 'Review temporary files' }).click();
   await expect(page.getByRole('heading', { name: 'PC Cleaner', exact: true })).toBeVisible();
   expect(await page.evaluate(() => (window as any).__calls.filter((call: any) => ['clean', 'apply', 'scan'].includes(call.method)))).toHaveLength(0);
+});
+
+test('navigation and cleaner remain usable on a scaled narrow desktop', async ({ page }) => {
+  await desktopFixture(page);
+  await page.setViewportSize({ width: 960, height: 640 });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Open navigation', exact: true }).click();
+  await page.getByRole('navigation').getByRole('button', { name: /PC Cleaner/ }).click();
+  await expect(page.getByRole('heading', { name: 'PC Cleaner', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Scan & Clean' }).click();
+  await page.getByRole('button', { name: 'Clean selected' }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.getByRole('button', { name: 'Keep my files' }).click();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  expect(await page.evaluate(() => (window as any).__calls.filter((call: any) => call.method === 'clean'))).toHaveLength(0);
 });

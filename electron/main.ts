@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, shell, type IpcMainInvokeEvent } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, shell, screen, type IpcMainInvokeEvent } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
@@ -81,7 +81,9 @@ function registerServices() {
   });
 }
 function createWindow() {
-  window = new BrowserWindow({ width: 1440, height: 920, minWidth: 1280, minHeight: 720, backgroundColor: '#090714', title: 'PANDORA — Created by Sonnier', frame: false, show: false, autoHideMenuBar: true, icon: path.join(__dirname, '../build/icon.png'), webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true, webSecurity: true, spellcheck: false } });
+  // Electron reports work-area sizes in logical pixels, including Windows scaling.
+  const area = screen.getPrimaryDisplay().workAreaSize;
+  window = new BrowserWindow({ width: Math.min(1440, area.width), height: Math.min(920, area.height), minWidth: Math.min(1280, area.width), minHeight: Math.min(720, area.height), backgroundColor: '#090714', title: 'PANDORA — Created by Sonnier', frame: false, show: false, autoHideMenuBar: true, icon: path.join(__dirname, '../build/icon.png'), webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true, webSecurity: true, spellcheck: false } });
   window.webContents.setWindowOpenHandler(({ url }) => { if (externalDocumentation(url)) void shell.openExternal(url).catch(() => undefined); return { action: 'deny' }; });
   window.webContents.on('will-navigate', event => event.preventDefault());
   window.webContents.on('will-attach-webview', event => event.preventDefault());
