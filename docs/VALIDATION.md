@@ -2,6 +2,40 @@
 
 PANDORA 0.1.0 is being built in a Linux cloud workspace. Windows-specific checks must be distinguished from Linux unit tests and browser tests. No gaming performance gains have been benchmarked.
 
+## Current expanded Windows test build — 2026-10-13
+
+Application source: `537da29bad7fc2d27c612df7d5a4df3bcd581824`.
+
+- Production build and **183 backend tests pass** on Linux; **11 native-only tests
+  skip** there. All **31 UI journeys pass**; focused visual restore, graphics and
+  minimum-viewport checks also pass after final layout polish.
+- PowerShell syntax and C# declarations compile. Real Linux Electron smoke verifies
+  hardware/renderer isolation, unavailable Windows guards and the visual-controls
+  IPC bridge. Test-only container flags do not certify the production sandbox.
+- Native [Windows run 39](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/38457117035)
+  passed the new backend at `40f991c`, including all seven visual API apply/relaunch/
+  exact-restore round trips, existing registry/profile/power/pointer/startup tests,
+  real cleanup guards, 31 UI journeys, package verification and installer lifecycle.
+- Final packaged revision [Windows run 40](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/38457487572)
+  **passed** at exact application source `537da29`, including 31 UI journeys, all
+  native tests and portable/installer build, launch and uninstall checks.
+- Both local NSIS packages pass outer/inner archive integrity, x64 payload, matching
+  bundled code/assets, third-party notice and checksum checks. These exact local
+  bytes were cross-built; `windowsLaunchVerified` remains false. Native CI produces
+  and launches its own packages from source; never mix their checksums.
+- Local installer: 158,256,425 bytes; SHA256
+  `d9c979e1835aaf0d274e0dd53ec2c7fa1d70b809cb38bb9574ed954b69aa3f37`.
+- Local portable: 111,508,510 bytes; SHA256
+  `5bf7175167c5e05ed313f8cbd4be894ed84c6194a129ff5fba103cc111dcdd75`.
+- Unsigned development release. Physical GPU/display effects, hardware accuracy,
+  standard-user policies, vendor compatibility, browser/Recycle Bin cleanup and
+  actual gaming performance still require real-PC testing. Full specification is
+  approximately 84% implemented by scope estimate; see FEATURES and WINDOWS-HANDOFF.
+
+Everything below records earlier checkpoints and may describe limitations that
+have since been resolved. The Wine installer blocker is historical: the current
+custom NSIS installer builds without Wine and passes native lifecycle checks.
+
 ## Test commands
 
 - `npm test`: backend logic, input validation, settings persistence, Windows provider fixtures, reversible tweak journal, cleanup snapshots and accounting.

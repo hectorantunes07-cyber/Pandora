@@ -33,9 +33,9 @@ Cleanup reports confirmed logical file bytes, not an exact physical free-space i
 
 ## Download
 
-The exact application source and checksums are recorded in the accompanying `verification.json`.
+Application source: `537da29bad7fc2d27c612df7d5a4df3bcd581824`. Both packages are built and archive-verified. Native Windows CI passed for this source, including installer lifecycle and 31 UI journeys. Exact checksums are recorded in the accompanying `verification.json`.
 
-Download **PANDORA-Windows-x64-unsigned** from a successful [Windows build and checks run](https://github.com/hectorantunes07-cyber/Pandora/actions). Sign in to GitHub if required and extract the ZIP first.
+Download **PANDORA-Windows-x64-unsigned** from [verified Windows run 40](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/38457487572). Sign in to GitHub if required and extract the ZIP first.
 
 - `PANDORA-Setup-0.1.0-x64.exe`: per-user installer with shortcuts and uninstaller.
 - `PANDORA-Portable-0.1.0-x64.exe`: no installation; still stores local app data.

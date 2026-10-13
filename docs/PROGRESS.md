@@ -163,3 +163,14 @@ visual apply/restore state transitions, graphics guidance and minimum viewport
 layout after the section-heading/spacing polish. Windows CI runs the real API
 checks, package verification and installer lifecycle; physical PC tests remain
 required. Current scope estimate: approximately 84%, not a completed full release.
+
+Native Windows run 39 (`38457117035`, source `40f991c`) passed in 5m23s,
+including all seven real visual API round trips and 31 UI journeys. Both local
+packages at clean application source `537da29` pass full archive/x64/bundled-code
+verification. Exact cross-built bytes remain distinct from native CI artifacts.
+
+Final native Windows run 40 (`38457487572`) passed at application source
+`537da29`, including all native mutation/restore tests, 31 UI journeys, both
+packages, packaged launch and installer lifecycle/data preservation. Local
+manifest correctly keeps Windows launch unverified for the separate cross-built
+bytes. The downloadable test kit includes matching checksums and CI evidence.
