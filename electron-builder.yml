@@ -10,6 +10,8 @@ asar: false
 npmRebuild: false
 afterPack: build/after-pack.cjs
 files:
+  # React and icon libraries are already bundled by Vite; ship no duplicate modules.
+  - "!node_modules/**/*"
   - dist/**/*
   - dist-electron/**/*
   - package.json
