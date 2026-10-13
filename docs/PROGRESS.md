@@ -59,3 +59,13 @@ Corrected NSIS include path separators and disabled electron-builder's implicit 
 Corrected adapter speed collection to use numeric CIM transmit rates instead of a formatted display property. Added a runtime fixture for the actual inventory PowerShell script and extra Windows-only browser-cache and exclusive-lock cleanup tests. These last safety tests are being checked in the current native run; do not infer their result from older green runs.
 
 Both updated local packages have been built. `docs/VALIDATION.md` identifies their hashes, native workflow evidence and remaining manual gates. `docs/WINDOWS-HANDOFF.md` separates implemented functionality, unfinished master-spec scope and the user's Windows checklist. The broader master specification remains approximately 70% implemented; the core test build is not a signed production release.
+
+## Stage 8 — scanner reliability, recommendations and distribution polish
+
+An intermittent native inventory failure surfaced in Windows run 21 while all interface tests passed. Bounded cold inventory scans now have a 45-second budget, with distinct timeout/execution/response diagnostics that do not leak arbitrary process errors. Windows run 22 passed the complete workflow after that change. The hardware smoke still requires real Windows CIM inventory rather than accepting fallback readings.
+
+Implemented a typed, read-only recommendations engine and dashboard panel for measured disk space, memory pressure, reported storage warnings, display review, unavailable GPU driver data and eligible Game Mode review. Each recommendation gives its evidence and limits and opens a review page; it never automatically changes settings. Windows run 23 passed with all 16 interface journeys.
+
+Window geometry now respects logical work-area sizes for display scaling, while headless/remote 1-pixel placeholder displays use a usable fallback. A 960×640 navigation/cleaner confirmation journey passed. The real Linux desktop smoke passed after accounting for the hidden responsive navigation button.
+
+Packaging excludes duplicate React/icon modules already bundled into the production code and uses solid installer compression, while retaining dependency notices and exact owned-file uninstall. The packaged file list decreased from 4489 to 85 entries. Final package integrity and native Windows results are recorded in VALIDATION.md once complete. Scope remains approximately 72% of the broader master specification; missing advanced actions and physical-PC validation are listed separately in WINDOWS-HANDOFF.md.

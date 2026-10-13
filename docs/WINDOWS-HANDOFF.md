@@ -1,10 +1,11 @@
 # PANDORA — Created by Sonnier: Windows testing handoff
 
-PANDORA 0.1.0 is a development build, not a signed production release. The full original specification is not finished. The core implemented features have passed the native Windows workflow and are intended for controlled Windows testing. The approximate 70% scope estimate is a planning estimate, not a percentage of Windows compatibility or guaranteed performance.
+PANDORA 0.1.0 is a development build, not a signed production release. The full original specification is not finished. The core implemented features have passed the native Windows workflow and are intended for controlled Windows testing. The approximate 72% scope estimate is a planning estimate, not a percentage of Windows compatibility or guaranteed performance.
 
 ## Implemented
 
-- Purple/black desktop interface, responsive sidebar, keyboard-accessible confirmations and reduced motion.
+- Purple/black desktop interface, responsive sidebar, keyboard-accessible confirmations and reduced motion. Window sizing respects the display work area and logical Windows scaling.
+- Dashboard recommendations grounded in actual readings, with explicit evidence, caveats and review actions.
 - Actual CPU/RAM readings and Windows hardware inventory, GPU/driver data, storage, adapter/link data, display modes, current power plan and unavailable-provider reporting.
 - PC Cleaner with measured candidate sizes, selected-category review, guarded deletion, progress and failure reporting; separate browser-cache and Recycle Bin confirmations.
 - Eight narrow per-user preferences with original-value backups, verification, history, individual restore and reviewed batch restore. External changes are preserved and reported as conflicts.
