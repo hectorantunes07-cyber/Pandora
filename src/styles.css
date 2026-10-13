@@ -63,4 +63,4 @@
 
 .graphics-guidance { margin-top: 24px; align-items: stretch; }
 .graphics-guidance > .panel { min-width: 0; }
-.graphics-guidance .button-row { margin-top: 16px; }
+.graphics-guidance .button-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 16px; }

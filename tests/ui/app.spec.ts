@@ -7,9 +7,10 @@ async function desktopFixture(page: Page) {
     const listeners: ((event: unknown) => void)[] = [];
     const track = (method: string, ...args: unknown[]) => calls.push({ method, args });
     const states = [{ id: 'transparency', title: 'Reduce transparency', description: 'Use opaque Windows surfaces.', category: 'Quality of life' as const, risk: 'Low' as const, tradeoff: 'Windows surfaces will look opaque.', target: 'HKCU\\Test\\Transparency', desiredValue: 0, restart: 'Sign out may be required.', reference: 'https://support.microsoft.com/', state: 'available' as const, currentValue: 1, managed: false }];
+    let visualManaged = false;
     window.pandora = {
-      getVisualEffects: async () => [{ id: 'menu-animation', current: true, original: null, managed: false, token: 'visual-review-token' }],
-      changeVisualEffect: async (token, restore) => { track('visual-change', token, restore); return { id: 'menu-animation', success: true, message: 'Visual preference verified.' }; },
+      getVisualEffects: async () => [{ id: 'menu-animation', current: !visualManaged, original: visualManaged ? true : null, managed: visualManaged, token: 'visual-review-token' }],
+      changeVisualEffect: async (token, restore) => { track('visual-change', token, restore); visualManaged = !restore; return { id: 'menu-animation', success: true, message: 'Visual preference verified.' }; },
       getPointer: async () => ({ supported: true, current: [6, 10, 1], original: null, managed: false, conflict: false, token: 'pointer-review-token' }),
       changePointer: async (token, restore) => { track('pointer-change', token, restore); return { id: 'pointer', success: true, message: 'Pointer change verified.' }; },
       inspectNetwork: async () => { track('network-inspect'); return { timestamp: new Date().toISOString(), notes: [], adapters: [{ index: 7, description: 'Radmin VPN test adapter', status: 'Up', physical: false, defaultRoute: false, linkSpeedBits: 1e9, advanced: [], power: [] }, { index: 8, description: 'Realtek test Ethernet', status: 'Up', physical: true, defaultRoute: true, linkSpeedBits: 5e9, advanced: [{ keyword: '*InterruptModeration', name: 'Interrupt Moderation', value: 'Enabled', options: ['Disabled', 'Enabled'] }], power: [] }] }; },
@@ -578,6 +579,11 @@ test('visual effects show current state, cancel safely and require a reviewed to
   await page.getByRole('button', { name: 'Confirm visual change' }).click();
   await expect(page.getByText('Visual preference verified.')).toBeVisible();
   expect(await page.evaluate(() => (window as any).__calls.find((c: any) => c.method === 'visual-change').args)).toEqual(['visual-review-token', false]);
+  await expect(card).toContainText('Managed · Off');
+  await card.getByRole('button', { name: 'Review restore' }).click();
+  await page.getByRole('button', { name: 'Confirm visual change' }).click();
+  await expect(card).toContainText('On');
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'visual-change').at(-1).args)).toEqual(['visual-review-token', true]);
   await expect(page.locator('.visual-effects .tweak-card')).toHaveCount(7);
   await page.locator('.visual-effects').screenshot({ path: 'test-results/pandora-visual-effects.png' });
 });

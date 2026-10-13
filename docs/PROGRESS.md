@@ -157,3 +157,9 @@ The library has 21 configurable targets (8 registry + 7 visual + power + pointer
 Build and 183 backend tests pass (11 Windows-only skipped locally). Native C#
 compilation and the Linux Electron smoke pass. Native visual API round trips are
 added to the existing disposable Windows workflow; results must be verified.
+
+The complete 31-journey UI suite passes. Additional focused checks confirm actual
+visual apply/restore state transitions, graphics guidance and minimum viewport
+layout after the section-heading/spacing polish. Windows CI runs the real API
+checks, package verification and installer lifecycle; physical PC tests remain
+required. Current scope estimate: approximately 84%, not a completed full release.
