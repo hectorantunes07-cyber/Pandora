@@ -83,7 +83,10 @@ function registerServices() {
 function createWindow() {
   // Electron reports work-area sizes in logical pixels, including Windows scaling.
   const area = screen.getPrimaryDisplay().workAreaSize;
-  window = new BrowserWindow({ width: Math.min(1440, area.width), height: Math.min(920, area.height), minWidth: Math.min(1280, area.width), minHeight: Math.min(720, area.height), backgroundColor: '#090714', title: 'PANDORA — Created by Sonnier', frame: false, show: false, autoHideMenuBar: true, icon: path.join(__dirname, '../build/icon.png'), webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true, webSecurity: true, spellcheck: false } });
+  // Some headless/remote sessions expose a 1-pixel placeholder instead of a display.
+  const usableWidth = area.width > 1 ? area.width : 1440;
+  const usableHeight = area.height > 1 ? area.height : 920;
+  window = new BrowserWindow({ width: Math.min(1440, usableWidth), height: Math.min(920, usableHeight), minWidth: Math.min(1280, usableWidth), minHeight: Math.min(720, usableHeight), backgroundColor: '#090714', title: 'PANDORA — Created by Sonnier', frame: false, show: false, autoHideMenuBar: true, icon: path.join(__dirname, '../build/icon.png'), webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true, webSecurity: true, spellcheck: false } });
   window.webContents.setWindowOpenHandler(({ url }) => { if (externalDocumentation(url)) void shell.openExternal(url).catch(() => undefined); return { action: 'deny' }; });
   window.webContents.on('will-navigate', event => event.preventDefault());
   window.webContents.on('will-attach-webview', event => event.preventDefault());
