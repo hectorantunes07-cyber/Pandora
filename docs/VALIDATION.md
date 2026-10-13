@@ -74,7 +74,7 @@ This is evidence from a GitHub-hosted Windows runner, not representative physica
 
 A final review also corrected network adapter inventory to read the numeric CIM `TransmitLinkSpeed`, rather than the formatted `LinkSpeed` display property. The actual inventory PowerShell script now has a runtime fixture covering this regression, extended aggregation and numeric serialization. Updated package identities and the latest native run are recorded below.
 
-## Current adapter-corrected Windows test packages
+## Historical adapter-corrected Windows test packages
 
 Application source: `33df09c`. [Windows run 16](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/38304399308) passed the complete workflow with the adapter correction, including installation, installed launch, uninstall, data preservation and artifact upload. Later commits add verification fixtures and documentation without changing the packaged application.
 
@@ -87,7 +87,7 @@ The current locally cross-built files are:
 
 The adjacent manifest records archive extraction and code comparison against the current production output. Local package hashes differ from native CI package hashes; use only the matching sidecars. The local manifest does not claim these exact cross-built bytes were executed on Windows. Use the successful CI artifact for packages built and launched by the Windows runner.
 
-## Current recommendations and scaling build — Windows testing ready
+## Historical recommendations and scaling build — Windows testing ready
 
 Application and packaging source: `a65d6a9`. [Windows run 28](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/38335432899) completed successfully with the final configuration. All 17 UI journeys passed, along with type checking, native syntax/runtime fixtures, backend checks, five real Win32 cleaner safety cases, the opt-in registry roundtrip, both package builds and verification, actual desktop hardware/bridge launch, installed launch, uninstall and data preservation. The browser-cache test preserves password/cookie/history fixtures, and the exclusive-lock test confirms zero deleted bytes with a reported failure.
 
@@ -103,3 +103,21 @@ The final file list contains 85 owned files instead of 4489, because already bun
 `verification.json` identifies the exact local files and keeps `windowsLaunchVerified: false`: these cross-built bytes were archive-verified, while the successful Windows runner built and launched its own artifacts from the same source. Download that run's `PANDORA-Windows-x64-unsigned` artifact for native-built files and their native validation manifest. The local Windows test kit includes both local executables, sidecars, manifest, CI evidence and guides. Hashes from different builds are not interchangeable.
 
 This is a Windows test handoff, not complete implementation of the entire master specification or production certification. Physical hardware accuracy, every preference's visible Windows effect, interactive/standard-account installation and upgrade paths, optional Recycle Bin behavior and broader machine compatibility still need manual testing. Missing features are listed separately in WINDOWS-HANDOFF.md and FEATURES.md.
+
+
+## Current frame-analysis build — Windows testing ready
+
+Application source: `d345c7a00c8c54b2f75f13a96e40d1a94bf6166e`. [Windows run 30](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/38337985591) passed all required checks and uploaded `PANDORA-Windows-x64-unsigned`. All **20 interface journeys** passed. Native cleaner safety fixtures, disposable registry apply/exact restoration, hardware CIM reads, packaged desktop launch, sandboxed file-capture import, installer launch/uninstall and user-data preservation passed. These are hosted-runner results, not physical-PC certification.
+
+Local validation: production/typecheck passed; **122 backend tests passed, six Windows-only tests skipped**. All 19 earlier interface journeys plus the new snapshot/reload/clear journey passed; the three affected benchmark journeys were rerun after configuration snapshots were added. The real Linux desktop smoke passed with hardware reads and the disposable capture import. Parser tests cover exact formulas, retained stalls, stream identity, malformed and bounded input; context tests cover fixed-schema privacy and condition changes.
+
+Both local archives were extracted, integrity checked, and compared against the built application from a clean source tree. Embedded application architecture is x64; the NSIS launcher stub is x86. Both packages are unsigned.
+
+| Current local artifact | Bytes | SHA256 |
+| --- | ---: | --- |
+| `PANDORA-Setup-0.1.0-x64.exe` | 158204303 | `a956a13854594a7c70cae966ecf6f5e10465c873b6663cab406e4fbef5d8a3bb` |
+| `PANDORA-Portable-0.1.0-x64.exe` | 111465994 | `5d699e01b7e09149e32c606d0888d8cd5100ef530509dcbcfb05ee5e0534b849` |
+
+`verification.json` intentionally keeps `windowsLaunchVerified: false` for the exact local cross-built executables. `windows-ci-evidence.json` links the successful native build of the same source. Native artifact hashes may differ; always use the sidecar supplied with your downloaded file. The local test-kit ZIP bundles both executables, sidecars, evidence, scope and Windows testing instructions. Earlier builds remain in `release/checkpoints/`.
+
+Full-spec completion remains approximately **74%** (planning estimate). Core implementation is ready for controlled Windows testing. Missing advanced actions, broader hardware/sensor support, full game presets, Windows restore points, signing/updating and physical-PC validation remain separate unfinished requirements. Imported frame intervals and configuration snapshots provide evidence for comparisons; no FPS improvement or input-latency measurement is claimed.

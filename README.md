@@ -2,7 +2,7 @@
 
 PANDORA is a local Windows desktop utility with a purple-and-black interface,
 hardware diagnostics, live resource monitoring, explicit Windows preference
-changes, a rollback journal, and a preview-first PC Cleaner. It does not require
+changes, a rollback journal, a preview-first PC Cleaner, and local frame-capture analysis. It does not require
 an account, collect analytics, or promise FPS improvements.
 
 This is an initial **0.1.0 development release**. The implementation and tests
@@ -119,6 +119,29 @@ Before uninstalling, revert changes you no longer want from inside PANDORA.
 Uninstalling does not revert Windows preferences and leaves user data in place,
 so a later installation can still find the rollback history. Preference backups
 are not Windows System Restore points or file backups.
+
+## Compare a measured game run
+
+In **Performance Lab**, capture the **Before PC configuration** near your baseline
+run. Enter measured FPS/latency or import a CSV with one `frame_time_ms` or classic
+PresentMon `MsBetweenPresents` column, in milliseconds. Export one process and one
+swap chain; multiple streams are rejected. Review the preview before replacing
+FPS values. Repeat the same game scene and settings after one deliberate change,
+then capture the **After PC configuration** and measurements.
+
+Average FPS uses frame count divided by total interval time. Imported 1% low uses
+1,000 divided by the mean of the slowest `ceil(frame count × 0.01)` intervals.
+Other tools may use percentile definitions, so compare like-for-like. The chart
+shows interval peaks per frame bucket; stalls are retained. Captures need at least
+100 frames and accept up to 250,000 frames / 8 MiB. Modern PresentMon columns with
+other names or units are not guessed automatically.
+
+Click **Save measurements** to retain the comparison and configuration snapshots.
+Raw rows, capture filenames and process identities are not saved. CSV export
+includes measurement sources, calculation method and recorded conditions. A
+changed driver, power plan, display mode or preference is flagged as a possible
+confounding factor. Frame intervals do not establish input latency, displayed
+FPS or causation; PANDORA does not record game frames itself.
 
 ## Troubleshooting
 
