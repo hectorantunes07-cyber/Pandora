@@ -119,3 +119,16 @@ Windows compatibility, anti-cheat approval or FPS improvement.
 - Check default-route indications against Windows; do not infer game routing.
   Run DNS checks with working, cached, blocked and disconnected conditions.
   DNS duration must never be presented as Fortnite server ping or input latency.
+
+## Visual effects and graphics guidance
+
+- [ ] For each of the seven supported visual controls, record the current Windows
+      appearance. Review/cancel once, apply, reopen relevant apps, relaunch PANDORA
+      and restore. Only that selected effect should change.
+- [ ] Confirm disabled effects are not claimed as PANDORA changes. Unavailable
+      providers must remain unavailable, with originals retained.
+- [ ] Apply two visual preferences and use combined restore. Both must return to
+      their saved effective API values; review individual outcomes.
+- [ ] Compare GPU/driver identity and active display rate with Windows tools.
+      Verify NVIDIA/AMD guidance is conditional, fixed settings links open the
+      correct page, and milliseconds per refresh is not labeled input latency.

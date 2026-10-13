@@ -100,8 +100,8 @@ leaves the user's application data and rollback journal intact.
 
 ## Additional managed actions and local game metadata
 
-Power, startup and pointer snapshots are durably saved in separate bounded JSON
-journals before any write. Expiring review tokens bind startup/pointer/preset
+Power, startup, pointer and visual-effect snapshots are durably saved in separate bounded JSON
+journals before any write. Expiring review tokens bind startup/pointer/visual/preset
 changes to reviewed state; power changes recheck the reviewed active GUID.
 Top-level mutations share a queue. Every service independently checks current
 state immediately before a write, verifies afterward, preserves later external
@@ -123,3 +123,11 @@ never executed or modified. Paths stay in local app data and are not exported.
 Adapter inspection omits IP/MAC/gateway addresses and adapter names. DNS checks
 resolve one fixed public hostname using Windows and may use cached answers;
 no raw addresses are retained and no settings are changed.
+
+Seven visual preferences use fixed SystemParametersInfo BOOL getter/setter pairs.
+Renderer requests contain only a short-lived review token and apply/restore intent,
+not API numbers or arbitrary values. The native allowlist saves original effective
+values, rereads before writing, verifies results and preserves pending recovery
+records on provider errors. An external return to the original Boolean state is
+acknowledged without another write. API restoration does not recreate prior raw
+registry value absence. Global mutation serialization includes visual changes.

@@ -56,3 +56,11 @@
 .pointer-controls { margin-bottom: 24px; }
 .optimization-native-controls { align-items: stretch; }
 .optimization-native-controls > section { min-width: 0; }
+
+.visual-effects { margin-top: 28px; }
+.visual-effects .tweak-grid { margin-top: 16px; }
+.visual-effects .tweak-bottom { gap: 12px; flex-wrap: wrap; }
+
+.graphics-guidance { margin-top: 24px; align-items: stretch; }
+.graphics-guidance > .panel { min-width: 0; }
+.graphics-guidance .button-row { margin-top: 16px; }

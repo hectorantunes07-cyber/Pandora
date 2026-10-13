@@ -143,3 +143,17 @@ Local production/typecheck and full backend suite passed (147 tests, eight nativ
 ## Stage 17 — professional copy and supported game list
 
 Removed the GTA VI placeholder entirely; the six supported guides and their navigation remain intact. Rewrote homepage, section headings, sidebar and game descriptions in direct software language. Retained the purple visual design and reviewed the rendered overview screenshot. Build and all 29 UI journeys pass; native Windows CI run 38392114551 passed the preceding backend/installer revision.
+
+## Stage 18 — expanded controls and graphics guidance
+
+Seven documented Windows visual-effect controls now have per-setting detection,
+review tokens, durable originals, pre-write checks, verified apply/restore and
+combined rollback. New tests cover all seven, stale/expired reviews, last-moment
+changes, provider failure, relaunch, already-configured states and corrupt backups.
+Graphics guidance uses actual GPU/driver inventory and reported display Hz, with
+fixed Windows settings shortcuts and no inferred input-latency or FPS claims.
+The library has 21 configurable targets (8 registry + 7 visual + power + pointer
++ 4 launcher entries); presets and diagnostics are not counted as extra tweaks.
+Build and 183 backend tests pass (11 Windows-only skipped locally). Native C#
+compilation and the Linux Electron smoke pass. Native visual API round trips are
+added to the existing disposable Windows workflow; results must be verified.

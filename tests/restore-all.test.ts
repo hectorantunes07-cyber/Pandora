@@ -2,6 +2,8 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { VISUAL_EFFECTS, type VisualEffectId } from '../shared/visual-effects';
+import { createVisualEffectsService } from '../electron/visual-effects';
 import { createRestoreService } from '../electron/restore-all';
 import { createTweakService, type RegistryValue } from '../electron/tweaks';
 import { createPowerService } from '../electron/power';
@@ -15,6 +17,7 @@ describe('reviewed restoration across all managed features', () => {
   afterEach(async () => { await fs.rm(dir, { recursive: true, force: true }); });
   function services() {
     return {
+      visual: createVisualEffectsService(dir, { supported: false, read: async () => { throw new Error('unavailable'); }, write: async () => {} }),
       pointer: createPointerService(dir, { supported: true, read: async () => [6, 10, 0], write: async () => { throw new Error('No pointer changes were applied in this fixture'); } }),
       tweaks: createTweakService(dir, { adapter: { supported: true, read: async t => values.get(t.id) ?? { kind: 'absent' }, write: async (t, v) => { writes.push(t.id); values.set(t.id, v); } } }),
       power: createPowerService(dir, { supported: true, read: async () => ({ currentId: current, plans: [A, B].map(id => ({ id, name: id })) }), set: async id => { writes.push('power'); current = id; } }),
@@ -89,4 +92,21 @@ describe('reviewed restoration across all managed features', () => {
     expect(writes).not.toContain('discord'); expect(launchers.get('discord')).toEqual({ kind: 'String', text: 'late.exe' });
     expect(launchers.get('steam')).toEqual(command); expect(current).toBe(A);
   });
+  it('includes every managed visual preference and retains unavailable originals', async () => {
+    const s = services();
+    const current = Object.fromEntries(VISUAL_EFFECTS.map(e => [e.id, true])) as Record<VisualEffectId, boolean | null>;
+    s.visual = createVisualEffectsService(dir, { supported: true, read: async () => ({ ...current }), write: async (id, value) => { current[id] = value; } });
+    const states = await s.visual.getStates();
+    await s.visual.change(states.find(e => e.id === 'menu-animation')!.token, false);
+    await s.visual.change(states.find(e => e.id === 'tooltip-animation')!.token, false);
+    current['tooltip-animation'] = null;
+    const recovery = createRestoreService(s), preview = await recovery.preview();
+    expect(preview.items.find(e => e.id === 'visual:tooltip-animation')).toMatchObject({ eligible: false, current: 'Unavailable' });
+    const results = await recovery.restore(preview.token);
+    expect(results.find(e => e.id === 'visual:menu-animation')?.success).toBe(true);
+    expect(results.find(e => e.id === 'visual:tooltip-animation')?.success).toBe(false);
+    expect(current['menu-animation']).toBe(true);
+    expect((await s.visual.getStates()).find(e => e.id === 'tooltip-animation')?.managed).toBe(true);
+  });
+
 });

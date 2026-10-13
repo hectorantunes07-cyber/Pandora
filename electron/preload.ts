@@ -1,6 +1,8 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { AppApi, ProgressEvent } from '../shared/types';
 const api: AppApi = {
+  getVisualEffects: () => ipcRenderer.invoke('pandora:visual-effects'),
+  changeVisualEffect: (token, restore) => ipcRenderer.invoke('pandora:visual-change', token, restore),
   getPointer: () => ipcRenderer.invoke('pandora:pointer'),
   changePointer: (token, restore) => ipcRenderer.invoke('pandora:pointer-change', token, restore),
   inspectNetwork: () => ipcRenderer.invoke('pandora:network-inspect'),

@@ -8,6 +8,8 @@ async function desktopFixture(page: Page) {
     const track = (method: string, ...args: unknown[]) => calls.push({ method, args });
     const states = [{ id: 'transparency', title: 'Reduce transparency', description: 'Use opaque Windows surfaces.', category: 'Quality of life' as const, risk: 'Low' as const, tradeoff: 'Windows surfaces will look opaque.', target: 'HKCU\\Test\\Transparency', desiredValue: 0, restart: 'Sign out may be required.', reference: 'https://support.microsoft.com/', state: 'available' as const, currentValue: 1, managed: false }];
     window.pandora = {
+      getVisualEffects: async () => [{ id: 'menu-animation', current: true, original: null, managed: false, token: 'visual-review-token' }],
+      changeVisualEffect: async (token, restore) => { track('visual-change', token, restore); return { id: 'menu-animation', success: true, message: 'Visual preference verified.' }; },
       getPointer: async () => ({ supported: true, current: [6, 10, 1], original: null, managed: false, conflict: false, token: 'pointer-review-token' }),
       changePointer: async (token, restore) => { track('pointer-change', token, restore); return { id: 'pointer', success: true, message: 'Pointer change verified.' }; },
       inspectNetwork: async () => { track('network-inspect'); return { timestamp: new Date().toISOString(), notes: [], adapters: [{ index: 7, description: 'Radmin VPN test adapter', status: 'Up', physical: false, defaultRoute: false, linkSpeedBits: 1e9, advanced: [], power: [] }, { index: 8, description: 'Realtek test Ethernet', status: 'Up', physical: true, defaultRoute: true, linkSpeedBits: 5e9, advanced: [{ keyword: '*InterruptModeration', name: 'Interrupt Moderation', value: 'Enabled', options: ['Disabled', 'Enabled'] }], power: [] }] }; },
@@ -180,7 +182,7 @@ test('preference review explains the target and cancellation never applies a cha
   await page.getByRole('button', { name: 'What changes?' }).click();
   await expect(page.getByRole('dialog')).toContainText('Windows surfaces will look opaque.');
   await expect(page.getByRole('dialog')).toContainText('HKCU\\Test\\Transparency');
-  await page.getByRole('button', { name: 'Review change', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Review change', exact: true }).click();
   await page.getByRole('button', { name: 'Cancel', exact: true }).click();
   expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'apply'))).toHaveLength(0);
   await page.getByRole('checkbox', { name: 'Select Reduce transparency' }).check();
@@ -560,4 +562,42 @@ test('pointer acceleration reviews exact API values and cancel never changes Win
   await expect(page.getByText('Pointer change verified.', { exact: true })).toBeVisible();
   expect(await page.evaluate(() => (window as any).__calls.find((c: any) => c.method === 'pointer-change').args)).toEqual(['pointer-review-token', false]);
   await page.locator('.optimization-native-controls').screenshot({ path: 'test-results/pandora-native-controls.png' });
+});
+
+
+test('visual effects show current state, cancel safely and require a reviewed token', async ({ page }) => {
+  await desktopFixture(page); await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Optimizations', exact: true }).click();
+  const card = page.locator('.visual-effects .tweak-card').filter({ hasText: 'Turn off menu animations' });
+  await expect(card).toContainText('On');
+  await card.getByRole('button', { name: 'Review change' }).click();
+  await expect(page.getByRole('dialog')).toContainText('Menu transitions become immediate');
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'visual-change'))).toHaveLength(0);
+  await card.getByRole('button', { name: 'Review change' }).click();
+  await page.getByRole('button', { name: 'Confirm visual change' }).click();
+  await expect(page.getByText('Visual preference verified.')).toBeVisible();
+  expect(await page.evaluate(() => (window as any).__calls.find((c: any) => c.method === 'visual-change').args)).toEqual(['visual-review-token', false]);
+  await expect(page.locator('.visual-effects .tweak-card')).toHaveCount(7);
+  await page.locator('.visual-effects').screenshot({ path: 'test-results/pandora-visual-effects.png' });
+});
+
+
+test('graphics guidance uses detected hardware and opens only reviewed Windows settings', async ({ page }) => {
+  await desktopFixture(page);
+  await page.addInitScript(() => {
+    const base = window.pandora!.getSystem;
+    window.pandora!.getSystem = async (...args) => ({ ...await base(...args), gpu: 'NVIDIA GeForce test adapter', gpuDriver: 'fixture-driver' });
+  });
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Optimizations', exact: true }).click();
+  const guidance = page.locator('.graphics-guidance');
+  await expect(guidance).toContainText('NVIDIA GeForce test adapter');
+  await expect(guidance).toContainText('In games that expose NVIDIA Reflex');
+  await expect(guidance).toContainText('144 Hz · 6.94 ms per refresh');
+  await expect(guidance).toContainText('not measured input latency');
+  await guidance.getByRole('button', { name: 'Open graphics settings' }).click();
+  expect(await page.evaluate(() => (window as any).__calls.find((c: any) => c.method === 'windows-settings').args)).toEqual(['graphics']);
+  await expect(guidance.getByRole('link', { name: 'Official driver downloads' })).toHaveAttribute('href', 'https://www.nvidia.com/en-us/drivers/');
+  await guidance.screenshot({ path: 'test-results/pandora-graphics-guidance.png' });
 });

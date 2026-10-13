@@ -2,7 +2,7 @@
 
 PANDORA is a local Windows desktop utility with a purple-and-black interface,
 hardware diagnostics, live resource monitoring, explicit Windows preference
-changes, reviewed presets, reversible power/pointer/startup controls, combined rollback,
+changes, reviewed presets, reversible power/pointer/visual/startup controls, combined rollback,
 a preview-first PC Cleaner, adapter/DNS diagnostics, and local frame-capture analysis. It does not require
 an account, collect analytics, or promise FPS improvements.
 
@@ -114,7 +114,7 @@ trusted code signing. Do not disable Windows security controls to run PANDORA.
 PANDORA stores settings and its rollback journal in Electron's per-user
 application-data directory, normally `%APPDATA%\PANDORA` on Windows. Backups
 include `backups\tweaks-v1.json`, `power-v1.json`, `startup-v1.json` and
-`pointer-v1.json`; settings are `settings.json` and manual game locations are
+`pointer-v1.json` and `visual-effects-v1.json`; settings are `settings.json` and manual game locations are
 `game-paths-v1.json`. Preserve the entire
 directory when backing up. Do not edit the journal or delete it while changes
 remain applied. PANDORA refuses to overwrite a later external preference change;
@@ -147,7 +147,7 @@ are not Windows System Restore points or file backups.
   resolver on request. These diagnostics do not modify adapter settings or prove
   which route carries a game, and DNS query duration is not game-server latency.
 - **Restore & History:** Review all managed changes combines preferences,
-  power, pointer, supported launcher entries and preset ownership. Individual
+  power, pointer, visual preferences, supported launcher entries and preset ownership. Individual
   outcomes and skipped conflicts remain visible; cleanup cannot be undone.
 
 ## Compare a measured game run
@@ -255,3 +255,17 @@ The Windows workflow includes a disposable install/installed-launch/uninstall
 check with user-data and unrelated-file sentinels. `scripts/test-installer.ps1`
 refuses to run outside a GitHub-hosted CI runner. These checks complement the
 manual Windows release checklist; they do not certify all physical machines.
+
+### Visual preferences and graphics guidance
+
+Optimizations includes seven Windows visual-effect controls with actual API
+readings, individual confirmation, durable originals and exact effective-value
+restoration. Unsupported values remain unavailable. These controls affect desktop
+appearance, not game graphics or promised FPS. They participate in combined
+rollback. Native round-trip tests are limited to explicitly disposable hosted CI
+with `PANDORA_TEST_WINDOWS_VISUAL=1`; never enable fixture mutation tests on your PC.
+
+GPU guidance uses the detected vendor and driver inventory. Windows graphics and
+display shortcuts open the relevant settings page; PANDORA does not silently
+change GPU scheduling, driver profiles or VRR. Refresh intervals are calculated
+from reported Hz and are not input-latency measurements.

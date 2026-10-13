@@ -40,6 +40,8 @@ export interface NetworkResult {
   received: number; lossPercent: number; averageMs: number | null; minMs: number | null; maxMs: number | null; jitterMs: number | null;
 }
 export interface AppApi {
+  getVisualEffects(): Promise<import('./visual-effects').VisualEffectState[]>;
+  changeVisualEffect(token: string, restore: boolean): Promise<OperationResult>;
   getPointer(): Promise<PointerInfo>;
   changePointer(token: string, restore: boolean): Promise<OperationResult>;
   inspectNetwork(): Promise<NetworkInspection>;

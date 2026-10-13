@@ -20,8 +20,10 @@ actual test/build outcomes and [the release checklist](docs/windows-validation.m
 | Preference backup and rollback | COMPLETE; WINDOWS VALIDATION REQUIRED | Exact original DWORD or absence, durable atomic journal, read-back verification, idempotence, reviewed newest-first batch restoration, partial batch outcomes, recovery and external-change conflict refusal. |
 | Reviewed presets | COMPLETE; PHYSICAL-PC VALIDATION REQUIRED | Competitive FPS, Balanced Gaming, Streaming + Gaming, Creator, Quiet/Everyday and Custom. Five-minute single-use reviews; exact per-item changes, skips and conflicts; previous profile ownership restored before new changes; manual settings preserved; custom selection retained. Presets use only the eight verified catalog preferences. |
 | Power-plan selection and restore | COMPLETE; PHYSICAL-PC VALIDATION REQUIRED | Existing Windows plans only, explicit current/target GUID review, durable original snapshot, read-back verification and external-change refusal. Requires restoring the previous managed plan before another selection. No invented plans, thermal control or guaranteed FPS gain. |
-| Combined managed rollback | COMPLETE; PHYSICAL-PC VALIDATION REQUIRED | One expiring review for preferences, power, pointer behavior, supported launcher entries and preset ownership. Exact originals, global mutation serialization, conflict preservation and individual outcomes; cleanup remains irreversible. |
-| Pointer acceleration | IMPLEMENTED; NATIVE VALIDATION PENDING | Optional Windows API acceleration-off control; durable original thresholds/mode, explicit tradeoff, expiring review, read-back, exact effective-value rollback, external-conflict refusal and combined restore. No DPI, polling-rate, FPS or raw-input latency claim. |
+| Combined managed rollback | COMPLETE; PHYSICAL-PC VALIDATION REQUIRED | One expiring review for preferences, power, pointer behavior, visual effects, supported launcher entries and preset ownership. Exact originals, global mutation serialization, conflict preservation and individual outcomes; cleanup remains irreversible. |
+| Pointer acceleration | COMPLETE; PHYSICAL-PC VALIDATION REQUIRED | Optional Windows API acceleration-off control; durable original thresholds/mode, explicit tradeoff, expiring review, read-back, exact effective-value rollback, external-conflict refusal and combined restore. No DPI, polling-rate, FPS or raw-input latency claim. |
+| Windows visual effects | IMPLEMENTED; NATIVE VALIDATION PENDING | Seven documented SystemParametersInfo BOOL controls: client-area, menu, combo-box and tooltip animation, list scrolling, selection fading and cursor shadow. Individual current-state detection, expiring review, durable exact effective-value originals, read-back and combined restoration. These are desktop preferences, not game graphics or FPS boosts. |
+| Hardware-specific graphics guidance | COMPLETE; PHYSICAL-PC VALIDATION REQUIRED | Vendor guidance based on reported NVIDIA/AMD/Intel GPU and driver; links to official driver pages and fixed Windows graphics/display settings. Calculated refresh intervals clearly separated from measured latency. Does not infer rendering GPU, feature compatibility or driver freshness. |
 | Windows System Restore | NOT IMPLEMENTED | Preference snapshots are not system restore points. No fake create-restore-point action. |
 | PC Cleaner: Windows temporary files | COMPLETE; WINDOWS VALIDATION REQUIRED | Scanned `.tmp`/`.temp` files older than seven days in known temporary locations; manifest selection, guarded deletion and failures. Personal extensions and recent files are excluded. |
 | PC Cleaner: browser caches | COMPLETE; WINDOWS VALIDATION REQUIRED | Separate opt-in; exact Chrome/Edge cache-data and Firefox cache-entry locations older than 24 hours. Passwords, cookies, history, profiles and Downloads are excluded. |
@@ -50,3 +52,9 @@ ignore or override some preferences.
 The benchmark screenshot supplied as reference contains example values. Those
 numbers and the reference development PC specifications are not used as live
 hardware readings or product performance claims.
+
+There are **21 separately configurable targets**: eight registry preferences,
+seven visual-effect preferences, one installed power-plan selector, one pointer
+acceleration control, and four allowlisted launcher startup entries. Availability
+is detected on each PC. This is not a claim of 21 FPS tweaks; presets reuse these
+settings, and diagnostic/cleanup actions are counted separately.
