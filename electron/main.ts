@@ -8,6 +8,7 @@ import { createCleanerService } from './cleaner';
 import { createStartupService } from './startup';
 import { createPowerService } from './power';
 import { createRestoreService } from './restore-all';
+import { createPointerService } from './pointer';
 import { createGamePathService, validateGameId } from './game-paths';
 import { createNetworkService } from './network';
 import { createNetworkInspection } from './network-inspection';
@@ -33,7 +34,7 @@ function registerServices() {
   function handle(name: string, fn: (...args: any[]) => unknown) {
     ipcMain.handle(`pandora:${name}`, async (event, ...args) => {
       checkSender(event);
-      const mutates = ['apply', 'revert', 'clean', 'profile-apply', 'power-apply', 'power-restore', 'startup-change', 'restore-all'].includes(name);
+      const mutates = ['apply', 'revert', 'clean', 'profile-apply', 'power-apply', 'power-restore', 'startup-change', 'pointer-change', 'restore-all'].includes(name);
       if (!mutates) return fn(...args);
       activeMutations++;
       const result = mutationQueue.then(() => fn(...args));
@@ -55,7 +56,10 @@ function registerServices() {
   handle('startup-controls', () => startup.getControls());
   handle('startup-change', (token: unknown, restore: unknown) => startup.change(token, restore));
   const power = createPowerService(app.getPath('userData'));
-  const recovery = createRestoreService({ tweaks, power, startup });
+  const pointer = createPointerService(app.getPath('userData'));
+  handle('pointer', () => pointer.getInfo());
+  handle('pointer-change', (token: unknown, restore: unknown) => pointer.change(token, restore));
+  const recovery = createRestoreService({ tweaks, power, startup, pointer });
   handle('restore-preview', () => recovery.preview());
   handle('restore-all', (token: unknown) => recovery.restore(token));
   handle('power', () => power.getInfo());

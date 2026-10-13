@@ -50,8 +50,10 @@ export function createPowerService(directory: string, adapter = createWindowsPow
   async function getInfo(): Promise<PowerInfo> {
     const backup = await load();
     if (!adapter.supported) return { supported: false, plans: [], currentId: null, backup, conflict: false };
-    const info = await adapter.read();
-    return { supported: true, ...info, backup, conflict: Boolean(owned(backup) && info.currentId !== backup!.appliedId && info.currentId !== backup!.originalId) };
+    try {
+      const info = await adapter.read();
+      return { supported: true, ...info, backup, conflict: Boolean(owned(backup) && info.currentId !== backup!.appliedId && info.currentId !== backup!.originalId) };
+    } catch { return { supported: true, plans: [], currentId: null, backup, conflict: false, reason: 'Windows power-plan data is unavailable. The saved backup is preserved; no power-plan change can be reviewed until the provider responds.' }; }
   }
   async function mutate(id: unknown, expected: unknown, restore: boolean): Promise<OperationResult> {
     if (!adapter.supported) throw new Error('Power-plan controls require Windows.');

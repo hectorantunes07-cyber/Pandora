@@ -83,4 +83,10 @@ describe('reviewed Windows power-plan changes', () => {
     expect(() => parsePowerPlans(A, C)).toThrow(/consistent/);
     expect(() => parsePowerPlans(A, `${A} ${B}`)).toThrow(/consistent/);
   });
+  it('keeps a saved original visible when the current Windows provider is unavailable', async () => {
+    const service = createPowerService(dir, adapter); await service.apply(B, A);
+    adapter.read = async () => { throw new Error('Provider unavailable'); };
+    expect(await service.getInfo()).toMatchObject({ supported: true, currentId: null, backup: { originalId: A, appliedId: B, status: 'applied' } });
+    expect(writes).toEqual([B]);
+  });
 });

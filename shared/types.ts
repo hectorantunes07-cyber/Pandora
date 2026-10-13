@@ -25,7 +25,7 @@ export interface TweakState extends TweakDefinition { state: 'available' | 'appl
 export interface OperationResult { id: string; success: boolean; message: string; }
 export interface RestoreReview { token: string; items: { id: string; category: string; title: string; original: string; current: string; eligible: boolean; reason: string }[]; }
 export interface PowerSnapshot { version: 1; originalId: string; appliedId: string; status: 'pending' | 'applied' | 'reverted' | 'conflict' | 'failed'; intent: 'apply' | 'restore'; timestamp: string; }
-export interface PowerInfo { supported: boolean; currentId: string | null; plans: { id: string; name: string }[]; backup: PowerSnapshot | null; conflict: boolean; }
+export interface PowerInfo { supported: boolean; currentId: string | null; plans: { id: string; name: string }[]; backup: PowerSnapshot | null; conflict: boolean; reason?: string; }
 export interface HistoryEntry { id: string; tweakId: string; title: string; timestamp: string; status: 'pending' | 'applied' | 'reverted' | 'failed' | 'conflict'; originalValue: number | null; appliedValue: number; message: string; }
 export type CleanupKind = 'safe' | 'browser' | 'recycle';
 export interface CleanupCategory { id: string; title: string; description: string; bytes: number; fileCount: number; paths: string[]; }
@@ -40,6 +40,8 @@ export interface NetworkResult {
   received: number; lossPercent: number; averageMs: number | null; minMs: number | null; maxMs: number | null; jitterMs: number | null;
 }
 export interface AppApi {
+  getPointer(): Promise<PointerInfo>;
+  changePointer(token: string, restore: boolean): Promise<OperationResult>;
   inspectNetwork(): Promise<NetworkInspection>;
   testDns(): Promise<DnsResult>;
   getManualGames(): Promise<ManualGamePath[]>;
@@ -80,3 +82,5 @@ export interface NetworkInspection {
   adapters: { index: number; description: string; status: string; physical: boolean | null; defaultRoute: boolean | null; linkSpeedBits: number | null; advanced: { keyword: string; name: string; value: string; options: string[] }[]; power: { name: string; value: string }[] }[];
 }
 export interface DnsResult { hostname: string; timestamp: string; resolved: boolean; elapsedMs: number; answerCount: number; }
+export type PointerValues = [number, number, number];
+export interface PointerInfo { supported: boolean; current: PointerValues | null; original: PointerValues | null; managed: boolean; conflict: boolean; token: string | null; reason?: string; }

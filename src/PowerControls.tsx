@@ -33,7 +33,7 @@ export function PowerControls({ onBusyChange, restoreOnly = false }: { onBusyCha
   };
   return <section className="panel power-controls">
     <PanelTitle icon={BatteryCharging} title={restoreOnly ? 'Power-plan backup' : 'Windows power plan'} action={<button className="button secondary compact" disabled={!isDesktop || busy || reading} onClick={() => void refresh()}><RefreshCw size={14}/>Refresh power plans</button>}/>
-    {error && <Notice tone="error">{error}</Notice>}
+    {error && <Notice tone="error">{error}</Notice>}{info?.reason && <Notice tone="warning">{info.reason}</Notice>}
     {result && <Notice>{result}</Notice>}
     {reading && <Spinner label="Reading installed power plans…"/>}
     <dl className="detail-list"><div><dt>Active plan</dt><dd>{name(info?.currentId ?? null)}</dd></div>{info?.backup && <><div><dt>Saved original plan</dt><dd>{name(info.backup.originalId)}<small className="power-guid">{info.backup.originalId}</small></dd></div><div><dt>Backup status</dt><dd><Badge>{info.backup.status}</Badge></dd></div></>}</dl>

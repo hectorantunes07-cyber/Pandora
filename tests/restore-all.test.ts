@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createRestoreService } from '../electron/restore-all';
 import { createTweakService, type RegistryValue } from '../electron/tweaks';
 import { createPowerService } from '../electron/power';
+import { createPointerService } from '../electron/pointer';
 import { createStartupService, type StartupValue } from '../electron/startup';
 const A = '381b4222-f694-41f0-9685-ff5bb260df2e', B = '8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c';
 describe('reviewed restoration across all managed features', () => {
@@ -14,6 +15,7 @@ describe('reviewed restoration across all managed features', () => {
   afterEach(async () => { await fs.rm(dir, { recursive: true, force: true }); });
   function services() {
     return {
+      pointer: createPointerService(dir, { supported: true, read: async () => [6, 10, 0], write: async () => { throw new Error('No pointer changes were applied in this fixture'); } }),
       tweaks: createTweakService(dir, { adapter: { supported: true, read: async t => values.get(t.id) ?? { kind: 'absent' }, write: async (t, v) => { writes.push(t.id); values.set(t.id, v); } } }),
       power: createPowerService(dir, { supported: true, read: async () => ({ currentId: current, plans: [A, B].map(id => ({ id, name: id })) }), set: async id => { writes.push('power'); current = id; } }),
       startup: createStartupService(dir, { supported: true, read: async a => launchers.get(a.id) ?? { kind: 'absent' }, write: async (a, v) => { writes.push(a.id); launchers.set(a.id, v); } }),
@@ -56,6 +58,26 @@ describe('reviewed restoration across all managed features', () => {
   it('fails closed on an unreadable backup instead of restoring a silently incomplete set', async () => {
     const s = services(); await populate(s); await fs.writeFile(path.join(dir, 'backups/startup-v1.json'), '{broken');
     await expect(createRestoreService(s).preview()).rejects.toThrow(/preserved/); expect(writes).toEqual([]);
+  });
+  it('includes saved pointer API values in the combined review and exact restoration', async () => {
+    let current: import('../shared/types').PointerValues = [6, 10, 1];
+    const s = services(); s.pointer = createPointerService(dir, { supported: true, read: async () => [...current], write: async v => { current = [...v]; } });
+    await s.pointer.change((await s.pointer.getInfo()).token, false);
+    const recovery = createRestoreService(s), preview = await recovery.preview();
+    expect(preview.items).toMatchObject([{ id: 'pointer', original: '6, 10, 1', current: '6, 10, 0', eligible: true }]);
+    expect((await recovery.restore(preview.token))[0].success).toBe(true); expect(current).toEqual([6, 10, 1]);
+  });
+  it('skips a temporarily unavailable native provider while restoring unrelated valid backups', async () => {
+    const s = services(); await populate(s);
+    let current: import('../shared/types').PointerValues = [6, 10, 1], unavailable = false;
+    s.pointer = createPointerService(dir, { supported: true, read: async () => { if (unavailable) throw new Error('Provider denied'); return [...current]; }, write: async v => { current = [...v]; } });
+    await s.pointer.change((await s.pointer.getInfo()).token, false); unavailable = true;
+    const recovery = createRestoreService(s), preview = await recovery.preview();
+    expect(preview.items.find(i => i.id === 'pointer')).toMatchObject({ eligible: false, current: 'Unavailable' });
+    const results = await recovery.restore(preview.token);
+    expect(results.find(r => r.id === 'pointer')?.success).toBe(false);
+    expect(results.filter(r => r.id !== 'pointer').every(r => r.success)).toBe(true); expect(current).toEqual([6, 10, 0]);
+    unavailable = false; expect((await s.pointer.getInfo()).managed).toBe(true);
   });
   it('does not overwrite a late external edit when another category is already restored', async () => {
     const s = services(); await populate(s);

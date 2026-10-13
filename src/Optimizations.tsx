@@ -3,6 +3,7 @@ import { ArrowRight, ArrowUpRight, Check, CheckCircle2, ChevronRight, CircleAler
 import type { GameInfo, HistoryEntry, ManualGamePath, OperationResult, TweakState } from '../shared/types';
 import { StartupControls } from './StartupControls';
 import { RestoreAll } from './RestoreAll';
+import { PointerControls } from './PointerControls';
 import { GAME_GUIDES, findInstalledGame } from '../shared/game-guides';
 import { PowerControls } from './PowerControls';
 import { ProfileControls } from './ProfileControls';
@@ -47,6 +48,7 @@ export function Optimizations({ tweaks, refresh, notify, quickReview, onQuickRev
   {error && <Notice tone={isDesktop ? 'warning' : 'info'}>{error}</Notice>}
   {results.length > 0 && <section className="panel operation-results"><PanelTitle icon={FileCheck2} title="Operation results" action={<button className="icon-button" aria-label="Dismiss operation results" onClick={() => setResults([])}><X size={15}/></button>}/>{results.map(result => <div className={`operation-result ${result.success ? 'success' : 'warning'}`} key={result.id}>{result.success ? <CheckCircle2 size={17}/> : <CircleAlert size={17}/>}<div><strong>{available.find(tweak => tweak.id === result.id)?.title || result.id}</strong><p>{result.message}</p></div></div>)}</section>}
   <PowerControls onBusyChange={onBusyChange}/>
+  <PointerControls onBusyChange={onBusyChange}/>
   <div className="filter-toolbar"><div className="tabs" role="tablist" aria-label="Optimization categories">{['All', 'Gaming', 'Privacy', 'Quality of life'].map(item => <button className={`tab ${category === item ? 'active' : ''}`} role="tab" aria-selected={category === item} key={item} onClick={() => setCategory(item)}>{item}{item === 'All' && <span>{available.length}</span>}</button>)}</div><label className="search-field"><Search size={16}/><input placeholder="Search optimizations…" aria-label="Search optimizations" value={query} onChange={event => setQuery(event.target.value)}/>{query && <button className="icon-button" aria-label="Clear search" onClick={() => setQuery('')}><X size={13}/></button>}</label></div>
   <div className="optimization-meta"><span>{visible.length} {visible.length === 1 ? 'preference' : 'preferences'}<span className="footer-dot">·</span>No promised FPS gains</span><span><ShieldCheck size={13}/> Security protections stay on</span></div>
   <div className="tweak-grid">{visible.map(tweak => <article className={`tweak-card ${selected.includes(tweak.id) ? 'selected' : ''}`} key={tweak.id}><div className="tweak-top"><span className="tweak-category"><span className={`category-dot ${tweak.category.toLowerCase().replaceAll(' ', '-')}`}/>{tweak.category}</span><Badge tone={tweak.risk === 'Low' ? 'green' : 'amber'}>{tweak.risk} risk</Badge></div><h3>{tweak.title}</h3><p>{tweak.description}</p><button className="text-button tweak-detail" onClick={() => setDetail(tweak)}>What changes?<ArrowUpRight size={13}/></button><div className="tweak-bottom"><span className={`tweak-state ${tweak.state === 'applied' || tweak.state === 'already-set' ? 'good' : ''}`}>{tweak.state === 'applied' || tweak.state === 'already-set' ? <CheckCircle2 size={14}/> : <span className="tiny-dot"/>}{isDesktop && tweak.state === 'unsupported' ? 'Unsupported on this PC' : stateLabels[tweak.state]}</span>{tweak.state === 'applied' || tweak.managed ? <button className="icon-button" aria-label={`Restore ${tweak.title}`} disabled={busy} onClick={() => review([tweak.id], 'revert')}><RotateCcw size={16}/></button> : <Checkbox label={`Select ${tweak.title}`} checked={selected.includes(tweak.id)} disabled={tweak.state !== 'available' || busy} onChange={() => setSelected(previous => previous.includes(tweak.id) ? previous.filter(id => id !== tweak.id) : [...previous, tweak.id])}/>}</div></article>)}</div>
@@ -99,6 +101,7 @@ export function Restore({ tweaks, notify, refreshTweaks, onBusyChange }: { tweak
     <RestoreAll onBusyChange={onBusyChange} onRestored={async () => { await load(); await refreshTweaks(); setRevision(n => n + 1); }}/>
     <ProfileControls key={`profile-${revision}`} tweaks={tweaks} refreshTweaks={refreshTweaks} onBusyChange={onBusyChange} restoreOnly/>
     <PowerControls key={`power-${revision}`} onBusyChange={onBusyChange} restoreOnly/>
+    <PointerControls key={`pointer-${revision}`} onBusyChange={onBusyChange} restoreOnly/>
     <StartupControls key={`startup-${revision}`} onBusyChange={onBusyChange} restoreOnly/>
     <Notice>These are setting snapshots created by PANDORA, not Windows System Restore points. Restore changes only the reviewed managed preferences. Deleted cleanup files cannot be restored here.</Notice>
     {error && <Notice tone="error">{error}</Notice>}

@@ -1,6 +1,8 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { AppApi, ProgressEvent } from '../shared/types';
 const api: AppApi = {
+  getPointer: () => ipcRenderer.invoke('pandora:pointer'),
+  changePointer: (token, restore) => ipcRenderer.invoke('pandora:pointer-change', token, restore),
   inspectNetwork: () => ipcRenderer.invoke('pandora:network-inspect'),
   testDns: () => ipcRenderer.invoke('pandora:dns-test'),
   getManualGames: () => ipcRenderer.invoke('pandora:manual-games'),

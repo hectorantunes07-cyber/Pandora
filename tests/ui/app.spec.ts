@@ -8,6 +8,8 @@ async function desktopFixture(page: Page) {
     const track = (method: string, ...args: unknown[]) => calls.push({ method, args });
     const states = [{ id: 'transparency', title: 'Reduce transparency', description: 'Use opaque Windows surfaces.', category: 'Quality of life' as const, risk: 'Low' as const, tradeoff: 'Windows surfaces will look opaque.', target: 'HKCU\\Test\\Transparency', desiredValue: 0, restart: 'Sign out may be required.', reference: 'https://support.microsoft.com/', state: 'available' as const, currentValue: 1, managed: false }];
     window.pandora = {
+      getPointer: async () => ({ supported: true, current: [6, 10, 1], original: null, managed: false, conflict: false, token: 'pointer-review-token' }),
+      changePointer: async (token, restore) => { track('pointer-change', token, restore); return { id: 'pointer', success: true, message: 'Pointer change verified.' }; },
       inspectNetwork: async () => { track('network-inspect'); return { timestamp: new Date().toISOString(), notes: [], adapters: [{ index: 7, description: 'Radmin VPN test adapter', status: 'Up', physical: false, defaultRoute: false, linkSpeedBits: 1e9, advanced: [], power: [] }, { index: 8, description: 'Realtek test Ethernet', status: 'Up', physical: true, defaultRoute: true, linkSpeedBits: 5e9, advanced: [{ keyword: '*InterruptModeration', name: 'Interrupt Moderation', value: 'Enabled', options: ['Disabled', 'Enabled'] }], power: [] }] }; },
       testDns: async () => { track('dns-test'); return { timestamp: new Date().toISOString(), hostname: 'www.microsoft.com', resolved: true, elapsedMs: 12, answerCount: 2 }; },
       getManualGames: async () => [], selectGameExecutable: async id => { track('game-select', id); return null; }, clearGameExecutable: async id => { track('game-clear', id); },
@@ -542,4 +544,18 @@ test('adapter capabilities distinguish VPNs and DNS runs only on explicit reques
   await page.getByRole('button', { name: 'Check DNS resolution' }).click();
   await expect(page.getByRole('region', { name: 'DNS results' })).toContainText('2 IPv4 answers, 12.0 ms query duration.');
   await page.screenshot({ path: 'test-results/pandora-network-capabilities.png', fullPage: true });
+});
+
+test('pointer acceleration reviews exact API values and cancel never changes Windows', async ({ page }) => {
+  await desktopFixture(page); await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: /Optimizations/ }).click();
+  await page.getByRole('button', { name: 'Review acceleration off' }).click();
+  await expect(page.getByRole('dialog')).toContainText('6, 10, 0');
+  await expect(page.getByRole('dialog')).toContainText('no FPS benefit is promised');
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'pointer-change'))).toHaveLength(0);
+  await page.getByRole('button', { name: 'Review acceleration off' }).click();
+  await page.getByRole('button', { name: 'Confirm pointer change' }).click();
+  await expect(page.getByText('Pointer change verified.', { exact: true })).toBeVisible();
+  expect(await page.evaluate(() => (window as any).__calls.find((c: any) => c.method === 'pointer-change').args)).toEqual(['pointer-review-token', false]);
 });

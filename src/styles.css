@@ -54,3 +54,4 @@
 .adapter-property { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 0; font-size: 12px; }
 .adapter-property small { flex-basis: 100%; color: var(--muted); overflow-wrap: anywhere; }
 .adapter-card .detail-list dt { overflow-wrap: anywhere; }
+.pointer-controls { margin-bottom: 24px; }
