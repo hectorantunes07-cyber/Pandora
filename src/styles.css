@@ -10,3 +10,14 @@
 .network-test{margin-bottom:20px}.sidebar{overflow:hidden}.sidebar nav{flex:1;min-height:0;overflow-y:auto;margin-bottom:12px}.sidebar-bottom,.workspace-chip,.brand{flex-shrink:0}
 
 .insights-panel{margin:22px 0}.insights-list article{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:20px 0;border-top:1px solid var(--line)}.insights-list h3{font-size:13px;margin:0 0 8px}.insights-list p{font-size:11px;color:var(--muted);line-height:1.7;max-width:760px}.insights-list .insight-evidence{color:#d4b5e8;margin-bottom:8px}.insights-list button{flex-shrink:0}@media(max-width:700px){.insights-list article{align-items:flex-start;flex-direction:column;gap:12px}}
+
+/* Local frame-capture review shares the Performance Lab visual language. */
+.capture-import { display: grid; gap: 12px; margin-bottom: 18px; }
+.capture-import > .button { justify-self: start; }
+.capture-summary { min-width: 0; }
+.capture-summary .notice { margin-top: 12px; }
+.frame-chart { display: block; width: 100%; height: 110px; color: var(--purple, #a78bfa); border-bottom: 1px solid var(--border, #302640); background: linear-gradient(0deg, #a78bfa0d, transparent); margin-top: 16px; }
+.capture-help { margin-bottom: 18px; font-size: 13px; line-height: 1.7; color: var(--muted, #aaa3bc); }
+.capture-help summary { cursor: pointer; color: var(--text, #ede9f7); font-weight: 600; }
+.capture-help p { margin-top: 12px; }
+.capture-help code { color: #c4b5fd; overflow-wrap: anywhere; }

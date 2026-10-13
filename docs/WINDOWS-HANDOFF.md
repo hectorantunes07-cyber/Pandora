@@ -1,6 +1,6 @@
 # PANDORA — Created by Sonnier: Windows testing handoff
 
-PANDORA 0.1.0 is a development build, not a signed production release. The full original specification is not finished. The core implemented features have passed the native Windows workflow and are intended for controlled Windows testing. The approximate 72% scope estimate is a planning estimate, not a percentage of Windows compatibility or guaranteed performance.
+PANDORA 0.1.0 is a development build, not a signed production release. The full original specification is not finished. The core implemented features have passed the native Windows workflow and are intended for controlled Windows testing. The approximate 74% scope estimate is a planning estimate, not a percentage of Windows compatibility or guaranteed performance.
 
 ## Implemented
 
@@ -10,7 +10,7 @@ PANDORA 0.1.0 is a development build, not a signed production release. The full 
 - PC Cleaner with measured candidate sizes, selected-category review, guarded deletion, progress and failure reporting; separate browser-cache and Recycle Bin confirmations.
 - Eight narrow per-user preferences with original-value backups, verification, history, individual restore and reviewed batch restore. External changes are preserved and reported as conflicts.
 - Read-only process/startup inventory, supported game detection and reviewable game guidance.
-- User-initiated network latency, jitter and loss measurements; manual before/after benchmark comparisons and exports.
+- User-initiated network latency, jitter and loss measurements; before/after benchmark comparisons, local frame-time CSV analysis with explicit calculation methods, capture provenance and exports.
 - Local settings, privacy-filtered reports, packaged portable application and per-user installer with uninstall/data-preservation checks.
 
 ## Still incomplete or deliberately unavailable
@@ -45,6 +45,7 @@ Use a backed-up Windows 11 x64 test machine or VM, as a normal user. Keep Window
 - [ ] Apply one preference, verify its Windows effect, then restore its exact original state. Preserve the rollback journal.
 - [ ] Test optional browser-cache/Recycle Bin cleanup only with disposable data and after reviewing their separate confirmations.
 - [ ] Test network diagnostics; blocked ICMP replies must not be interpreted as proven internet failure.
+- [ ] Import a real single-process/single-swap-chain frame capture in Performance Lab. Review the formulas, cancel once, then import/save/reopen and compare with calculations using the same definitions.
 - [ ] Uninstall/reinstall and verify saved history remains. Restore unwanted preferences before uninstalling.
 
 Only after these checks and the full `windows-validation.md` checklist should broader release be considered. Report the build hash, Windows version, exact steps and error; do not publish private file paths or your backup journal.

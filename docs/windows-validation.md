@@ -77,3 +77,11 @@ For each ID in `electron/tweak-catalog.ts`, use a disposable VM snapshot:
 Record OS builds, hardware, commit/build ID, exact outcomes and unresolved issues
 in `docs/VALIDATION.md`. Do not replace this checklist with blanket claims of
 Windows compatibility, anti-cheat approval or FPS improvement.
+
+
+## Frame capture imports
+
+- Export one game process and swap chain using classic PresentMon `MsBetweenPresents`, or provide an explicit `frame_time_ms` column in milliseconds. Modern PresentMon layouts with other metric names are not inferred automatically.
+- Import before and after runs with identical settings/scenario/capture method. Check review/cancel, source labels, persistence and CSV export.
+- Independently verify average FPS as frame count / sum of intervals in seconds, and 1% low as 1000 / mean of the slowest ceil(N × 0.01) intervals. Percentile FPS reported by some tools uses a different definition.
+- Confirm missing/malformed/mixed-stream input does not replace existing measurements. No captured intervals establish input latency or causation of a performance change.

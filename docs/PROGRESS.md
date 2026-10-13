@@ -69,3 +69,12 @@ Implemented a typed, read-only recommendations engine and dashboard panel for me
 Window geometry now respects logical work-area sizes for display scaling, while headless/remote 1-pixel placeholder displays use a usable fallback. A 960×640 navigation/cleaner confirmation journey passed. The real Linux desktop smoke passed after accounting for the hidden responsive navigation button.
 
 Packaging excludes duplicate React/icon modules already bundled into the production code while retaining dependency notices and exact owned-file uninstall. The packaged file list decreased from 4489 to 85 entries. Final package integrity passed, and Windows run 28 passed the full workflow with all 17 UI journeys. See VALIDATION.md for exact hashes and scope. Scope remains approximately 72% of the broader master specification; missing advanced actions and physical-PC validation are listed separately in WINDOWS-HANDOFF.md.
+
+
+## Stage 9 — measured frame-capture analysis
+
+Performance Lab now imports local comma-separated frame intervals from `frame_time_ms` or classic PresentMon `MsBetweenPresents` captures. Review displays average FPS, mean-slowest-1% FPS, nearest-rank p99 interval, longest interval and a bounded peak chart. File size, row/field/frame limits, numeric units and stream identity are validated; mixed process/swap-chain captures are refused. Only an unmeasured first PresentMon interval may be excluded; stalls and dropped-frame rows are not filtered. This is analysis of supplied intervals, not automatic recording or a measure of input latency/displayed FPS.
+
+Users can cancel without changing values or saving, confirm replacement of FPS while retaining separate latency entries, save summary/provenance without raw rows or filenames, reload, and export source-labelled comparisons. Manual FPS edits remove stale capture provenance. Fixed the shared dialog close button to avoid submitting a surrounding form.
+
+Validation: production build and typecheck passed; 119 backend tests passed, with six Windows-only checks skipped locally; all 19 interface journeys passed, including import cancellation, invalid-stream refusal, persistence, manual edits and export. The new parser accounts for 26 tests covering calculations, stalls, quoted CSV, malformed data and bounded input. Interface screenshot reviewed. Updated native package validation is recorded separately in VALIDATION.md when complete. Approximate master-spec implementation is 74%; broader missing actions, sensor coverage, signing and physical-PC validation remain.

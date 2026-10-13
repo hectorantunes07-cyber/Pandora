@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import { Activity, ArrowDown, ArrowRight, ArrowUp, ChartNoAxesCombined, Check, Download, FlaskConical, Layers, Monitor, RefreshCw, Save, Search, Settings, ShieldCheck, Sparkles, Trash2 } from 'lucide-react';
 import type { AppSettings, ProcessInfo, StartupEntry } from '../shared/types';
 import { api, errorMessage, formatBytes, isDesktop, unsupportedMessage } from './api';
+import { FrameImport, CaptureSummary } from './FrameImport';
+import { validFrameCapture, type FrameCapture } from '../shared/frame-capture';
 import { Badge, EmptyState, Modal, Notice, PageHeading, PanelTitle, Spinner, Toggle } from './components';
 
 export function Processes() {
@@ -53,7 +55,7 @@ export function Processes() {
   </>;
 }
 
-type Measurement = { average: string; low: string; latency: string };
+type Measurement = { average: string; low: string; latency: string; capture?: FrameCapture };
 type Benchmark = { game: string; notes: string; before: Measurement; after: Measurement; savedAt: string | null };
 const STORAGE_KEY = 'pandora.benchmark.v1';
 const blankMeasurement = (): Measurement => ({ average: '', low: '', latency: '' });
@@ -83,6 +85,10 @@ function readBenchmark(): Benchmark {
     if (!value.before || !value.after || typeof value.game !== 'string' || typeof value.notes !== 'string') return blankBenchmark();
     if (!['before', 'after'].every(phase => measurementFields.every(field => typeof (value[phase as 'before' | 'after'] as Measurement)[field.key] === 'string'))) return blankBenchmark();
     const savedAt = typeof value.savedAt === 'string' && Number.isFinite(Date.parse(value.savedAt)) ? value.savedAt : null;
+    for (const phase of ['before', 'after'] as const) {
+      const measurement = value[phase]!;
+      if (!validFrameCapture(measurement.capture) || measurement.average !== measurement.capture.averageFps.toFixed(2) || measurement.low !== measurement.capture.lowFps.toFixed(2)) delete measurement.capture;
+    }
     const result: Benchmark = { game: value.game.slice(0, 120), notes: value.notes.slice(0, 1200), before: value.before, after: value.after, savedAt };
     return benchmarkErrors(result).length ? blankBenchmark() : result;
   } catch { return blankBenchmark(); }
@@ -94,7 +100,7 @@ export function PerformanceLab({ notify }: { notify: (message: string) => void }
   const [clearOpen, setClearOpen] = useState(false);
   const [dirty, setDirty] = useState(false);
   const hasAny = (['before', 'after'] as const).some(phase => measurementFields.some(field => benchmark[phase][field.key].trim()));
-  const change = (phase: 'before' | 'after', key: keyof Measurement, value: string) => { setBenchmark(previous => ({ ...previous, [phase]: { ...previous[phase], [key]: value } })); setDirty(true); setErrors([]); };
+  const change = (phase: 'before' | 'after', key: 'average' | 'low' | 'latency', value: string) => { setBenchmark(previous => ({ ...previous, [phase]: { ...previous[phase], [key]: value, capture: key === 'latency' ? previous[phase].capture : undefined } })); setDirty(true); setErrors([]); };
   const save = (event: FormEvent) => {
     event.preventDefault();
     const issues = benchmarkErrors(benchmark);
@@ -112,7 +118,13 @@ export function PerformanceLab({ notify }: { notify: (message: string) => void }
     const issues = benchmarkErrors(benchmark);
     if (issues.length) { setErrors(issues); return; }
     const cell = (value: string) => `"${(/^[=+\-@\t\r]/.test(value) ? `'${value}` : value).replaceAll('"', '""')}"`;
-    const rows = [['PANDORA — Created by Sonnier', 'User-entered benchmark measurements'], ['Game', benchmark.game], ['Test conditions', benchmark.notes],
+    const rows = [['PANDORA — Created by Sonnier', 'Local benchmark measurements; sources listed below'], ['Game', benchmark.game], ['Test conditions', benchmark.notes],
+      ...(['before', 'after'] as const).flatMap(phase => {
+        const capture = benchmark[phase].capture;
+        return [[`${phase} FPS source`, capture ? `Imported ${capture.source} intervals` : 'Manual entry'], ...(capture ? [[`${phase} frame count`, String(capture.frames)], [`${phase} interval duration ms`, String(capture.durationMs)], [`${phase} p99 interval ms`, String(capture.p99Ms)]] : [])];
+      }),
+      ['1% low method for imports', '1000 / mean of slowest ceil(frame count * 0.01) intervals in ms'],
+      ['Latency source', 'Manual entry; never inferred from frame intervals'],
       ['Metric', 'Before', 'After', 'Unit'], ...measurementFields.map(field => [field.title, benchmark.before[field.key], benchmark.after[field.key], field.unit])];
     const blob = new Blob([rows.map(row => row.map(cell).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob), anchor = document.createElement('a');
@@ -125,23 +137,26 @@ export function PerformanceLab({ notify }: { notify: (message: string) => void }
     <PageHeading eyebrow="MEASURE WHAT MATTERS" title="Performance Lab" description="Change one thing. Repeat your test. See what actually improved.">
       <button className="button secondary" onClick={exportCsv} disabled={!hasAny}><Download size={16}/>Export CSV</button>
     </PageHeading>
-    <Notice>These are your manually entered measurements. PANDORA does not measure game FPS or latency automatically and never predicts performance gains.</Notice>
+    <Notice>Enter measurements or import a recorded frame-time CSV. PANDORA analyzes your capture locally; it does not record game frames, infer input latency or predict performance gains.</Notice>
     <form onSubmit={save} className="stack">
       <section className="panel">
         <PanelTitle icon={FlaskConical} title="Your test conditions" action={<Badge>REPEATABLE BY DESIGN</Badge>}/>
         <div className="two-columns"><label className="field">Game or benchmark<input className="input" placeholder="Name your test" value={benchmark.game} maxLength={120} onChange={event => { setBenchmark(previous => ({ ...previous, game: event.target.value })); setDirty(true); }}/></label><label className="field">Settings & scenario<input className="input" placeholder="Resolution, graphics preset, map and test duration" value={benchmark.notes} maxLength={1200} onChange={event => { setBenchmark(previous => ({ ...previous, notes: event.target.value })); setDirty(true); }}/></label></div>
         <p className="benchmark-note">Use the same game scene, settings, duration and measuring tool for each run. Warm up first, repeat runs and compare consistent results.</p>
       </section>
+      <details className="panel capture-help"><summary>How to import a frame capture</summary><p>Choose a comma-separated CSV with one <code>frame_time_ms</code> or classic PresentMon <code>MsBetweenPresents</code> column, in milliseconds. Include at least 100 frames, up to 250,000 frames and 8 MiB. Export one process and one swap chain; mixed captures are rejected.</p><p>Your file stays on this device. Only calculated summaries are saved when you click Save measurements. Capture filenames, raw rows and process identities are not retained. For a simple file, use <code>frame_time_ms</code> as the first line and one measured interval per line.</p></details>
       <div className="two-columns">
         {(['before', 'after'] as const).map((phase, index) => <section className="panel" key={phase}>
           <PanelTitle icon={index ? Sparkles : Activity} title={index ? 'After your change' : 'Before your change'} action={<Badge>{index ? '02 / COMPARE' : '01 / BASELINE'}</Badge>}/>
+          <FrameImport phase={phase} onImport={capture => { setBenchmark(previous => ({ ...previous, [phase]: { ...previous[phase], average: capture.averageFps.toFixed(2), low: capture.lowFps.toFixed(2), capture } })); setDirty(true); setErrors([]); notify('Captured FPS results added. Save measurements to keep them.'); }}/>
+          {benchmark[phase].capture && <details className="capture-help"><summary>Imported capture details</summary><CaptureSummary capture={benchmark[phase].capture!}/></details>}
           <div className="stack">{measurementFields.map(field => <label className="field" key={field.key}>{field.title}<span className="input-unit"><input className="input" type="number" inputMode="decimal" min="0.001" max="100000" step="any" aria-label={`${phase === 'before' ? 'Before' : 'After'} ${field.title}`} placeholder="Not measured" value={benchmark[phase][field.key]} onChange={event => change(phase, field.key, event.target.value)}/><span>{field.unit}</span></span><small className="muted">{field.help}</small></label>)}</div>
         </section>)}
       </div>
       {errors.length > 0 && <Notice tone="error"><ul>{errors.map(error => <li key={error}>{error}</li>)}</ul></Notice>}
       <div className="benchmark-actions"><span className="muted">{dirty ? 'Unsaved measurements' : benchmark.savedAt ? `Saved ${new Date(benchmark.savedAt).toLocaleString()}` : 'Your measurements stay on this device.'}</span><div><button type="button" className="button secondary" onClick={() => setClearOpen(true)} disabled={!hasAny && !benchmark.game && !benchmark.notes}><Trash2 size={16}/>Clear</button><button type="submit" className="button primary"><Save size={16}/>Save measurements</button></div></div>
     </form>
-    <div className="section-heading"><h2>Your comparison</h2><span className="muted">Based on your entries</span></div>
+    <div className="section-heading"><h2>Your comparison</h2><span className="muted">Based on your measurements</span></div>
     <div className="benchmark-grid">{measurementFields.map(field => {
       const before = numberOrNull(benchmark.before[field.key]), after = numberOrNull(benchmark.after[field.key]);
       const valid = benchmarkErrors(benchmark).length === 0;

@@ -311,3 +311,58 @@ test('navigation and cleaner remain usable on a scaled narrow desktop', async ({
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   expect(await page.evaluate(() => (window as any).__calls.filter((call: any) => call.method === 'clean'))).toHaveLength(0);
 });
+
+
+test('frame capture review cancels safely, imports measured FPS, persists provenance and clears it on manual edits', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Performance Lab', exact: true }).click();
+  await page.getByRole('spinbutton', { name: 'Before Average FPS', exact: true }).fill('75');
+  await page.getByRole('spinbutton', { name: 'Before Latency', exact: true }).fill('15');
+  const file = { name: 'private-game-capture.csv', mimeType: 'text/csv', buffer: Buffer.from('frame_time_ms\n' + Array(1000).fill('10').join('\n')) };
+  await page.getByLabel('Choose before frame capture').setInputFiles(file);
+  await expect(page.getByRole('dialog')).toContainText('100.00 / 100.00 FPS');
+  await page.getByRole('button', { name: 'Close dialog', exact: true }).click();
+  await expect(page.getByRole('spinbutton', { name: 'Before Average FPS', exact: true })).toHaveValue('75');
+  expect(await page.evaluate(() => localStorage.getItem('pandora.benchmark.v1'))).toBeNull();
+  await page.getByLabel('Choose before frame capture').setInputFiles(file);
+  await page.getByRole('button', { name: 'Use captured results' }).click();
+  await expect(page.getByRole('spinbutton', { name: 'Before Average FPS', exact: true })).toHaveValue('100.00');
+  await expect(page.getByRole('spinbutton', { name: 'Before 1% low FPS', exact: true })).toHaveValue('100.00');
+  await expect(page.getByRole('spinbutton', { name: 'Before Latency', exact: true })).toHaveValue('15');
+  await page.getByRole('button', { name: 'Save measurements' }).click();
+  const stored = await page.evaluate(() => localStorage.getItem('pandora.benchmark.v1'));
+  expect(JSON.parse(stored!).before.capture.frames).toBe(1000);
+  expect(stored).not.toContain('private-game');
+  await page.reload();
+  await page.getByRole('navigation').getByRole('button', { name: 'Performance Lab', exact: true }).click();
+  await expect(page.getByText('Imported capture details', { exact: true })).toBeVisible();
+  await page.getByRole('spinbutton', { name: 'Before Latency', exact: true }).fill('16');
+  await expect(page.getByText('Imported capture details', { exact: true })).toBeVisible();
+  await page.getByRole('spinbutton', { name: 'Before Average FPS', exact: true }).fill('120');
+  await expect(page.getByText('Imported capture details', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Save measurements' }).click();
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('pandora.benchmark.v1')!).before.capture)).toBeUndefined();
+});
+
+test('invalid capture preserves measurements and valid after import yields a comparison and source-labelled export', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Performance Lab', exact: true }).click();
+  await page.getByRole('spinbutton', { name: 'Before Average FPS', exact: true }).fill('50');
+  await page.getByLabel('Choose after frame capture').setInputFiles({ name: 'mixed.csv', mimeType: 'text/csv', buffer: Buffer.from('ProcessID,MsBetweenPresents\n1,10\n2,10') });
+  await expect(page.getByRole('alert')).toContainText('multiple processes or swap chains');
+  await expect(page.getByRole('spinbutton', { name: 'Before Average FPS', exact: true })).toHaveValue('50');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page.getByLabel('Choose after frame capture').setInputFiles({ name: 'after.csv', mimeType: 'text/csv', buffer: Buffer.from('MsBetweenPresents\n' + Array(100).fill('10').join('\n')) });
+  await page.getByRole('button', { name: 'Use captured results' }).click();
+  await expect(page.getByText('100.0% higher FPS', { exact: false })).toBeVisible();
+  await expect(page.getByRole('spinbutton', { name: 'After Latency', exact: true })).toHaveValue('');
+  const downloaded = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export CSV' }).click();
+  const stream = await (await downloaded).createReadStream();
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream!) chunks.push(Buffer.from(chunk));
+  const exported = Buffer.concat(chunks).toString('utf8');
+  expect(exported).toContain('Imported MsBetweenPresents intervals');
+  expect(exported).toContain('Manual entry; never inferred from frame intervals');
+  await page.screenshot({ path: 'test-results/pandora-performance-import.png', fullPage: true });
+});
