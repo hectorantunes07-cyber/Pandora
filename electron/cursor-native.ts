@@ -44,7 +44,7 @@ public static class PandoraCursor {
    key.Flush();
   }
   // Reload configured cursors; only Arrow was changed. Other registry roles remain intact.
-  if(!Spi(0x0057,0,IntPtr.Zero,3)) throw new System.ComponentModel.Win32Exception();
+  if(!Spi(0x0057,0,IntPtr.Zero,0)) throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error(), "Windows did not reload its cursor configuration.");
   if(!Same(Read(),desired)) throw new Exception("Arrow read-back mismatch.");
  }
 }`;

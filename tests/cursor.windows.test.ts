@@ -19,6 +19,13 @@ describe.skipIf(!allowed)('normal pointer on explicitly disposable hosted Window
       const reopened = createCursorService(dir, path.resolve('public/cursors/sonnier.cur'), adapter);
       const restored = await reopened.change((await reopened.getInfo()).token, true); expect(restored.success, nativeErrors.join('\n') || restored.message).toBe(true);
       expect(await adapter.read()).toEqual(original);
-    } finally { const current = await adapter.read(); if (JSON.stringify(current) !== JSON.stringify(original)) await adapter.write(current, original, true); expect(await adapter.read()).toEqual(original); await fs.rm(dir, { recursive: true, force: true }); }
+    } finally {
+      const current = await adapter.read();
+      if (JSON.stringify(current) !== JSON.stringify(original)) {
+        try { await adapter.write(current, original, true); }
+        catch (error) { throw new Error('Native cursor cleanup failed: ' + String((error as { stderr?: string }).stderr || error)); }
+      }
+      expect(await adapter.read()).toEqual(original); await fs.rm(dir, { recursive: true, force: true });
+    }
   }, 180_000);
 });
