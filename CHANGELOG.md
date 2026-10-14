@@ -29,3 +29,11 @@ and a PC Cleaner with scan/review/confirmation flows.
 The precise implemented scope and known gaps are listed in [FEATURES.md](FEATURES.md).
 This release does not claim universal FPS gains, verified signing, or completed
 native Windows certification.
+
+## NVIDIA reference, cursor customization and readability — 2026-10-14
+
+- Added a searchable 54-entry personal NVIDIA configuration reference, saved notes, scoped instructions and guarded Control Panel launch. Manual driver changes remain outside automatic rollback.
+- Added optional normal-pointer customization with the supplied crosshair, validated local CUR/ANI files, persistent assets, durable originals, reviewed native apply/restore and combined rollback integration.
+- Added separate in-app cursor use with a static preview for animated files.
+- Increased text sizes and adjusted card layouts across the existing purple interface.
+- Extended backend, renderer, packaged bridge and disposable Windows cursor checks. Physical-PC and reboot validation remain required.

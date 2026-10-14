@@ -8,7 +8,12 @@ async function desktopFixture(page: Page) {
     const track = (method: string, ...args: unknown[]) => calls.push({ method, args });
     const states = [{ id: 'transparency', title: 'Reduce transparency', description: 'Use opaque Windows surfaces.', category: 'Quality of life' as const, risk: 'Low' as const, tradeoff: 'Windows surfaces will look opaque.', target: 'HKCU\\Test\\Transparency', desiredValue: 0, restart: 'Sign out may be required.', reference: 'https://support.microsoft.com/', state: 'available' as const, currentValue: 1, managed: false }];
     let visualManaged = false;
+    let cursorManaged = false, appCursor = false;
+    const cursorInfo = () => ({ supported: true, current: { kind: 'String' as const, value: cursorManaged ? 'C:\\fixture.cur' : '' }, original: cursorManaged ? { kind: 'String' as const, value: '' } : null, currentPreview: null, selected: { id: 'fixture', name: 'Sonnier’s cursor', kind: 'cur' as const, width: 32, height: 32, x: 15, y: 16, preview: './cursors/sonnier.png', cssCursor: 'data:image/x-icon;base64,AA==' }, useInApp: appCursor, managed: cursorManaged, conflict: false, token: 'cursor-review' });
     window.pandora = {
+      getCursor: async () => cursorInfo(), selectCursor: async bundled => { track('cursor-select', bundled); return bundled ? cursorInfo() : null; },
+      changeCursor: async (token, restore) => { track('cursor-change', token, restore); cursorManaged = !restore; return { id: 'cursor', success: true, message: 'Normal pointer verified.' }; },
+      setAppCursor: async enabled => { track('cursor-app', enabled); appCursor = enabled; return cursorInfo(); },
       getNvidiaPreset: async () => null, saveNvidiaPreset: async preset => { track('nvidia-save', preset); return preset; }, openNvidiaControlPanel: async () => { track('nvidia-open'); },
       getVisualEffects: async () => [{ id: 'menu-animation', current: !visualManaged, original: visualManaged ? true : null, managed: visualManaged, token: 'visual-review-token' }],
       changeVisualEffect: async (token, restore) => { track('visual-change', token, restore); visualManaged = !restore; return { id: 'menu-animation', success: true, message: 'Visual preference verified.' }; },
@@ -635,4 +640,34 @@ test('readable typography and NVIDIA cards fit a scaled desktop', async ({ page 
   await nav.click();
   expect(await page.locator('.nvidia-setting p').first().evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(14);
   expect(await page.locator('#main-content').evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+});
+
+test('cursor customization separates preview, app-only use, confirmed Windows apply and original restoration', async ({ page }) => {
+  await desktopFixture(page); await page.goto('/');
+  await page.getByRole('button', { name: 'Quality of Life', exact: true }).click();
+  await expect(page.getByRole('img', { name: 'Selected custom cursor' })).toBeVisible();
+  await page.getByRole('button', { name: 'Choose .cur or .ani file' }).click();
+  await expect(page.getByRole('heading', { name: 'Cursor Customization' })).toBeVisible();
+  await page.getByLabel('Use selected cursor inside PANDORA').check();
+  await expect(page.locator('html')).toHaveAttribute('data-personal-cursor', 'true');
+  await page.getByRole('button', { name: 'Apply Cursor', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('Other roles, including text, busy and resize pointers');
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'cursor-change'))).toHaveLength(0);
+  await page.getByRole('button', { name: 'Apply Cursor', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm cursor change', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Apply Cursor', exact: true })).toBeDisabled();
+  await page.getByRole('button', { name: 'Restore Default', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('Saved Windows scheme default');
+  await page.getByRole('button', { name: 'Confirm cursor change', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Restore Default', exact: true })).toBeDisabled();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'cursor-change').map((c: any) => c.args))).toEqual([['cursor-review', false], ['cursor-review', true]]);
+});
+
+test('cursor provider failure blocks Windows apply and restore instead of showing success', async ({ page }) => {
+  await desktopFixture(page); await page.addInitScript(() => { window.pandora!.getCursor = async () => { throw new Error('Cursor backup unreadable. Preserved.'); }; });
+  await page.goto('/'); await page.getByRole('button', { name: 'Quality of Life', exact: true }).click();
+  await expect(page.locator('.cursor-manager').getByRole('alert')).toContainText('Cursor backup unreadable');
+  await expect(page.getByRole('button', { name: 'Apply Cursor', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Restore Default', exact: true })).toBeDisabled();
 });

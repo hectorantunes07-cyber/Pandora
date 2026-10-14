@@ -27,13 +27,14 @@ jobs:
       - name: Unit and filesystem safety tests
         run: npm test
       - name: Disposable runner registry, profile, power, pointer, visual effects and startup exact restore
-        run: npx vitest run tests/tweaks.windows.test.ts tests/power.windows.test.ts tests/startup.windows.test.ts tests/pointer.windows.test.ts tests/visual-effects.windows.test.ts
+        run: npx vitest run tests/tweaks.windows.test.ts tests/power.windows.test.ts tests/startup.windows.test.ts tests/pointer.windows.test.ts tests/visual-effects.windows.test.ts tests/cursor.windows.test.ts
         env:
           PANDORA_TEST_WINDOWS_TWEAKS: '1'
           PANDORA_TEST_WINDOWS_POWER: '1'
           PANDORA_TEST_WINDOWS_STARTUP: '1'
           PANDORA_TEST_WINDOWS_POINTER: '1'
           PANDORA_TEST_WINDOWS_VISUAL: '1'
+          PANDORA_TEST_WINDOWS_CURSOR: '1'
       - name: Install Chromium for UI tests
         run: npx playwright install chromium
       - name: UI smoke tests

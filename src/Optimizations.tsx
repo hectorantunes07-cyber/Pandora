@@ -1,3 +1,4 @@
+import { CursorCustomization } from './CursorCustomization';
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, ArrowUpRight, Check, CheckCircle2, ChevronRight, CircleAlert, FileCheck2, Gamepad2, History, Info, ListFilter, RefreshCw, RotateCcw, Search, ShieldCheck, SlidersHorizontal, Sparkles, X, Zap } from 'lucide-react';
 import type { GameInfo, HistoryEntry, ManualGamePath, OperationResult, SystemInfo, TweakState } from '../shared/types';
@@ -105,7 +106,7 @@ export function Restore({ tweaks, notify, refreshTweaks, onBusyChange }: { tweak
     <RestoreAll onBusyChange={onBusyChange} onRestored={async () => { await load(); await refreshTweaks(); setRevision(n => n + 1); }}/>
     <ProfileControls key={`profile-${revision}`} tweaks={tweaks} refreshTweaks={refreshTweaks} onBusyChange={onBusyChange} restoreOnly/>
     <PowerControls key={`power-${revision}`} onBusyChange={onBusyChange} restoreOnly/>
-    <PointerControls key={`pointer-${revision}`} onBusyChange={onBusyChange} restoreOnly/>
+    <PointerControls key={`pointer-${revision}`} onBusyChange={onBusyChange} restoreOnly/><CursorCustomization key={`cursor-${revision}`} onBusyChange={onBusyChange} restoreOnly/>
     <VisualEffects key={`visual-${revision}`} onBusyChange={onBusyChange} restoreOnly/>
     <StartupControls key={`startup-${revision}`} onBusyChange={onBusyChange} restoreOnly/>
     <Notice>These are setting snapshots created by PANDORA, not Windows System Restore points. Restore changes only the reviewed managed preferences. Deleted cleanup files cannot be restored here.</Notice>

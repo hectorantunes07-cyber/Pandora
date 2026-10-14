@@ -43,7 +43,7 @@ export function createNvidiaService(directory: string) {
     savePreset(input: unknown): Promise<NvidiaPreset> {
       const preset = validateNvidiaPreset(input);
       preset.savedAt = new Date().toISOString();
-      const work = queue.catch(() => undefined).then(async () => { await writeDurableJson(file, preset); return preset; }); queue = work; return work;
+      const work = queue.catch(() => undefined).then(async () => { const existing = await readSmallJson(file); if (existing !== undefined) validateNvidiaPreset(existing); await writeDurableJson(file, preset); return preset; }); queue = work; return work;
     },
   };
 }

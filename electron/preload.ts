@@ -1,6 +1,10 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { AppApi, ProgressEvent } from '../shared/types';
 const api: AppApi = {
+  getCursor: () => ipcRenderer.invoke('pandora:cursor'),
+  selectCursor: bundled => ipcRenderer.invoke('pandora:cursor-select', bundled),
+  changeCursor: (token, restore) => ipcRenderer.invoke('pandora:cursor-change', token, restore),
+  setAppCursor: enabled => ipcRenderer.invoke('pandora:cursor-app', enabled),
   getNvidiaPreset: () => ipcRenderer.invoke('pandora:nvidia-preset'),
   saveNvidiaPreset: preset => ipcRenderer.invoke('pandora:nvidia-save', preset),
   openNvidiaControlPanel: () => ipcRenderer.invoke('pandora:nvidia-open'),

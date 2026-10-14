@@ -38,6 +38,13 @@ try {
   assert.equal(info.platform, process.platform);
   assert.ok(info.ramBytes > 0 && info.ramTotal > 0);
   assert.equal(info.nodeExposed, false);
+  const cursor = await page.evaluate(() => window.pandora.getCursor());
+  assert.equal(cursor.selected.width, 32);
+  assert.equal(cursor.selected.x, 15);
+  assert.equal(cursor.selected.y, 16);
+  assert.equal(cursor.managed, false);
+  assert.match(cursor.selected.preview, /^data:image\/png;base64,/);
+  assert.equal(await page.evaluate(() => window.pandora.getNvidiaPreset()), null);
   if (process.platform === 'win32') {
     assert.match(info.os, /Windows/i, `Windows CIM inventory must load: ${info.notes.join(' ')}`);
     assert.ok(info.physicalCores > 0 && info.volumeCount > 0, 'Windows CPU and volume providers must return real inventory');

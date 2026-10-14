@@ -1,3 +1,6 @@
+export interface CursorValue { kind: 'String' | 'ExpandString' | null; value: string | null; }
+export interface CursorAsset { id: string; name: string; kind: 'cur' | 'ani'; width: number; height: number; x: number; y: number; preview: string; cssCursor: string; }
+export interface CursorInfo { supported: boolean; current: CursorValue | null; original: CursorValue | null; currentPreview: string | null; selected: CursorAsset | null; useInApp: boolean; managed: boolean; conflict: boolean; token: string | null; reason?: string; }
 export interface NvidiaPreset { version: 1; name: string; savedAt: string; notes: string; values: Record<string, string>; }
 export type Capability = 'available' | 'unavailable' | 'unsupported' | 'permission';
 export interface SystemInfo {
@@ -41,6 +44,11 @@ export interface NetworkResult {
   received: number; lossPercent: number; averageMs: number | null; minMs: number | null; maxMs: number | null; jitterMs: number | null;
 }
 export interface AppApi {
+  getCursor(): Promise<CursorInfo>;
+  selectCursor(bundled: boolean): Promise<CursorInfo | null>;
+  changeCursor(token: string, restore: boolean): Promise<OperationResult>;
+  setAppCursor(enabled: boolean): Promise<CursorInfo>;
+
   getNvidiaPreset(): Promise<NvidiaPreset | null>;
   saveNvidiaPreset(preset: NvidiaPreset): Promise<NvidiaPreset>;
   openNvidiaControlPanel(): Promise<void>;

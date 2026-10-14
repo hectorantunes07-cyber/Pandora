@@ -9,6 +9,7 @@ import { createStartupService } from './startup';
 import { createPowerService } from './power';
 import { createRestoreService } from './restore-all';
 import { createVisualEffectsService } from './visual-effects';
+import { createCursorService } from './cursor';
 import { createNvidiaService, openNvidiaControlPanel } from './nvidia';
 import { createPointerService } from './pointer';
 import { createGamePathService, validateGameId } from './game-paths';
@@ -36,7 +37,7 @@ function registerServices() {
   function handle(name: string, fn: (...args: any[]) => unknown) {
     ipcMain.handle(`pandora:${name}`, async (event, ...args) => {
       checkSender(event);
-      const mutates = ['apply', 'revert', 'clean', 'profile-apply', 'power-apply', 'power-restore', 'startup-change', 'pointer-change', 'visual-change', 'restore-all'].includes(name);
+      const mutates = ['apply', 'revert', 'clean', 'profile-apply', 'power-apply', 'power-restore', 'startup-change', 'pointer-change', 'visual-change', 'cursor-change', 'cursor-select', 'cursor-app', 'restore-all'].includes(name);
       if (!mutates) return fn(...args);
       activeMutations++;
       const result = mutationQueue.then(() => fn(...args));
@@ -68,7 +69,18 @@ function registerServices() {
   const visual = createVisualEffectsService(app.getPath('userData'));
   handle('visual-effects', () => visual.getStates());
   handle('visual-change', (token: unknown, restore: unknown) => visual.change(token, restore));
-  const recovery = createRestoreService({ tweaks, power, startup, pointer, visual });
+  const bundledCursor = path.join(__dirname, '../dist/cursors/sonnier.cur');
+  const cursor = createCursorService(app.getPath('userData'), bundledCursor);
+  handle('cursor', () => cursor.getInfo());
+  handle('cursor-change', (token: unknown, restore: unknown) => cursor.change(token, restore));
+  handle('cursor-app', (enabled: unknown) => cursor.setAppCursor(enabled));
+  handle('cursor-select', async (bundled: unknown) => {
+    if (typeof bundled !== 'boolean' || !window || process.platform !== 'win32') throw new Error('Choose cursor files from the Windows app.');
+    if (bundled) return cursor.select(bundledCursor, true);
+    const result = await dialog.showOpenDialog(window, { title: 'Choose a Windows normal pointer', properties: ['openFile'], filters: [{ name: 'Windows cursor', extensions: ['cur', 'ani'] }] });
+    return result.canceled || !result.filePaths[0] ? null : cursor.select(result.filePaths[0]);
+  });
+  const recovery = createRestoreService({ tweaks, power, startup, pointer, visual, cursor });
   handle('restore-preview', () => recovery.preview());
   handle('restore-all', (token: unknown) => recovery.restore(token));
   handle('power', () => power.getInfo());

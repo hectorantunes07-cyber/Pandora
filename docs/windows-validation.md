@@ -132,3 +132,18 @@ Windows compatibility, anti-cheat approval or FPS improvement.
 - [ ] Compare GPU/driver identity and active display rate with Windows tools.
       Verify NVIDIA/AMD guidance is conditional, fixed settings links open the
       correct page, and milliseconds per refresh is not labeled input latency.
+
+
+## NVIDIA configuration and cursor customization
+
+- [ ] Open NVIDIA Settings; confirm detected GPU/driver match your hardware. Sonnier's reference values must not be mistaken for detected settings.
+- [ ] Search and filter the 54 settings; switch Global/Per-Game guidance. Save notes and reopen the application to confirm persistence.
+- [ ] Open the real NVIDIA Control Panel using the launcher. On unsupported hardware or a missing installation, verify the failure message and manual Start-menu alternative.
+- [ ] Record original driver values before manually changing anything. Driver defaults and PANDORA rollback are not backups of manual NVIDIA changes.
+- [ ] In Quality of Life, verify the actual supplied crosshair preview and hotspot. Cancel Apply Cursor and confirm no Windows change.
+- [ ] Apply only the normal pointer, check text/busy/resize roles are unchanged, restart PANDORA, and restore the exact previous pointer.
+- [ ] Apply again and restart Windows. Confirm the persistent app-data file is still used, then restore. Repeat with a local CUR and supported ANI file (in-app animation is a static first frame).
+- [ ] Change the normal pointer outside PANDORA while it is managed. Confirm conflict reporting and that automatic rollback does not overwrite the external change.
+- [ ] Toggle in-app use separately. Check cursor behavior on buttons, text fields, disabled controls and resizing. No Windows write should occur.
+- [ ] Review combined rollback and verify the custom normal pointer is included with its original value.
+- [ ] Check all pages at 100%, 125%, 150% and 200% display scaling for readable text, keyboard access, wrapping and scrolling.

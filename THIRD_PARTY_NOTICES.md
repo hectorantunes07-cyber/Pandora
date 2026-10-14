@@ -16,3 +16,7 @@ file for the authoritative terms. This summary is not a substitute for them.
 PANDORA's icon and interface artwork are original project assets. Screenshots
 provided during development were visual references only; competitor assets are
 not included. The interface uses locally available system fonts.
+
+## User-supplied cursor
+
+`public/cursors/sonnier.cur` was supplied by the project owner for PANDORA's optional normal-pointer customization. Its SHA-256 is `1d73adc392eb917fbb90601c47edc1ca14f1d5249d5f56d85d5ce1f61bbe85d4`. The PNG is a lossless preview conversion. No third-party cursor theme or other pointer roles are included.

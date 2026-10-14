@@ -4,6 +4,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { VISUAL_EFFECTS, type VisualEffectId } from '../shared/visual-effects';
 import { createVisualEffectsService } from '../electron/visual-effects';
+import { createCursorService } from '../electron/cursor';
 import { createRestoreService } from '../electron/restore-all';
 import { createTweakService, type RegistryValue } from '../electron/tweaks';
 import { createPowerService } from '../electron/power';
@@ -17,6 +18,7 @@ describe('reviewed restoration across all managed features', () => {
   afterEach(async () => { await fs.rm(dir, { recursive: true, force: true }); });
   function services() {
     return {
+      cursor: createCursorService(dir, path.resolve('public/cursors/sonnier.cur'), { supported: false, read: async () => { throw new Error('Unavailable'); }, write: async () => {}, preview: async () => null }),
       visual: createVisualEffectsService(dir, { supported: false, read: async () => { throw new Error('unavailable'); }, write: async () => {} }),
       pointer: createPointerService(dir, { supported: true, read: async () => [6, 10, 0], write: async () => { throw new Error('No pointer changes were applied in this fixture'); } }),
       tweaks: createTweakService(dir, { adapter: { supported: true, read: async t => values.get(t.id) ?? { kind: 'absent' }, write: async (t, v) => { writes.push(t.id); values.set(t.id, v); } } }),
@@ -107,6 +109,19 @@ describe('reviewed restoration across all managed features', () => {
     expect(results.find(e => e.id === 'visual:tooltip-animation')?.success).toBe(false);
     expect(current['menu-animation']).toBe(true);
     expect((await s.visual.getStates()).find(e => e.id === 'tooltip-animation')?.managed).toBe(true);
+  });
+
+  it('includes managed custom cursor in combined restore and rejects corrupt cursor journals', async () => {
+    let arrow = { kind: 'String' as const, value: '' };
+    const s = services();
+    s.cursor = createCursorService(dir, path.resolve('public/cursors/sonnier.cur'), { supported: true, read: async () => arrow, write: async (_expected, desired) => { arrow = desired as typeof arrow; }, preview: async () => null });
+    await s.cursor.change((await s.cursor.getInfo()).token, false);
+    const recovery = createRestoreService(s), reviewed = await recovery.preview();
+    expect(reviewed.items.find(i => i.id === 'cursor')?.eligible).toBe(true);
+    expect((await recovery.restore(reviewed.token)).find(i => i.id === 'cursor')?.success).toBe(true);
+    expect(arrow).toEqual({ kind: 'String', value: '' });
+    await fs.writeFile(path.join(dir, 'backups/cursor-v1.json'), '{bad');
+    await expect(recovery.preview()).rejects.toThrow('preserved');
   });
 
 });
