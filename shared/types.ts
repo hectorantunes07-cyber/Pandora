@@ -44,6 +44,7 @@ export interface NetworkResult {
   received: number; lossPercent: number; averageMs: number | null; minMs: number | null; maxMs: number | null; jitterMs: number | null;
 }
 export interface AppApi {
+  getGpuTelemetry(): Promise<import('./gpu-telemetry').GpuTelemetry>;
   getPowerTuning(): Promise<import('./power-tuning').PowerTuningInfo>;
   previewPowerTuning(id: string, value: number | null, restore: boolean): Promise<import('./power-tuning').PowerTuningReview>;
   changePowerTuning(token: string): Promise<OperationResult>;

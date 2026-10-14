@@ -141,3 +141,10 @@
 .power-tuning details { margin:16px 0; font-size:14px; }
 .power-tuning summary { color:#cab7f2; cursor:pointer; }
 .power-tuning details p { margin-top:10px; }
+
+.gpu-device { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--line); }
+.gpu-device h3 { font-size: 20px; line-height: 1.4; overflow-wrap: anywhere; }
+.gpu-reading-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin: 20px 0; }
+.gpu-reading-grid dt { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+.gpu-reading-grid dd { font-size: 22px; font-weight: 600; margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 1000px) { .gpu-reading-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

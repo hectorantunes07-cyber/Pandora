@@ -9,6 +9,7 @@ const browserSettings = (): AppSettings => {
   catch { return defaultSettings; }
 };
 export const api: AppApi = window.pandora ?? {
+  getGpuTelemetry: unavailable,
   getPowerTuning: unavailable, previewPowerTuning: unavailable, changePowerTuning: unavailable,
   getCursor: unavailable, selectCursor: unavailable, changeCursor: unavailable, setAppCursor: unavailable,
   getNvidiaPreset: unavailable, saveNvidiaPreset: unavailable, openNvidiaControlPanel: unavailable,

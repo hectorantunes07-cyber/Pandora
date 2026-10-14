@@ -1,5 +1,11 @@
 # Changelog
 
+## NVIDIA hardware readings — 2026-10-14
+
+- Added optional read-only NVIDIA driver snapshots for VRAM usage/capacity, GPU temperature, graphics clock, reported power and utilization.
+- Added per-device cards, explicit refresh timestamps, bounded queries, unavailable values and system report export. Memory units are explicitly MiB/GiB.
+- Added malformed-output, multi-GPU, caching, failure-recovery, fixed-command and interface regression tests. Actual NVIDIA GPU/driver behavior still needs physical-PC validation.
+
 ## Advanced power controls — 2026-10-14
 
 - Added six individually reviewed plugged-in power settings using documented Windows power APIs: CPU minimum/maximum, boost mode, energy preference, PCIe savings and cooling policy.

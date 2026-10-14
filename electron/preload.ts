@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { AppApi, ProgressEvent } from '../shared/types';
 const api: AppApi = {
+  getGpuTelemetry: () => ipcRenderer.invoke('pandora:gpu-telemetry'),
   getPowerTuning: () => ipcRenderer.invoke('pandora:power-tuning'),
   previewPowerTuning: (id, value, restore) => ipcRenderer.invoke('pandora:power-tuning-preview', id, value, restore),
   changePowerTuning: token => ipcRenderer.invoke('pandora:power-tuning-change', token),

@@ -158,3 +158,11 @@ Windows compatibility, anti-cheat approval or FPS improvement.
 - Compare repeated same-scene frame captures and actual thermals/noise/power on representative hardware. Do not recommend maximum performance universally, particularly on laptops. PANDORA does not presently measure temperatures itself.
 
 The implementation uses PowerGetActiveScheme, PowerReadACValueIndex, PowerWriteACValueIndex and PowerSetActiveScheme. Fixed setting identifiers were cross-checked against Microsoft's [Windows SDK winnt.h](https://github.com/microsoft/win32metadata/blob/main/generation/WinSDK/RecompiledIdlHeaders/um/winnt.h). Unsupported stored values remain unavailable; power-policy presence does not establish hardware effectiveness.
+
+
+## NVIDIA driver telemetry
+
+- Compare each supported NVIDIA device against NVIDIA SMI on the same PC. Check VRAM units (MiB/GiB), temperature, graphics clock, utilization and reported power; these are sampled driver values, not guarantees of throttling or performance.
+- Test NVIDIA absent, a missing utility, driver errors/timeouts, unsupported individual fields and multiple GPUs. All failures must remain unavailable, with no prior snapshot represented as current. AMD/Intel GPUs should still retain existing hardware inventory even though this sensor provider is NVIDIA-only.
+- Refresh within and after 15 seconds; check the cache label/timestamp and verify no periodic NVIDIA subprocess runs while idle. Provider queries occur only when entering System Monitor, explicitly refreshing or exporting a system report.
+- Inspect the exported provider timestamp and numeric fields; no UUID, serial, bus address, executable path or command output should be retained.

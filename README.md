@@ -279,3 +279,15 @@ GPU guidance uses the detected vendor and driver inventory. Windows graphics and
 display shortcuts open the relevant settings page; PANDORA does not silently
 change GPU scheduling, driver profiles or VRR. Refresh intervals are calculated
 from reported Hz and are not input-latency measurements.
+
+### NVIDIA hardware readings
+
+System Monitor can query the installed NVIDIA SMI utility for per-device memory
+usage/capacity, temperature, graphics clock, power draw and utilization. PANDORA
+uses fixed read-only arguments and fixed Windows installation locations; it does
+not download tools, search PATH, change clocks, or require NVIDIA on other PCs.
+Snapshots load when opening System Monitor and on explicit refresh, with a
+15-second cache and bounded execution. Unsupported fields remain unavailable.
+Reports include these readings with a separate timestamp and provider label.
+Physical NVIDIA hardware/driver verification is still required; hosted Windows
+CI usually has no NVIDIA GPU. CPU and AMD/Intel sensor providers are unfinished.

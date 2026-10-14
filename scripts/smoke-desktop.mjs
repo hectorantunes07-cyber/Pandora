@@ -45,6 +45,12 @@ try {
   assert.equal(cursor.managed, false);
   assert.match(cursor.selected.preview, /^data:image\/png;base64,/);
   assert.equal(await page.evaluate(() => window.pandora.getNvidiaPreset()), null);
+  const gpuReadings = await page.evaluate(() => window.pandora.getGpuTelemetry());
+  assert.equal(gpuReadings.provider, 'NVIDIA SMI');
+  assert.ok(['available', 'unavailable'].includes(gpuReadings.status));
+  assert.ok(Array.isArray(gpuReadings.devices));
+  assert.ok(Number.isFinite(Date.parse(gpuReadings.timestamp)));
+  if (process.platform !== 'win32') assert.equal(gpuReadings.devices.length, 0);
   const powerTuning = await page.evaluate(() => window.pandora.getPowerTuning());
   assert.equal(powerTuning.states.length, 6);
   assert.ok(powerTuning.states.every(state => !state.managed));

@@ -11,6 +11,7 @@ async function desktopFixture(page: Page) {
     let cursorManaged = false, appCursor = false;
     const cursorInfo = () => ({ supported: true, current: { kind: 'String' as const, value: cursorManaged ? 'C:\\fixture.cur' : '' }, original: cursorManaged ? { kind: 'String' as const, value: '' } : null, currentPreview: null, selected: { id: 'fixture', name: 'Sonnier’s cursor', kind: 'cur' as const, width: 32, height: 32, x: 15, y: 16, preview: './cursors/sonnier.png', cssCursor: 'data:image/x-icon;base64,AA==' }, useInApp: appCursor, managed: cursorManaged, conflict: false, token: 'cursor-review' });
     window.pandora = {
+      getGpuTelemetry: async () => { track('gpu-telemetry'); return { timestamp: new Date().toISOString(), provider: 'NVIDIA SMI', status: 'unavailable', cached: false, devices: [], reason: 'No GPU sensor fixture configured.' }; },
       getPowerTuning: async () => ({ supported: true, planId: '381b4222-f694-41f0-9685-ff5bb260df2e', activePlanId: '381b4222-f694-41f0-9685-ff5bb260df2e', states: [{ id: 'cpu-maximum', current: 100, original: null, applied: null, managed: false, conflict: false }] }),
       previewPowerTuning: async (id, value, restore) => { track('power-tuning-preview', id, value, restore); return { token: 'power-tuning-review', id, planId: '381b4222-f694-41f0-9685-ff5bb260df2e', activePlanId: '381b4222-f694-41f0-9685-ff5bb260df2e', current: 100, desired: value ?? 100, restore }; },
       changePowerTuning: async token => { track('power-tuning-change', token); return { id: 'power-tuning:cpu-maximum', success: true, message: 'Power value verified.' }; },
@@ -148,7 +149,7 @@ test('scanner displays returned hardware, keeps unavailable GPU metrics honest, 
   await expect(page.getByText('Test NVMe drive')).toBeVisible();
   await expect(page.getByText('Test Ethernet adapter')).toBeVisible();
   await expect(page.getByText('Up · 2.5 Gbps link')).toBeVisible();
-  await expect(page.getByText('CPU and GPU temperatures are not exposed', { exact: false })).toBeVisible();
+  await expect(page.getByText('CPU temperature is not currently exposed.', { exact: false })).toBeVisible();
   await expect(page.locator('.metric-card').nth(1).locator('.meter > span')).toHaveText('—');
   await page.getByRole('button', { name: 'Export report' }).click();
   expect(await page.evaluate(() => (window as any).__calls.find((c: any) => c.method === 'export').args)).toEqual(['system']);
@@ -689,4 +690,30 @@ test('advanced power controls review exact values and cancel without changing th
   await page.getByRole('button', { name: 'Confirm power setting', exact: true }).click();
   await expect(page.locator('.power-tuning')).toContainText('Power value verified.');
   expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'power-tuning-change').map((c: any) => c.args))).toEqual([['power-tuning-review']]);
+});
+
+test('GPU telemetry shows separate real-provider fields, preserves unavailable values and clears stale readings on failure', async ({ page }) => {
+  await desktopFixture(page);
+  await page.addInitScript(() => {
+    let count = 0;
+    window.pandora!.getGpuTelemetry = async () => {
+      (window as any).__calls.push({ method: 'gpu-telemetry', args: [] });
+      if (++count > 1) throw new Error('Driver query unavailable');
+      return { timestamp: '2026-10-14T12:00:00Z', provider: 'NVIDIA SMI', status: 'available', cached: false, devices: [{ index: 0, name: 'GPU telemetry test device', memoryTotalBytes: 16 * 1024 ** 3, memoryUsedBytes: 4 * 1024 ** 3, temperatureC: 52, powerWatts: null, graphicsMHz: 2100, utilizationPercent: 74 }] };
+    };
+  });
+  await page.goto('/');
+  await expect.poll(() => page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'gpu-telemetry').length)).toBe(0);
+  await page.getByRole('navigation').getByRole('button', { name: 'System Monitor', exact: true }).click();
+  const panel = page.getByRole('region', { name: 'NVIDIA hardware readings' });
+  await expect(panel.getByText('52 °C', { exact: true })).toBeVisible();
+  await expect(panel.getByText('16.0 GiB', { exact: true })).toBeVisible();
+  await expect(panel.getByText('4.0 GiB', { exact: true })).toBeVisible();
+  await expect(panel.getByText('Unavailable', { exact: true })).toHaveCount(1);
+  await expect(panel.getByText(/Sample collected/)).toBeVisible();
+  await expect(panel.getByText('GPU telemetry test device')).toBeVisible();
+  await panel.screenshot({ path: 'test-results/pandora-gpu-readings.png' });
+  await panel.getByRole('button', { name: 'Refresh GPU readings' }).click();
+  await expect(panel.getByText('Driver query unavailable')).toBeVisible();
+  await expect(panel.getByText('52 °C', { exact: true })).toHaveCount(0);
 });

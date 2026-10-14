@@ -7,6 +7,7 @@ import { createTweakService } from './tweaks';
 import { createCleanerService } from './cleaner';
 import { createStartupService } from './startup';
 import { createPowerTuningService } from './power-tuning';
+import { createGpuTelemetryService } from './gpu-telemetry';
 import { createPowerService } from './power';
 import { createRestoreService } from './restore-all';
 import { createVisualEffectsService } from './visual-effects';
@@ -106,6 +107,8 @@ function registerServices() {
   });
   handle('system', getSystem);
   handle('metrics', getMetrics);
+  const gpuTelemetry = createGpuTelemetryService();
+  handle('gpu-telemetry', () => gpuTelemetry.get());
   handle('processes', getProcesses);
   handle('startup', getStartup);
   handle('games', getGames);
@@ -131,7 +134,7 @@ function registerServices() {
     if (!window) return null;
     // Fixed schema intentionally excludes usernames, network addresses, serials, paths and hardware IDs.
     const info = kind === 'system' ? await getSystem() : null;
-    const report = info ? { product: 'PANDORA', version: app.getVersion(), createdBy: 'Sonnier', timestamp: info.timestamp, platform: info.platform, cpu: info.cpu, logicalCores: info.logicalCores, physicalCores: info.physicalCores, cpuReportedMHz: info.cpuReportedMHz, architecture: info.architecture, gpu: info.gpu, gpuDriver: info.gpuDriver, ramBytes: info.ramBytes, installedRamBytes: info.installedRamBytes, deviceType: info.deviceType, physicalDisks: info.physicalDisks, networkAdapters: info.networkAdapters, ramSpeedMHz: info.ramSpeedMHz, os: info.os, motherboard: info.motherboard, volumes: info.volumes.map(v => ({ totalBytes: v.totalBytes, freeBytes: v.freeBytes })), monitors: info.monitors.map(m => ({ width: m.width, height: m.height, refreshHz: m.refreshHz })) } : { product: 'PANDORA', timestamp: new Date().toISOString(), history: (await tweaks.getHistory()).map(h => ({ tweakId: h.tweakId, title: h.title, timestamp: h.timestamp, status: h.status, originalValue: h.originalValue, appliedValue: h.appliedValue })) };
+    const report = info ? { product: 'PANDORA', version: app.getVersion(), createdBy: 'Sonnier', gpuReadings: await gpuTelemetry.get(), timestamp: info.timestamp, platform: info.platform, cpu: info.cpu, logicalCores: info.logicalCores, physicalCores: info.physicalCores, cpuReportedMHz: info.cpuReportedMHz, architecture: info.architecture, gpu: info.gpu, gpuDriver: info.gpuDriver, ramBytes: info.ramBytes, installedRamBytes: info.installedRamBytes, deviceType: info.deviceType, physicalDisks: info.physicalDisks, networkAdapters: info.networkAdapters, ramSpeedMHz: info.ramSpeedMHz, os: info.os, motherboard: info.motherboard, volumes: info.volumes.map(v => ({ totalBytes: v.totalBytes, freeBytes: v.freeBytes })), monitors: info.monitors.map(m => ({ width: m.width, height: m.height, refreshHz: m.refreshHz })) } : { product: 'PANDORA', timestamp: new Date().toISOString(), history: (await tweaks.getHistory()).map(h => ({ tweakId: h.tweakId, title: h.title, timestamp: h.timestamp, status: h.status, originalValue: h.originalValue, appliedValue: h.appliedValue })) };
     const result = await dialog.showSaveDialog(window, { title: 'Save privacy-filtered PANDORA report', defaultPath: `PANDORA-${kind}-${new Date().toISOString().slice(0, 10)}.json`, filters: [{ name: 'JSON report', extensions: ['json'] }] });
     if (result.canceled || !result.filePath) return null;
     await fs.writeFile(result.filePath, JSON.stringify(report, null, 2), { mode: 0o600 });
