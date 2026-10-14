@@ -1,5 +1,12 @@
 # Changelog
 
+## Reviewed Windows restore points — 2026-10-14
+
+- Added restore-point inventory and explicit reviewed creation through a separate Windows administrator helper; the desktop app is not relaunched elevated.
+- Creation uses the fixed Windows Checkpoint-Computer cmdlet and verifies a newly listed unique point before reporting success. Cancellation, unsupported Windows Server, policy limits and unconfirmed results remain explicit.
+- Added Windows System Protection launch and clear separation from exact PANDORA setting rollback. Protection/retention/frequency policy and existing points are not changed by PANDORA.
+- Actual creation/UAC behavior requires Windows 10/11 client validation; hosted Server CI only verifies supported script fixtures and unavailable behavior.
+
 ## NVIDIA hardware readings — 2026-10-14
 
 - Added optional read-only NVIDIA driver snapshots for VRAM usage/capacity, GPU temperature, graphics clock, reported power and utilization.

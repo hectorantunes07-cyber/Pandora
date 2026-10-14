@@ -8,6 +8,7 @@ import { createCleanerService } from './cleaner';
 import { createStartupService } from './startup';
 import { createPowerTuningService } from './power-tuning';
 import { createGpuTelemetryService } from './gpu-telemetry';
+import { createSystemRestoreService } from './system-restore';
 import { createPowerService } from './power';
 import { createRestoreService } from './restore-all';
 import { createVisualEffectsService } from './visual-effects';
@@ -39,7 +40,7 @@ function registerServices() {
   function handle(name: string, fn: (...args: any[]) => unknown) {
     ipcMain.handle(`pandora:${name}`, async (event, ...args) => {
       checkSender(event);
-      const mutates = ['apply', 'revert', 'clean', 'profile-apply', 'power-apply', 'power-restore', 'power-tuning-change', 'startup-change', 'pointer-change', 'visual-change', 'cursor-change', 'cursor-select', 'cursor-app', 'restore-all'].includes(name);
+      const mutates = ['apply', 'revert', 'clean', 'profile-apply', 'power-apply', 'power-restore', 'power-tuning-change', 'startup-change', 'pointer-change', 'visual-change', 'cursor-change', 'cursor-select', 'cursor-app', 'restore-all', 'system-restore-create'].includes(name);
       if (!mutates) return fn(...args);
       activeMutations++;
       const result = mutationQueue.then(() => fn(...args));
@@ -47,6 +48,15 @@ function registerServices() {
       try { return await result; } finally { activeMutations--; }
     });
   }
+  const systemRestore = createSystemRestoreService();
+  handle('system-restore', () => systemRestore.getInfo());
+  handle('system-restore-preview', () => systemRestore.preview());
+  handle('system-restore-create', (token: unknown) => systemRestore.create(token));
+  handle('system-protection-open', async () => {
+    if (process.platform !== 'win32') throw new Error('System Protection requires Windows.');
+    const error = await shell.openPath(path.win32.join(process.env.SystemRoot ?? 'C:\\Windows', 'System32/SystemPropertiesProtection.exe'));
+    if (error) throw new Error('Windows System Protection could not be opened.');
+  });
   const nvidia = createNvidiaService(app.getPath('userData'));
   handle('nvidia-preset', () => nvidia.getPreset());
   handle('nvidia-save', (preset: unknown) => nvidia.savePreset(preset));

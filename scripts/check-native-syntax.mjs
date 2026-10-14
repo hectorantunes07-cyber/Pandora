@@ -12,10 +12,10 @@ const root = fileURLToPath(new URL('..', import.meta.url));
 const directory = await mkdtemp(join(tmpdir(), 'pandora-native-syntax-'));
 try {
   const bundle = join(directory, 'scripts.cjs');
-  await build({ stdin: { contents: "export {POWER_TUNING_NATIVE_SOURCE} from './electron/power-tuning-native'; export {NVIDIA_LAUNCH_SCRIPT} from './electron/nvidia'; export {CURSOR_NATIVE_SOURCE} from './electron/cursor-native'; export {CLEANER_SCRIPT} from './electron/cleaner-native'; export {WINDOWS_QUERIES} from './electron/system'; export {NETWORK_SCRIPT} from './electron/network'; export {ADAPTER_INSPECTION_SCRIPT, DNS_INSPECTION_SCRIPT} from './electron/network-inspection'; export {POINTER_NATIVE_SOURCE} from './electron/pointer'; export {VISUAL_EFFECTS_NATIVE_SOURCE} from './electron/visual-effects';", resolveDir: root }, outfile: bundle, bundle: true, platform: 'node', format: 'cjs', logLevel: 'silent' });
-  const { POWER_TUNING_NATIVE_SOURCE, NVIDIA_LAUNCH_SCRIPT, CURSOR_NATIVE_SOURCE, CLEANER_SCRIPT, WINDOWS_QUERIES, NETWORK_SCRIPT, ADAPTER_INSPECTION_SCRIPT, DNS_INSPECTION_SCRIPT, POINTER_NATIVE_SOURCE, VISUAL_EFFECTS_NATIVE_SOURCE } = createRequire(import.meta.url)(bundle);
+  await build({ stdin: { contents: "export {SYSTEM_RESTORE_QUERY, buildRestorePointScript, buildRestoreElevationScript} from './electron/system-restore-native'; export {POWER_TUNING_NATIVE_SOURCE} from './electron/power-tuning-native'; export {NVIDIA_LAUNCH_SCRIPT} from './electron/nvidia'; export {CURSOR_NATIVE_SOURCE} from './electron/cursor-native'; export {CLEANER_SCRIPT} from './electron/cleaner-native'; export {WINDOWS_QUERIES} from './electron/system'; export {NETWORK_SCRIPT} from './electron/network'; export {ADAPTER_INSPECTION_SCRIPT, DNS_INSPECTION_SCRIPT} from './electron/network-inspection'; export {POINTER_NATIVE_SOURCE} from './electron/pointer'; export {VISUAL_EFFECTS_NATIVE_SOURCE} from './electron/visual-effects';", resolveDir: root }, outfile: bundle, bundle: true, platform: 'node', format: 'cjs', logLevel: 'silent' });
+  const { SYSTEM_RESTORE_QUERY, buildRestorePointScript, buildRestoreElevationScript, POWER_TUNING_NATIVE_SOURCE, NVIDIA_LAUNCH_SCRIPT, CURSOR_NATIVE_SOURCE, CLEANER_SCRIPT, WINDOWS_QUERIES, NETWORK_SCRIPT, ADAPTER_INSPECTION_SCRIPT, DNS_INSPECTION_SCRIPT, POINTER_NATIVE_SOURCE, VISUAL_EFFECTS_NATIVE_SOURCE } = createRequire(import.meta.url)(bundle);
   const payload = join(directory, 'scripts.json');
-  await writeFile(payload, JSON.stringify({ nvidiaLauncher: NVIDIA_LAUNCH_SCRIPT, cleaner: CLEANER_SCRIPT, network: NETWORK_SCRIPT, adapterInspection: ADAPTER_INSPECTION_SCRIPT, dnsInspection: DNS_INSPECTION_SCRIPT, ...WINDOWS_QUERIES }));
+  await writeFile(payload, JSON.stringify({ systemRestoreQuery: SYSTEM_RESTORE_QUERY, systemRestoreCreate: buildRestorePointScript('8c867f33-14c2-4d27-9557-20fd0173f972'), systemRestoreElevate: buildRestoreElevationScript('8c867f33-14c2-4d27-9557-20fd0173f972'), nvidiaLauncher: NVIDIA_LAUNCH_SCRIPT, cleaner: CLEANER_SCRIPT, network: NETWORK_SCRIPT, adapterInspection: ADAPTER_INSPECTION_SCRIPT, dnsInspection: DNS_INSPECTION_SCRIPT, ...WINDOWS_QUERIES }));
   await writeFile(join(directory, 'power-tuning.cs'), POWER_TUNING_NATIVE_SOURCE);
   await writeFile(join(directory, 'cursor.cs'), CURSOR_NATIVE_SOURCE);
   await writeFile(join(directory, 'pointer.cs'), POINTER_NATIVE_SOURCE);
@@ -111,6 +111,61 @@ function Resolve-DnsName {
 $dns = (& ([scriptblock]::Create([string]$scripts.dnsInspection))) | ConvertFrom-Json
 if(-not $dns.resolved -or $dns.answerCount -ne 1 -or $dns.elapsedMs -lt 0){throw 'DNS resolution fixture failed.'}
 Write-Output 'Adapter capabilities and DNS scripts passed isolated runtime fixtures; no network request or setting change was made.'
+
+# Run the actual restore helper against shadowed provider/cmdlet functions only.
+# This does not create a point, elevate, change policy or start another process.
+$script:restorePoints=@(); $script:restoreAction='create'; $script:restoreCalls=0
+function Get-CimInstance {
+ param([string]$Namespace,[string]$ClassName,[string]$ErrorAction)
+ if($ClassName -eq 'Win32_OperatingSystem') { return [pscustomobject]@{ProductType=1} }
+ if($ClassName -eq 'SystemRestore') { return $script:restorePoints }
+ throw 'Unexpected restore provider request.'
+}
+function Checkpoint-Computer {
+ param([string]$Description,[string]$RestorePointType,[string]$ErrorAction,[string]$WarningAction)
+ $script:restoreCalls++
+ if($RestorePointType -ne 'MODIFY_SETTINGS') { throw 'Unexpected point type.' }
+ if($script:restoreAction -eq 'create') { $script:restorePoints=@([pscustomobject]@{SequenceNumber=7;Description=$Description;CreationTime=[DateTime]::UtcNow}) }
+}
+$helper=([string]$scripts.systemRestoreCreate).Replace('exit (New-PandoraRestorePoint)','New-PandoraRestorePoint')
+$code=& ([scriptblock]::Create($helper))
+if($code -ne 0 -or $script:restoreCalls -ne 1) { throw 'Restore helper must verify a newly created point.' }
+$code=& ([scriptblock]::Create($helper))
+if($code -ne 21) { throw 'An existing matching point is not a newly created backup.' }
+$script:restorePoints=@();$script:restoreAction='skip'
+$code=& ([scriptblock]::Create($helper))
+if($code -ne 21) { throw 'A successful no-op must not be called a created restore point.' }
+$inventory=& ([scriptblock]::Create([string]$scripts.systemRestoreQuery)) | ConvertFrom-Json
+if(-not $inventory.supported -or -not $inventory.readable -or $inventory.points.Count -ne 0) { throw 'Empty restore inventory schema failed.' }
+function Start-Process {
+ param([string]$FilePath,[string[]]$ArgumentList,[string]$Verb,[switch]$Wait,[switch]$PassThru,[string]$ErrorAction)
+ if($Verb -ne 'RunAs' -or -not $Wait -or -not $PassThru -or $ArgumentList[3] -ne '-EncodedCommand') { throw 'Unexpected elevation boundary.' }
+ $decoded=[Text.Encoding]::Unicode.GetString([Convert]::FromBase64String($ArgumentList[4]))
+ if($decoded -ne [string]$scripts.systemRestoreCreate) { throw 'Elevated script did not match the fixed verified helper.' }
+ [pscustomobject]@{ExitCode=0}
+}
+$elevation=& ([scriptblock]::Create([string]$scripts.systemRestoreElevate)) | ConvertFrom-Json
+if($elevation.exitCode -ne 0 -or $elevation.cancelled) { throw 'Elevation result parsing failed.' }
+
+function Start-Process { [pscustomobject]@{ExitCode=$null} }
+$missingExit=& ([scriptblock]::Create([string]$scripts.systemRestoreElevate)) | ConvertFrom-Json
+if($missingExit.exitCode -ne 21) { throw 'A missing native process exit code must never be coerced into successful verification.' }
+function Start-Process { throw [System.ComponentModel.Win32Exception]::new(1223) }
+$cancelled=& ([scriptblock]::Create([string]$scripts.systemRestoreElevate)) | ConvertFrom-Json
+if(-not $cancelled.cancelled) { throw 'Windows UAC cancellation must be distinguished from successful creation.' }
+function Get-CimInstance {
+ param([string]$Namespace,[string]$ClassName,[string]$ErrorAction)
+ if($ClassName -eq 'Win32_OperatingSystem') { return [pscustomobject]@{ProductType=1} }
+ throw 'Fixture access denied.'
+}
+$unreadable=& ([scriptblock]::Create([string]$scripts.systemRestoreQuery)) | ConvertFrom-Json
+if(-not $unreadable.supported -or $unreadable.readable) { throw 'An unreadable list must still permit reviewed administrator creation on a client OS.' }
+function Get-CimInstance { [pscustomobject]@{ProductType=3} }
+$unsupported=& ([scriptblock]::Create([string]$scripts.systemRestoreQuery)) | ConvertFrom-Json
+if($unsupported.supported) { throw 'Windows Server must be unavailable.' }
+if((& ([scriptblock]::Create($helper))) -ne 22) { throw 'Elevated helper must recheck client edition.' }
+Write-Output 'System Restore query, verified-create and elevation wrapper fixtures passed. No native restore point or administrator prompt was invoked.'
+
 
 
 `);

@@ -166,3 +166,16 @@ The implementation uses PowerGetActiveScheme, PowerReadACValueIndex, PowerWriteA
 - Test NVIDIA absent, a missing utility, driver errors/timeouts, unsupported individual fields and multiple GPUs. All failures must remain unavailable, with no prior snapshot represented as current. AMD/Intel GPUs should still retain existing hardware inventory even though this sensor provider is NVIDIA-only.
 - Refresh within and after 15 seconds; check the cache label/timestamp and verify no periodic NVIDIA subprocess runs while idle. Provider queries occur only when entering System Monitor, explicitly refreshing or exporting a system report.
 - Inspect the exported provider timestamp and numeric fields; no UUID, serial, bus address, executable path or command output should be retained.
+
+
+## Windows System Restore (Windows 10/11 client only)
+
+- Use a disposable client VM with System Protection configured and no checkpoint in the past day. As a standard user, inspect the point list; if access is denied, the UI should explain it while permitting a reviewed administrator request. Windows Server must show unsupported and never offer creation.
+- Cancel PANDORA's review: no UAC prompt or checkpoint should occur. Then confirm and cancel UAC: show cancellation without success. PANDORA itself must not restart elevated.
+- Confirm creation with administrator approval. Verify a new PANDORA description and sequence in Windows System Protection. Success requires the helper to find a point absent from its baseline. A listed point is not proof that every future system restoration will succeed.
+- Retry within the Windows creation-frequency interval, turn off protection in the disposable VM, deny elevation and test insufficient disk space. No skipped/failed request may be reported as a completed backup. Do not change Windows protection or frequency policy merely to make a test pass.
+- Inspect the separate helper command: only the fixed Checkpoint-Computer MODIFY_SETTINGS operation, provider reads and verification are permitted. It must not accept renderer scripts/paths or write user-controlled elevated result files. Built-in module search is constrained to PSHOME Modules.
+- Test interrupted/long-running creation. If confirmation times out, it may still finish; refresh System Protection before retrying. Do not infer that a timeout proves nothing happened.
+- Keep exact PANDORA setting rollback separate from Windows System Restore. PANDORA must never select a point and automatically restore/reboot the OS, delete points, enable protection or bypass frequency policy.
+
+References: [Microsoft Checkpoint-Computer](https://learn.microsoft.com/powershell/module/microsoft.powershell.management/checkpoint-computer?view=powershell-5.1) and [SystemRestore.CreateRestorePoint](https://learn.microsoft.com/windows/win32/sr/createrestorepoint-systemrestore).

@@ -291,3 +291,18 @@ Snapshots load when opening System Monitor and on explicit refresh, with a
 Reports include these readings with a separate timestamp and provider label.
 Physical NVIDIA hardware/driver verification is still required; hosted Windows
 CI usually has no NVIDIA GPU. CPU and AMD/Intel sensor providers are unfinished.
+
+### Windows System Restore
+
+Restore & History includes a separate Windows restore-point section. List recent
+points, review creation, or open System Protection. Confirmed creation requests
+UAC approval only for a fixed helper using Windows PowerShell Checkpoint-Computer;
+PANDORA is not relaunched elevated. The helper restricts its module search path
+to built-in PowerShell modules and verifies a new matching sequence before
+reporting success. No renderer command, path or custom script is accepted.
+
+Windows client editions and configured System Protection are required. Windows
+may limit new points to one per day. PANDORA does not change that policy, enable
+protection, delete points or start full-system restoration. Points are not file
+backups; Windows owns retention. Actual UAC/create behavior requires a Windows
+10/11 client test: hosted Windows Server CI cannot validate native creation.

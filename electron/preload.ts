@@ -1,6 +1,10 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { AppApi, ProgressEvent } from '../shared/types';
 const api: AppApi = {
+  getSystemRestore: () => ipcRenderer.invoke('pandora:system-restore'),
+  previewSystemRestore: () => ipcRenderer.invoke('pandora:system-restore-preview'),
+  createSystemRestore: token => ipcRenderer.invoke('pandora:system-restore-create', token),
+  openSystemProtection: () => ipcRenderer.invoke('pandora:system-protection-open'),
   getGpuTelemetry: () => ipcRenderer.invoke('pandora:gpu-telemetry'),
   getPowerTuning: () => ipcRenderer.invoke('pandora:power-tuning'),
   previewPowerTuning: (id, value, restore) => ipcRenderer.invoke('pandora:power-tuning-preview', id, value, restore),

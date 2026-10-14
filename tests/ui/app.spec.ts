@@ -7,10 +7,14 @@ async function desktopFixture(page: Page) {
     const listeners: ((event: unknown) => void)[] = [];
     const track = (method: string, ...args: unknown[]) => calls.push({ method, args });
     const states = [{ id: 'transparency', title: 'Reduce transparency', description: 'Use opaque Windows surfaces.', category: 'Quality of life' as const, risk: 'Low' as const, tradeoff: 'Windows surfaces will look opaque.', target: 'HKCU\\Test\\Transparency', desiredValue: 0, restart: 'Sign out may be required.', reference: 'https://support.microsoft.com/', state: 'available' as const, currentValue: 1, managed: false }];
-    let visualManaged = false;
+    let visualManaged = false, systemPointCreated = false;
     let cursorManaged = false, appCursor = false;
     const cursorInfo = () => ({ supported: true, current: { kind: 'String' as const, value: cursorManaged ? 'C:\\fixture.cur' : '' }, original: cursorManaged ? { kind: 'String' as const, value: '' } : null, currentPreview: null, selected: { id: 'fixture', name: 'Sonnier’s cursor', kind: 'cur' as const, width: 32, height: 32, x: 15, y: 16, preview: './cursors/sonnier.png', cssCursor: 'data:image/x-icon;base64,AA==' }, useInApp: appCursor, managed: cursorManaged, conflict: false, token: 'cursor-review' });
     window.pandora = {
+      getSystemRestore: async () => ({ supported: true, readable: true, points: systemPointCreated ? [{ sequence: 1, description: 'PANDORA fixture checkpoint', createdAt: new Date().toISOString() }] : [] }),
+      previewSystemRestore: async () => ({ token: 'system-restore-review', description: 'PANDORA fixture checkpoint' }),
+      createSystemRestore: async token => { track('system-restore-create', token); systemPointCreated = true; return { id: 'windows-system-restore', success: true, message: 'New Windows restore point verified.' }; },
+      openSystemProtection: async () => { track('system-protection-open'); },
       getGpuTelemetry: async () => { track('gpu-telemetry'); return { timestamp: new Date().toISOString(), provider: 'NVIDIA SMI', status: 'unavailable', cached: false, devices: [], reason: 'No GPU sensor fixture configured.' }; },
       getPowerTuning: async () => ({ supported: true, planId: '381b4222-f694-41f0-9685-ff5bb260df2e', activePlanId: '381b4222-f694-41f0-9685-ff5bb260df2e', states: [{ id: 'cpu-maximum', current: 100, original: null, applied: null, managed: false, conflict: false }] }),
       previewPowerTuning: async (id, value, restore) => { track('power-tuning-preview', id, value, restore); return { token: 'power-tuning-review', id, planId: '381b4222-f694-41f0-9685-ff5bb260df2e', activePlanId: '381b4222-f694-41f0-9685-ff5bb260df2e', current: 100, desired: value ?? 100, restore }; },
@@ -716,4 +720,32 @@ test('GPU telemetry shows separate real-provider fields, preserves unavailable v
   await panel.getByRole('button', { name: 'Refresh GPU readings' }).click();
   await expect(panel.getByText('Driver query unavailable')).toBeVisible();
   await expect(panel.getByText('52 °C', { exact: true })).toHaveCount(0);
+});
+
+test('Windows restore points require a separate review, preserve cancellation and report confirmed creation', async ({ page }) => {
+  await desktopFixture(page); await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Restore & History', exact: true }).click();
+  const panel = page.getByRole('region', { name: 'Windows System Restore' });
+  await panel.getByRole('button', { name: 'Create restore point', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('administrator approval');
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(await page.evaluate(() => (window as any).__calls.some((c: any) => c.method === 'system-restore-create'))).toBe(false);
+  await panel.getByRole('button', { name: 'Create restore point', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm & request administrator approval', exact: true }).click();
+  await expect(panel.getByText('New Windows restore point verified.')).toBeVisible();
+  await panel.getByText('View available restore points (1)').click();
+  await expect(panel.getByRole('cell', { name: 'PANDORA fixture checkpoint' })).toBeVisible();
+  expect(await page.evaluate(() => (window as any).__calls.find((c: any) => c.method === 'system-restore-create').args)).toEqual(['system-restore-review']);
+  await panel.getByRole('button', { name: 'Open System Protection' }).click();
+  expect(await page.evaluate(() => (window as any).__calls.some((c: any) => c.method === 'system-protection-open'))).toBe(true);
+  await panel.screenshot({ path: 'test-results/pandora-system-restore.png' });
+});
+
+test('Windows restore-point policy failure is not presented as a completed backup', async ({ page }) => {
+  await desktopFixture(page); await page.addInitScript(() => { window.pandora!.createSystemRestore = async () => ({ id: 'windows-system-restore', success: false, message: 'Windows daily creation limit prevented a new point.' }); });
+  await page.goto('/'); await page.getByRole('navigation').getByRole('button', { name: 'Restore & History', exact: true }).click();
+  await page.getByRole('button', { name: 'Create restore point', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm & request administrator approval', exact: true }).click();
+  await expect(page.getByText('A new Windows restore point was not confirmed.')).toBeVisible();
+  await expect(page.getByText('Windows daily creation limit prevented a new point.')).toBeVisible();
 });

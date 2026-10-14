@@ -1,4 +1,5 @@
 import { PowerTuning } from './PowerTuning';
+import { SystemRestore } from './SystemRestore';
 import { CursorCustomization } from './CursorCustomization';
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, ArrowUpRight, Check, CheckCircle2, ChevronRight, CircleAlert, FileCheck2, Gamepad2, History, Info, ListFilter, RefreshCw, RotateCcw, Search, ShieldCheck, SlidersHorizontal, Sparkles, X, Zap } from 'lucide-react';
@@ -104,6 +105,7 @@ export function Restore({ tweaks, notify, refreshTweaks, onBusyChange }: { tweak
       <button className="button secondary" disabled={busy || !isDesktop} onClick={exportHistory}><History size={15}/>Export history</button>
       <button className="button primary" disabled={loading || busy || !current.length} onClick={() => review(current)}><RotateCcw size={15}/>Restore all preferences</button>
     </PageHeading>
+    <SystemRestore onBusyChange={onBusyChange}/>
     <RestoreAll onBusyChange={onBusyChange} onRestored={async () => { await load(); await refreshTweaks(); setRevision(n => n + 1); }}/>
     <ProfileControls key={`profile-${revision}`} tweaks={tweaks} refreshTweaks={refreshTweaks} onBusyChange={onBusyChange} restoreOnly/>
     <PowerControls key={`power-${revision}`} onBusyChange={onBusyChange} restoreOnly/>

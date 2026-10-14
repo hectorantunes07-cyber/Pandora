@@ -148,3 +148,9 @@
 .gpu-reading-grid dt { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
 .gpu-reading-grid dd { font-size: 22px; font-weight: 600; margin: 0; overflow-wrap: anywhere; }
 @media (max-width: 1000px) { .gpu-reading-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.system-restore-actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 20px 0; }
+.system-restore-list { margin: 20px 0; }
+.system-restore-list summary { cursor: pointer; font-size: 14px; margin-bottom: 12px; }
+.system-restore-list .table-wrap { max-height: 320px; overflow: auto; }
+.system-restore-list td { overflow-wrap: anywhere; }

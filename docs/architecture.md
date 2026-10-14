@@ -60,8 +60,9 @@ signing. Uninstall does not reverse system settings or remove rollback data.
 
 ## Intentional initial limitations
 
-No privileged helper or elevation flow is needed for the present per-user
-catalog. Windows System Restore, machine-wide tuning, service disablement,
+The per-user tuning catalog needs no elevated UI. Windows restore-point creation
+now uses a separate narrow UAC helper with fixed cmdlet input and new-point
+verification; the GUI is not relaunched elevated. Broader machine-wide tuning, service disablement,
 automatic driver updates, packet capture, automatic game benchmarking, and
 secure auto-update are absent. Game guidance must remain visibly distinct from
 automatic config modification. Native integration checks belong on disposable

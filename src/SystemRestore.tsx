@@ -1,0 +1,22 @@
+import { useEffect, useRef, useState } from 'react';
+import { History, RefreshCw } from 'lucide-react';
+import type { SystemRestoreInfo, RestorePointReview } from '../shared/system-restore';
+import { api, errorMessage, formatDate, isDesktop } from './api';
+import { Badge, Modal, Notice, PanelTitle, Spinner } from './components';
+export function SystemRestore({ onBusyChange }: { onBusyChange: (busy: boolean) => void }) {
+  const [info, setInfo] = useState<SystemRestoreInfo | null>(null), [review, setReview] = useState<RestorePointReview | null>(null);
+  const [busy, setBusy] = useState(false), [error, setError] = useState(''), [result, setResult] = useState('');
+  const pending = useRef(false);
+  async function run(fn: () => Promise<void>) { if (pending.current) return; pending.current = true; setBusy(true); onBusyChange(true); setError(''); try { await fn(); } catch (e) { setError(errorMessage(e)); } finally { pending.current = false; setBusy(false); onBusyChange(false); } }
+  const load = async () => { setInfo(await api.getSystemRestore()); };
+  useEffect(() => { if (isDesktop) void run(load); }, []);
+  return <section className="panel windows-system-restore" aria-label="Windows System Restore"><PanelTitle icon={History} title="Windows System Restore" action={<Badge>WINDOWS CHECKPOINT</Badge>}/>
+    <p className="benchmark-note">Create a Windows restore point before changing your setup. It protects supported system files and settings. Personal files and cleaner deletions are not covered.</p>
+    {error && <Notice tone="error">{error}</Notice>}{result && <Notice>{result}</Notice>}{info?.reason && <Notice>{info.reason}</Notice>}{!isDesktop && <Notice>Open the Windows desktop app to inspect restore points.</Notice>}
+    <div className="system-restore-actions"><button className="button primary" disabled={busy || !info?.supported} onClick={() => void run(async () => setReview(await api.previewSystemRestore()))}>Create restore point</button><button className="button secondary" disabled={busy || !isDesktop} onClick={() => void run(async () => { await api.openSystemProtection(); })}>Open System Protection</button><button className="button secondary" disabled={busy || !isDesktop} onClick={() => void run(load)}><RefreshCw size={15} className={busy ? 'spin' : ''}/>Refresh restore points</button></div>
+    {busy && !review && <Spinner label="Checking Windows System Restore…"/>}
+    {info?.readable && <details className="system-restore-list"><summary>View available restore points ({info.points.length})</summary>{info.points.length ? <div className="table-wrap"><table className="data-table"><thead><tr><th>Description</th><th>Created</th></tr></thead><tbody>{info.points.map(point => <tr key={point.sequence}><td>{point.description || 'Unnamed restore point'}</td><td>{point.createdAt ? formatDate(point.createdAt) : 'Time unavailable'}</td></tr>)}</tbody></table></div> : <p>No restore points were reported. Check protection for your Windows drive in System Protection.</p>}</details>}
+    <p className="accounting-note">Windows manages retention and may limit creation to one point per day. Use System Protection to enable protection or restore Windows. Showing up to 100 recent points.</p>
+    {review && <Modal title="Create a Windows restore point?" description="Windows may request administrator approval for a separate restore-point helper. PANDORA does not restart with administrator privileges." busy={busy} onClose={() => setReview(null)} footer={<><button className="button secondary" disabled={busy} onClick={() => setReview(null)}>Cancel</button><button className="button primary" disabled={busy} onClick={() => void run(async () => { try { const r = await api.createSystemRestore(review.token); setResult(r.message); if (!r.success) setError('A new Windows restore point was not confirmed.'); await load(); } finally { setReview(null); } })}>{busy ? <Spinner label="Waiting for Windows…"/> : 'Confirm & request administrator approval'}</button></>}><p>System Protection must be available for your Windows drive. Creation can take a few minutes. PANDORA reports success only after the elevated helper finds the newly created point.</p><Notice>Restore points are not a replacement for file backups. Windows may remove older points under its retention policy. Cancelling the administrator prompt stops this request.</Notice><details><summary>Restore-point description</summary><p>{review.description}</p></details></Modal>}
+  </section>;
+}
