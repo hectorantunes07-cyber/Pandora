@@ -60,6 +60,13 @@ describe('normal pointer persistence and recovery', () => {
     expect((await service().getInfo()).managed).toBe(true); expect(writes).toHaveLength(1);
     failure = 'none'; expect((await s.change((await s.getInfo()).token, true)).success).toBe(true);
   });
+  test('a failed reload after restoration keeps retryable ownership even if registry matches original', async () => {
+    const s = service(); await s.change((await s.getInfo()).token, false);
+    failure = 'after'; expect((await s.change((await s.getInfo()).token, true)).success).toBe(false);
+    expect((await service().getInfo()).managed).toBe(true);
+    failure = 'none'; expect((await s.change((await s.getInfo()).token, true)).success).toBe(true);
+    expect((await s.getInfo()).managed).toBe(false); expect(writes).toHaveLength(3);
+  });
   test('failed native writes leave original values and backup intact', async () => {
     const s = service(), original = { ...current }; failure = 'before'; expect((await s.change((await s.getInfo()).token, false)).success).toBe(false);
     expect(current).toEqual(original); expect(writes).toHaveLength(0); expect((await s.getInfo()).original).toEqual(original);

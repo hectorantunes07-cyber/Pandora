@@ -8,13 +8,16 @@ const allowed = process.platform === 'win32' && process.env.PANDORA_TEST_WINDOWS
 describe.skipIf(!allowed)('normal pointer on explicitly disposable hosted Windows only', () => {
   it('loads the actual supplied cursor, persists Arrow, reloads and restores exact original after relaunch', async () => {
     const adapter = createWindowsCursorAdapter(), original = await adapter.read(), dir = await fs.mkdtemp(path.join(os.tmpdir(), 'pandora-native-cursor-'));
+    const nativeErrors: string[] = [];
+    const realWrite = adapter.write;
+    adapter.write = async (...args) => { try { await realWrite(...args); } catch (error) { nativeErrors.push(String((error as { stderr?: string }).stderr || error)); throw error; } };
     try {
       const s = createCursorService(dir, path.resolve('public/cursors/sonnier.cur'), adapter);
       const before = await s.getInfo(); expect(before.current).toEqual(original);
-      expect((await s.change(before.token, false)).success).toBe(true);
+      const applied = await s.change(before.token, false); expect(applied.success, nativeErrors.join('\n') || applied.message).toBe(true);
       expect((await adapter.read()).value).toContain(path.join(dir, 'cursors'));
       const reopened = createCursorService(dir, path.resolve('public/cursors/sonnier.cur'), adapter);
-      expect((await reopened.change((await reopened.getInfo()).token, true)).success).toBe(true);
+      const restored = await reopened.change((await reopened.getInfo()).token, true); expect(restored.success, nativeErrors.join('\n') || restored.message).toBe(true);
       expect(await adapter.read()).toEqual(original);
     } finally { const current = await adapter.read(); if (JSON.stringify(current) !== JSON.stringify(original)) await adapter.write(current, original, true); expect(await adapter.read()).toEqual(original); await fs.rm(dir, { recursive: true, force: true }); }
   }, 180_000);

@@ -69,8 +69,9 @@ export function createCursorService(directory: string, bundled: string, adapter:
     let b = await backup();
     if (restore) {
       if (!owned(b)) throw new Error('No managed cursor is available to restore.');
-      if (same(current, b!.original)) { b!.status = 'restored'; await writeDurableJson(journal, b); return { id: 'cursor', success: true, message: 'Saved original pointer already present; no Windows write needed.' }; }
-      if (!same(current, b!.applied)) throw new Error('An external cursor change is preserved. Your original backup remains available.');
+      // Even when the registry already holds the original, retry the Windows
+      // reload: a previous SPI_SETCURSORS failure may have left a stale live arrow.
+      if (!same(current, b!.original) && !same(current, b!.applied)) throw new Error('An external cursor change is preserved. Your original backup remains available.');
     } else {
       if (owned(b)) throw new Error('Restore the managed cursor before applying another.');
       const p = await prefs(), a = await asset(p); if (a.public.id !== r.selected) throw new Error('The selected cursor changed. Review again.');
@@ -87,7 +88,7 @@ export function createCursorService(directory: string, bundled: string, adapter:
       b!.status = restore ? 'restored' : 'applied'; await writeDurableJson(journal, b);
       return { id: 'cursor', success: true, message: restore ? 'Saved original normal pointer restored and verified. Other pointer roles were preserved.' : 'Normal pointer applied and Windows configuration verified. The cursor file is stored persistently for future sign-ins. Other pointer roles were preserved.' };
     } catch {
-      try { const observed = await adapter.read(); b!.status = same(observed, b!.original) ? restore ? 'restored' : 'failed' : same(observed, b!.applied) ? 'applied' : 'conflict'; await writeDurableJson(journal, b); } catch { /* Retain durable pending backup. */ }
+      try { const observed = await adapter.read(); b!.status = same(observed, b!.original) ? restore ? 'pending' : 'failed' : same(observed, b!.applied) ? 'applied' : 'conflict'; await writeDurableJson(journal, b); } catch { /* Retain durable pending backup. */ }
       return { id: 'cursor', success: false, message: 'Windows could not fully confirm the cursor change or reload. Your original backup is retained. Refresh and restore if needed; no extra change was attempted.' };
     }
   }
