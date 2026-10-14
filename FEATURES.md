@@ -23,6 +23,7 @@ actual test/build outcomes and [the release checklist](docs/windows-validation.m
 | Preference backup and rollback | COMPLETE; PHYSICAL-PC VALIDATION REQUIRED | Exact original DWORD or absence, durable atomic journal, read-back verification, idempotence, reviewed newest-first batch restoration, partial batch outcomes, recovery and external-change conflict refusal. |
 | Reviewed presets | COMPLETE; PHYSICAL-PC VALIDATION REQUIRED | Competitive FPS, Balanced Gaming, Streaming + Gaming, Creator, Quiet/Everyday and Custom. Five-minute single-use reviews; exact per-item changes, skips and conflicts; previous profile ownership restored before new changes; manual settings preserved; custom selection retained. Presets use only the eight verified catalog preferences. |
 | Power-plan selection and restore | COMPLETE; PHYSICAL-PC VALIDATION REQUIRED | Existing Windows plans only, explicit current/target GUID review, durable original snapshot, read-back verification and external-change refusal. Requires restoring the previous managed plan before another selection. No invented plans, thermal control or guaranteed FPS gain. |
+| Advanced power controls | IMPLEMENTED; WINDOWS VALIDATION IN PROGRESS | Six documented AC policy controls: processor minimum/maximum, boost policy, energy preference, PCIe link-state savings and cooling policy. Real stored-value detection, explicit choices/tradeoffs, exact durable originals, reviewed read-back/restore, inactive-plan restoration and ordered combined rollback. Battery values preserved. Firmware, Windows power mode or policy can override effective behavior. |
 | Combined managed rollback | COMPLETE; PHYSICAL-PC VALIDATION REQUIRED | One expiring review for preferences, power, pointer behavior, custom normal cursor, visual effects, supported launcher entries and preset ownership. Exact originals, global mutation serialization, conflict preservation and individual outcomes; cleanup remains irreversible. |
 | Pointer acceleration | COMPLETE; PHYSICAL-PC VALIDATION REQUIRED | Optional Windows API acceleration-off control; durable original thresholds/mode, explicit tradeoff, expiring review, read-back, exact effective-value rollback, external-conflict refusal and combined restore. No DPI, polling-rate, FPS or raw-input latency claim. |
 | Windows visual effects | COMPLETE; PHYSICAL-PC VALIDATION REQUIRED | Seven documented SystemParametersInfo BOOL controls: client-area, menu, combo-box and tooltip animation, list scrolling, selection fading and cursor shadow. Individual current-state detection, expiring review, durable exact effective-value originals, read-back and combined restoration. These are desktop preferences, not game graphics or FPS boosts. |
@@ -56,8 +57,8 @@ The benchmark screenshot supplied as reference contains example values. Those
 numbers and the reference development PC specifications are not used as live
 hardware readings or product performance claims.
 
-There are **21 separately configurable targets**: eight registry preferences,
-seven visual-effect preferences, one installed power-plan selector, one pointer
+There are **27 separately configurable targets**: eight registry preferences,
+seven visual-effect preferences, six advanced power controls, one installed power-plan selector, one pointer
 acceleration control, and four allowlisted launcher startup entries. Availability
-is detected on each PC. This is not a claim of 21 FPS tweaks; presets reuse these
+is detected on each PC. This is not a claim of 27 FPS tweaks; presets reuse these
 settings, and diagnostic/cleanup actions are counted separately.

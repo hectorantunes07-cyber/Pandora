@@ -6,6 +6,7 @@ import { getSystem, getMetrics, getProcesses, getStartup, getGames } from './sys
 import { createTweakService } from './tweaks';
 import { createCleanerService } from './cleaner';
 import { createStartupService } from './startup';
+import { createPowerTuningService } from './power-tuning';
 import { createPowerService } from './power';
 import { createRestoreService } from './restore-all';
 import { createVisualEffectsService } from './visual-effects';
@@ -37,7 +38,7 @@ function registerServices() {
   function handle(name: string, fn: (...args: any[]) => unknown) {
     ipcMain.handle(`pandora:${name}`, async (event, ...args) => {
       checkSender(event);
-      const mutates = ['apply', 'revert', 'clean', 'profile-apply', 'power-apply', 'power-restore', 'startup-change', 'pointer-change', 'visual-change', 'cursor-change', 'cursor-select', 'cursor-app', 'restore-all'].includes(name);
+      const mutates = ['apply', 'revert', 'clean', 'profile-apply', 'power-apply', 'power-restore', 'power-tuning-change', 'startup-change', 'pointer-change', 'visual-change', 'cursor-change', 'cursor-select', 'cursor-app', 'restore-all'].includes(name);
       if (!mutates) return fn(...args);
       activeMutations++;
       const result = mutationQueue.then(() => fn(...args));
@@ -80,7 +81,11 @@ function registerServices() {
     const result = await dialog.showOpenDialog(window, { title: 'Choose a Windows normal pointer', properties: ['openFile'], filters: [{ name: 'Windows cursor', extensions: ['cur', 'ani'] }] });
     return result.canceled || !result.filePaths[0] ? null : cursor.select(result.filePaths[0]);
   });
-  const recovery = createRestoreService({ tweaks, power, startup, pointer, visual, cursor });
+  const powerTuning = createPowerTuningService(app.getPath('userData'));
+  handle('power-tuning', () => powerTuning.getInfo());
+  handle('power-tuning-preview', (id: unknown, value: unknown, restore: unknown) => powerTuning.preview(id, value, restore));
+  handle('power-tuning-change', (token: unknown) => powerTuning.change(token));
+  const recovery = createRestoreService({ tweaks, power, startup, pointer, visual, cursor, powerTuning });
   handle('restore-preview', () => recovery.preview());
   handle('restore-all', (token: unknown) => recovery.restore(token));
   handle('power', () => power.getInfo());

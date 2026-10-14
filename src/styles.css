@@ -132,3 +132,12 @@
 :root[data-personal-cursor=true] input:not([type=checkbox]), :root[data-personal-cursor=true] textarea { cursor:text; }
 .current-pointer, .current-pointer * { cursor:default; }
 @media(max-width:700px) { .cursor-previews { grid-template-columns:1fr; } }
+
+.power-tuning { margin:28px 0; }
+.power-tuning .tweak-grid { margin-top:18px; }
+.power-tuning .power-current { margin:16px 0; color:#d4c5ed; }
+.power-choice { display:grid; gap:8px; font-size:13px; margin:12px 0; }
+.power-choice select { width:100%; min-width:0; padding:10px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:inherit; }
+.power-tuning details { margin:16px 0; font-size:14px; }
+.power-tuning summary { color:#cab7f2; cursor:pointer; }
+.power-tuning details p { margin-top:10px; }

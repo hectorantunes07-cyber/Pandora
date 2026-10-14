@@ -12,10 +12,11 @@ const root = fileURLToPath(new URL('..', import.meta.url));
 const directory = await mkdtemp(join(tmpdir(), 'pandora-native-syntax-'));
 try {
   const bundle = join(directory, 'scripts.cjs');
-  await build({ stdin: { contents: "export {NVIDIA_LAUNCH_SCRIPT} from './electron/nvidia'; export {CURSOR_NATIVE_SOURCE} from './electron/cursor-native'; export {CLEANER_SCRIPT} from './electron/cleaner-native'; export {WINDOWS_QUERIES} from './electron/system'; export {NETWORK_SCRIPT} from './electron/network'; export {ADAPTER_INSPECTION_SCRIPT, DNS_INSPECTION_SCRIPT} from './electron/network-inspection'; export {POINTER_NATIVE_SOURCE} from './electron/pointer'; export {VISUAL_EFFECTS_NATIVE_SOURCE} from './electron/visual-effects';", resolveDir: root }, outfile: bundle, bundle: true, platform: 'node', format: 'cjs', logLevel: 'silent' });
-  const { NVIDIA_LAUNCH_SCRIPT, CURSOR_NATIVE_SOURCE, CLEANER_SCRIPT, WINDOWS_QUERIES, NETWORK_SCRIPT, ADAPTER_INSPECTION_SCRIPT, DNS_INSPECTION_SCRIPT, POINTER_NATIVE_SOURCE, VISUAL_EFFECTS_NATIVE_SOURCE } = createRequire(import.meta.url)(bundle);
+  await build({ stdin: { contents: "export {POWER_TUNING_NATIVE_SOURCE} from './electron/power-tuning-native'; export {NVIDIA_LAUNCH_SCRIPT} from './electron/nvidia'; export {CURSOR_NATIVE_SOURCE} from './electron/cursor-native'; export {CLEANER_SCRIPT} from './electron/cleaner-native'; export {WINDOWS_QUERIES} from './electron/system'; export {NETWORK_SCRIPT} from './electron/network'; export {ADAPTER_INSPECTION_SCRIPT, DNS_INSPECTION_SCRIPT} from './electron/network-inspection'; export {POINTER_NATIVE_SOURCE} from './electron/pointer'; export {VISUAL_EFFECTS_NATIVE_SOURCE} from './electron/visual-effects';", resolveDir: root }, outfile: bundle, bundle: true, platform: 'node', format: 'cjs', logLevel: 'silent' });
+  const { POWER_TUNING_NATIVE_SOURCE, NVIDIA_LAUNCH_SCRIPT, CURSOR_NATIVE_SOURCE, CLEANER_SCRIPT, WINDOWS_QUERIES, NETWORK_SCRIPT, ADAPTER_INSPECTION_SCRIPT, DNS_INSPECTION_SCRIPT, POINTER_NATIVE_SOURCE, VISUAL_EFFECTS_NATIVE_SOURCE } = createRequire(import.meta.url)(bundle);
   const payload = join(directory, 'scripts.json');
   await writeFile(payload, JSON.stringify({ nvidiaLauncher: NVIDIA_LAUNCH_SCRIPT, cleaner: CLEANER_SCRIPT, network: NETWORK_SCRIPT, adapterInspection: ADAPTER_INSPECTION_SCRIPT, dnsInspection: DNS_INSPECTION_SCRIPT, ...WINDOWS_QUERIES }));
+  await writeFile(join(directory, 'power-tuning.cs'), POWER_TUNING_NATIVE_SOURCE);
   await writeFile(join(directory, 'cursor.cs'), CURSOR_NATIVE_SOURCE);
   await writeFile(join(directory, 'pointer.cs'), POINTER_NATIVE_SOURCE);
   await writeFile(join(directory, 'visual-effects.cs'), VISUAL_EFFECTS_NATIVE_SOURCE);
@@ -23,6 +24,8 @@ try {
   await writeFile(checker, String.raw`param([string]$InputFile)
 $ErrorActionPreference = 'Stop'
 $scripts = Get-Content -Raw -LiteralPath $InputFile | ConvertFrom-Json
+Add-Type -TypeDefinition (Get-Content -Raw -LiteralPath (Join-Path (Split-Path $InputFile) 'power-tuning.cs'))
+Write-Output 'Advanced power API compiled; no power setting was changed.'
 Add-Type -TypeDefinition (Get-Content -Raw -LiteralPath (Join-Path (Split-Path $InputFile) 'cursor.cs'))
 Write-Output 'Cursor API and registry declarations compiled; no native cursor API was invoked.'
 Add-Type -TypeDefinition (Get-Content -Raw -LiteralPath (Join-Path (Split-Path $InputFile) 'pointer.cs'))

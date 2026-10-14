@@ -45,6 +45,11 @@ try {
   assert.equal(cursor.managed, false);
   assert.match(cursor.selected.preview, /^data:image\/png;base64,/);
   assert.equal(await page.evaluate(() => window.pandora.getNvidiaPreset()), null);
+  const powerTuning = await page.evaluate(() => window.pandora.getPowerTuning());
+  assert.equal(powerTuning.states.length, 6);
+  assert.ok(powerTuning.states.every(state => !state.managed));
+  assert.equal(powerTuning.supported, process.platform === 'win32');
+  if (process.platform === 'win32') assert.ok(powerTuning.activePlanId, 'Windows power-policy provider must return the active plan');
   if (process.platform === 'win32') {
     assert.match(info.os, /Windows/i, `Windows CIM inventory must load: ${info.notes.join(' ')}`);
     assert.ok(info.physicalCores > 0 && info.volumeCount > 0, 'Windows CPU and volume providers must return real inventory');

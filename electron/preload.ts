@@ -1,6 +1,9 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { AppApi, ProgressEvent } from '../shared/types';
 const api: AppApi = {
+  getPowerTuning: () => ipcRenderer.invoke('pandora:power-tuning'),
+  previewPowerTuning: (id, value, restore) => ipcRenderer.invoke('pandora:power-tuning-preview', id, value, restore),
+  changePowerTuning: token => ipcRenderer.invoke('pandora:power-tuning-change', token),
   getCursor: () => ipcRenderer.invoke('pandora:cursor'),
   selectCursor: bundled => ipcRenderer.invoke('pandora:cursor-select', bundled),
   changeCursor: (token, restore) => ipcRenderer.invoke('pandora:cursor-change', token, restore),

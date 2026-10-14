@@ -1,5 +1,12 @@
 # Changelog
 
+## Advanced power controls — 2026-10-14
+
+- Added six individually reviewed plugged-in power settings using documented Windows power APIs: CPU minimum/maximum, boost mode, energy preference, PCIe savings and cooling policy.
+- Added real stored-state detection, hardware/policy caveats, durable exact backups, conflict refusal and restoration after relaunch or changing the active plan.
+- Combined restore now orders CPU limits so the minimum never exceeds the maximum; battery values and unrelated plans are preserved.
+- Added service, UI and disposable Windows power-plan tests. Native Windows validation and new packages are tracked in the validation report.
+
 ## 0.1.0 — Expanded Windows test build
 
 - Six reviewed presets with custom choices, ownership-aware switching and off.

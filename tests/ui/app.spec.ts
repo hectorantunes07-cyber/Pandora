@@ -11,6 +11,9 @@ async function desktopFixture(page: Page) {
     let cursorManaged = false, appCursor = false;
     const cursorInfo = () => ({ supported: true, current: { kind: 'String' as const, value: cursorManaged ? 'C:\\fixture.cur' : '' }, original: cursorManaged ? { kind: 'String' as const, value: '' } : null, currentPreview: null, selected: { id: 'fixture', name: 'Sonnier’s cursor', kind: 'cur' as const, width: 32, height: 32, x: 15, y: 16, preview: './cursors/sonnier.png', cssCursor: 'data:image/x-icon;base64,AA==' }, useInApp: appCursor, managed: cursorManaged, conflict: false, token: 'cursor-review' });
     window.pandora = {
+      getPowerTuning: async () => ({ supported: true, planId: '381b4222-f694-41f0-9685-ff5bb260df2e', activePlanId: '381b4222-f694-41f0-9685-ff5bb260df2e', states: [{ id: 'cpu-maximum', current: 100, original: null, applied: null, managed: false, conflict: false }] }),
+      previewPowerTuning: async (id, value, restore) => { track('power-tuning-preview', id, value, restore); return { token: 'power-tuning-review', id, planId: '381b4222-f694-41f0-9685-ff5bb260df2e', activePlanId: '381b4222-f694-41f0-9685-ff5bb260df2e', current: 100, desired: value ?? 100, restore }; },
+      changePowerTuning: async token => { track('power-tuning-change', token); return { id: 'power-tuning:cpu-maximum', success: true, message: 'Power value verified.' }; },
       getCursor: async () => cursorInfo(), selectCursor: async bundled => { track('cursor-select', bundled); return bundled ? cursorInfo() : null; },
       changeCursor: async (token, restore) => { track('cursor-change', token, restore); cursorManaged = !restore; return { id: 'cursor', success: true, message: 'Normal pointer verified.' }; },
       setAppCursor: async enabled => { track('cursor-app', enabled); appCursor = enabled; return cursorInfo(); },
@@ -670,4 +673,20 @@ test('cursor provider failure blocks Windows apply and restore instead of showin
   await expect(page.locator('.cursor-manager').getByRole('alert')).toContainText('Cursor backup unreadable');
   await expect(page.getByRole('button', { name: 'Apply Cursor', exact: true })).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Restore Default', exact: true })).toBeDisabled();
+});
+
+test('advanced power controls review exact values and cancel without changing the plan', async ({ page }) => {
+  await desktopFixture(page); await page.goto('/');
+  await page.getByRole('button', { name: 'Optimizations', exact: true }).click();
+  const card = page.locator('.power-tuning .tweak-card').filter({ has: page.getByRole('heading', { name: 'Maximum processor state', exact: true }) });
+  await card.getByLabel('Maximum processor state').selectOption('75');
+  await card.getByRole('button', { name: 'Review power change' }).click();
+  await expect(page.getByRole('dialog')).toContainText('75%');
+  await expect(page.getByRole('dialog')).toContainText('Battery');
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'power-tuning-change'))).toHaveLength(0);
+  await card.getByRole('button', { name: 'Review power change' }).click();
+  await page.getByRole('button', { name: 'Confirm power setting', exact: true }).click();
+  await expect(page.locator('.power-tuning')).toContainText('Power value verified.');
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'power-tuning-change').map((c: any) => c.args))).toEqual([['power-tuning-review']]);
 });

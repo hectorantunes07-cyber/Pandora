@@ -29,7 +29,7 @@ jobs:
       - name: Disposable runner registry, profile, power, pointer, visual effects and startup exact restore
         shell: pwsh
         run: |
-          & npx.cmd vitest run tests/tweaks.windows.test.ts tests/power.windows.test.ts tests/startup.windows.test.ts tests/pointer.windows.test.ts tests/visual-effects.windows.test.ts tests/cursor.windows.test.ts --reporter=verbose 2>&1 | Tee-Object -FilePath native-windows.log
+          & npx.cmd vitest run tests/tweaks.windows.test.ts tests/power.windows.test.ts tests/startup.windows.test.ts tests/pointer.windows.test.ts tests/visual-effects.windows.test.ts tests/cursor.windows.test.ts tests/power-tuning.windows.test.ts --no-file-parallelism --reporter=verbose 2>&1 | Tee-Object -FilePath native-windows.log
           $testExit = $LASTEXITCODE
           if ($testExit -ne 0) {
             $tail = (Get-Content native-windows.log -Tail 110) -join "`n"
@@ -44,6 +44,7 @@ jobs:
           PANDORA_TEST_WINDOWS_POINTER: '1'
           PANDORA_TEST_WINDOWS_VISUAL: '1'
           PANDORA_TEST_WINDOWS_CURSOR: '1'
+          PANDORA_TEST_WINDOWS_POWER_TUNING: '1'
       - name: Install Chromium for UI tests
         run: npx playwright install chromium
       - name: UI smoke tests

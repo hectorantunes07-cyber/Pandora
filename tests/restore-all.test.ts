@@ -1,3 +1,4 @@
+import { createPowerTuningService } from '../electron/power-tuning';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -18,6 +19,7 @@ describe('reviewed restoration across all managed features', () => {
   afterEach(async () => { await fs.rm(dir, { recursive: true, force: true }); });
   function services() {
     return {
+      powerTuning: createPowerTuningService(dir, { supported: false, read: async () => { throw new Error('unavailable'); }, write: async () => {} }),
       cursor: createCursorService(dir, path.resolve('public/cursors/sonnier.cur'), { supported: false, read: async () => { throw new Error('Unavailable'); }, write: async () => {}, preview: async () => null }),
       visual: createVisualEffectsService(dir, { supported: false, read: async () => { throw new Error('unavailable'); }, write: async () => {} }),
       pointer: createPointerService(dir, { supported: true, read: async () => [6, 10, 0], write: async () => { throw new Error('No pointer changes were applied in this fixture'); } }),
@@ -122,6 +124,16 @@ describe('reviewed restoration across all managed features', () => {
     expect(arrow).toEqual({ kind: 'String', value: '' });
     await fs.writeFile(path.join(dir, 'backups/cursor-v1.json'), '{bad');
     await expect(recovery.preview()).rejects.toThrow('preserved');
+  });
+
+  it.each([[5, 50, 100, 100], [100, 100, 5, 50]])('restores CPU bounds in a valid order: %j', async (originalMin, originalMax, changedMin, changedMax) => {
+    const s = services(), policy: Record<string, number | null> = { 'cpu-minimum': originalMin, 'cpu-maximum': originalMax };
+    s.powerTuning = createPowerTuningService(dir, { supported: true, read: async () => ({ planId: A, activePlanId: A, values: { ...policy } }), write: async (_plan, _active, id, expected, desired) => { expect(policy[id]).toBe(expected); const low = id === 'cpu-minimum' ? desired : policy['cpu-minimum']!; const high = id === 'cpu-maximum' ? desired : policy['cpu-maximum']!; if (low > high) throw new Error('Invalid bounds'); policy[id] = desired; } });
+    const changes = changedMin > originalMin ? [['cpu-maximum', changedMax], ['cpu-minimum', changedMin]] : [['cpu-minimum', changedMin], ['cpu-maximum', changedMax]];
+    for (const [id, value] of changes) expect((await s.powerTuning.change((await s.powerTuning.preview(id, value, false)).token)).success).toBe(true);
+    const recovery = createRestoreService(s), review = await recovery.preview();
+    expect((await recovery.restore(review.token)).every(r => r.success)).toBe(true);
+    expect(policy).toEqual({ 'cpu-minimum': originalMin, 'cpu-maximum': originalMax });
   });
 
 });
