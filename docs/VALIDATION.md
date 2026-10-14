@@ -2,7 +2,19 @@
 
 PANDORA 0.1.0 is being built in a Linux cloud workspace. Windows-specific checks must be distinguished from Linux unit tests and browser tests. No gaming performance gains have been benchmarked.
 
-## Current NVIDIA/cursor Windows test build — 2026-10-14
+## Current advanced-power Windows test build — 2026-10-14
+
+Application source: `f0f75781b041c38deac6de6d934e7bce20ae07e2`. Later documentation commits do not alter the packaged runtime.
+
+- **211 backend tests passed on Linux; 13 Windows-only tests skipped there. All 36 UI journeys passed.** Production build, native C# compilation/PowerShell fixtures and the read-only Electron bridge smoke passed. The new cards were visually inspected in Electron.
+- Six power controls use documented Windows SDK GUIDs and PowerReadACValueIndex/PowerWriteACValueIndex. Tests cover per-control relaunch/restore, stale review and plan changes, unsupported values, CPU bound constraints, corrupt journals, failed writes and refresh failures. Combined restoration relaxes CPU bounds before tightening them.
+- [Native Windows CI](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/38536940358) passed at this exact source: disposable native power-plan checks alongside the existing preference/profile/pointer/visual/startup/cursor tests; all UI checks; portable and installer builds; archive verification; packaged launch; install/launch/uninstall and user-data preservation. The new test exercises available policies on a cloned disposable plan, requires at least three round trips, compares the final full power query to its baseline and restores the original active plan. Availability on the hosted runner does not certify every physical system's effective power behavior.
+- Both local executable archives, x64 payloads, bundled files and checksums passed verification against a clean checkout. These exact cross-built bytes were not launched on Windows; `windowsLaunchVerified` stays false. CI separately builds and launches its own artifacts from the same source.
+- PANDORA-Setup-0.1.0-x64.exe: **158,308,441 bytes**, SHA256 `808927c083eb36d6688ee264368103d504a5979d382543b6a8875dc770f88173`.
+- PANDORA-Portable-0.1.0-x64.exe: **111,550,771 bytes**, SHA256 `ee40d59a87065260e6f90daa94ed8855c0fbbdaf08122270252c2ce216f6a177`.
+- Approximately **86%** of the broader requested scope is implemented by rough estimate. Both packages remain unsigned. Physical-PC power policy effects, laptop battery isolation, OEM overrides, standard-account permissions, heat/noise and repeatable gaming results still need validation. Broader unfinished features remain explicit in FEATURES.md.
+
+## Previous NVIDIA/cursor Windows test build — 2026-10-14
 
 Application source: `756b79b2e88bd7fd0db4e7bb1aca761d5ef5269c`. Final documentation commits do not change packaged runtime code.
 

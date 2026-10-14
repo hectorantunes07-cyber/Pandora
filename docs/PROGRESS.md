@@ -183,3 +183,14 @@ Preserved all previous commits and implemented the user-requested stage: 54 NVID
 Saved implementation in 8bd74cd and da48349. Added retryable restoration after native reload failure in 00eb900. Windows CI identified unsupported cursor-reload flags; corrected at `756b79b2e88bd7fd0db4e7bb1aca761d5ef5269c`. [Native build](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/38522747218) passed every required stage, including the actual supplied cursor apply/restore, all other native fixtures, 35 UI journeys, packaging, launch and installer lifecycle. Local checks: 198 backend passes, 12 native skips, native helper compilation and real Electron smoke. Both unsigned local EXEs passed archive/x64/bundled-file/checksum verification.
 
 Keep the 537da29 release checkpoint. Download handoff and the updated test kit use the verified 756b79b runtime source. Read FEATURES and WINDOWS-HANDOFF before choosing the next stage. The project remains approximately 85% implemented by rough scope estimate; outstanding broader driver/network controls, restore points, richer sensors, game automation, signing/update/release certification and physical-PC checks must not be called complete.
+
+
+## Advanced power controls checkpoint — 2026-10-14
+
+Added six real individually reviewed AC power-plan controls: processor minimum/maximum, boost policy, energy preference, PCIe link savings and cooling policy. This brings the configurable target count to 27; desktop/privacy/personalization actions are not represented as FPS boosts. No battery policy is written, no unsupported Wi-Fi value is guessed and Quick Optimize does not silently apply advanced power choices.
+
+Durable per-plan originals survive relaunch, failed refreshes and inactive-plan restoration. Stale reviews, external conflicts, invalid CPU limit combinations and unreadable journals are refused. Combined restoration orders CPU limits safely. The UI shows actual stored values, proposed values and hardware/policy tradeoffs.
+
+Source `f0f75781b041c38deac6de6d934e7bce20ae07e2` is saved to GitHub. Local checks: 211 backend passes, 13 native-only skips, 36 UI journeys, native helper compilation and Electron integration. [Windows CI](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/38536940358) passed native mutation/restore, all UI checks, both package builds, packaged launch and installer lifecycle. Local archives match clean source and are distinguished from CI-built bytes. The previous 756b79b release is retained in release/checkpoints/756b79b-before-power-controls.
+
+Full scope remains approximately 86%, not a finished public release. Follow WINDOWS-HANDOFF.md for physical-PC testing and unfinished functionality. Do not reimplement completed power/NVIDIA/cursor features or repeat successful packaging without source changes.

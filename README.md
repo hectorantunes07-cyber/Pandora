@@ -57,8 +57,8 @@ adapters. It never tunes the development host. Passing these tests does not
 establish real Windows API compatibility. Browser tests verify UI behavior;
 they are separate from native desktop testing.
 
-The Windows workflow additionally opts into registry/profile, power-plan, launcher
-startup and pointer API roundtrips on its disposable GitHub-hosted runner. These
+The Windows workflow additionally opts into registry/profile, power-plan, advanced
+AC power policy, launcher startup, pointer, cursor and visual API roundtrips on its disposable GitHub-hosted runner. These
 mutation tests require explicit `PANDORA_TEST_WINDOWS_*` flags plus the hosted-runner
 identity checks. Keep those flags off on your daily PC; they are not needed for
 development. Read-only adapter inspection and guarded temporary filesystem
@@ -114,7 +114,7 @@ trusted code signing. Do not disable Windows security controls to run PANDORA.
 PANDORA stores settings and its rollback journal in Electron's per-user
 application-data directory, normally `%APPDATA%\PANDORA` on Windows. Backups
 include `backups\tweaks-v1.json`, `power-v1.json`, `startup-v1.json` and
-`pointer-v1.json` and `visual-effects-v1.json`; settings are `settings.json` and manual game locations are
+`pointer-v1.json`, `visual-effects-v1.json`, `cursor-v1.json` and `power-tuning-v1.json`; settings are `settings.json` and manual game locations are
 `game-paths-v1.json`. Preserve the entire
 directory when backing up. Do not edit the journal or delete it while changes
 remain applied. PANDORA refuses to overwrite a later external preference change;
@@ -257,6 +257,16 @@ refuses to run outside a GitHub-hosted CI runner. These checks complement the
 manual Windows release checklist; they do not certify all physical machines.
 
 ### Visual preferences and graphics guidance
+
+Optimizations also includes six advanced plugged-in power controls: processor
+minimum/maximum state, boost policy, energy preference, PCIe link-state savings
+and cooling policy. Each shows the current stored value and a review of the
+proposed value and tradeoffs. Exact originals are backed up before writing and
+can be restored individually or through combined rollback. Battery values and
+unrelated plans are preserved. Availability does not prove hardware effectiveness:
+Windows power mode, firmware and OEM software can override the stored policy.
+Permission failures remain explicit; do not elevate the entire application to
+bypass organizational policy. These controls are never silently applied by a preset.
 
 Optimizations includes seven Windows visual-effect controls with actual API
 readings, individual confirmation, durable originals and exact effective-value

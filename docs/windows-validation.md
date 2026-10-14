@@ -147,3 +147,14 @@ Windows compatibility, anti-cheat approval or FPS improvement.
 - [ ] Toggle in-app use separately. Check cursor behavior on buttons, text fields, disabled controls and resizing. No Windows write should occur.
 - [ ] Review combined rollback and verify the custom normal pointer is included with its original value.
 - [ ] Check all pages at 100%, 125%, 150% and 200% display scaling for readable text, keyboard access, wrapping and scrolling.
+
+
+## Advanced power controls
+
+- On a standard account, record the active plan and AC/DC values before using a supported control. Review/cancel must not write; confirmed apply must preserve the original before writing and report read-back accurately. Permission or policy denial must remain explicit.
+- Test CPU minimum/maximum, boost policy, energy preference, PCIe savings and cooling policy separately where supported. Power mode, firmware and OEM controls may override effective behavior; a stored value alone is not evidence of clocks, fan speed, latency or FPS.
+- Reopen PANDORA and restore exact original values. Switch the active plan externally before restoration: restore the saved plan without activating it. Battery/DC values must remain unchanged throughout.
+- Test a valid pair of changed CPU bounds and combined restore in both directions. Minimum must never exceed maximum during the sequence. External modifications and deleted/unavailable plans must preserve backups and be reported rather than overwritten.
+- Compare repeated same-scene frame captures and actual thermals/noise/power on representative hardware. Do not recommend maximum performance universally, particularly on laptops. PANDORA does not presently measure temperatures itself.
+
+The implementation uses PowerGetActiveScheme, PowerReadACValueIndex, PowerWriteACValueIndex and PowerSetActiveScheme. Fixed setting identifiers were cross-checked against Microsoft's [Windows SDK winnt.h](https://github.com/microsoft/win32metadata/blob/main/generation/WinSDK/RecompiledIdlHeaders/um/winnt.h). Unsupported stored values remain unavailable; power-policy presence does not establish hardware effectiveness.

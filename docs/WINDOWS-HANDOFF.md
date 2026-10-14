@@ -1,6 +1,6 @@
 # PANDORA — Created by Sonnier: Windows test release
 
-PANDORA 0.1.0 is ready for controlled Windows testing. It is an unsigned development release, not completion of the full original specification or a certified public release. Approximately **85% of the full requested scope is implemented**; this is a rough scope estimate, not a Windows compatibility or performance score. The expanded optimization wishlist is also only partially implemented. The current library has 21 configurable targets: eight registry preferences, seven desktop effects, power-plan selection, pointer acceleration and four launcher startup entries. Presets reuse these targets. Normal-pointer customization is an additional personalization feature, not an FPS tweak.
+PANDORA 0.1.0 is ready for controlled Windows testing. It is an unsigned development release, not completion of the full original specification or a certified public release. Approximately **86% of the full requested scope is implemented**; this is a rough scope estimate, not a Windows compatibility or performance score. The expanded optimization wishlist is also only partially implemented. The current library has 27 configurable targets: eight registry preferences, seven desktop effects, six advanced power controls, power-plan selection, pointer acceleration and four launcher startup entries. Presets reuse these targets. Normal-pointer customization is an additional personalization feature, not an FPS tweak.
 
 ## Implemented (see validation record for platform checks)
 
@@ -14,9 +14,10 @@ PANDORA 0.1.0 is ready for controlled Windows testing. It is an unsigned develop
 - Graphics guidance selected from detected GPU/driver inventory, official driver links and Windows settings shortcuts. Refresh intervals are calculated, not measured input latency.
 - Six reviewed presets: Competitive FPS, Balanced Gaming, Streaming + Gaming, Creator, Quiet/Everyday and Custom. Profile switching restores profile-owned preferences and preserves individual changes/custom choices.
 - Existing power-plan selection with exact original GUID backup and guarded restoration.
+- Six reviewed plugged-in power controls: CPU minimum/maximum, boost policy, energy preference, PCIe savings and cooling policy. Real stored-state detection, durable originals, read-back and restoration on the original plan; battery values remain unchanged. Hardware may override these preferences.
 - Optional pointer acceleration through the documented Windows API, with original thresholds/mode saved, read-back verification and exact effective-value restoration. Raw-input games may ignore it.
 - Guarded disable/restore for four named current-user launcher startup entries: Discord, Steam, Epic Games Launcher and Spotify. Other startup mechanisms remain read-only.
-- Combined restoration of managed preferences, power, pointer acceleration, custom normal cursor, visual preferences, launcher entries and preset ownership, with skipped conflicts/unavailable providers reported individually.
+- Combined restoration of managed preferences, power-plan selection and AC policies, pointer acceleration, custom normal cursor, visual preferences, launcher entries and preset ownership, with skipped conflicts/unavailable providers reported individually.
 - Six supported game guides: Fortnite, VALORANT, CS2, Apex Legends, Warzone and GTA V. Automatic supported install detection and native manual executable selection, persisted/missing-path handling and metadata-only removal.
 - Explicit ICMP latency/loss/jitter measurements, physical/virtual/hidden adapter inspection, recognized EEE/interrupt-moderation options, available power-management states and fixed-host DNS timing. These diagnostics do not change network configuration or infer game routing.
 - Performance Lab with manual measurements and validated local frame-time CSV analysis, average/1% low FPS, interval consistency, capture provenance, before/after PC snapshots and export. No fabricated improvement or live game capture.
@@ -35,9 +36,9 @@ Cleanup reports confirmed logical file bytes, not an exact physical free-space i
 
 ## Download
 
-Application source: `756b79b2e88bd7fd0db4e7bb1aca761d5ef5269c`. Both packages are built and archive-verified. Native Windows CI passed for this source, including installer lifecycle and 35 UI journeys. Exact checksums are recorded in the accompanying `verification.json`.
+Application source: `f0f75781b041c38deac6de6d934e7bce20ae07e2`. Both packages are built and archive-verified. Native Windows CI passed for this source, including installer lifecycle and 36 UI journeys. Exact checksums are recorded in the accompanying `verification.json`.
 
-Download **PANDORA-Windows-x64-unsigned** from [verified NVIDIA/cursor Windows build](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/38522747218). Sign in to GitHub if required and extract the ZIP first.
+Download **PANDORA-Windows-x64-unsigned** from [verified advanced-power Windows build](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/38536940358). Sign in to GitHub if required and extract the ZIP first.
 
 - `PANDORA-Setup-0.1.0-x64.exe`: per-user installer with shortcuts and uninstaller.
 - `PANDORA-Portable-0.1.0-x64.exe`: no installation; still stores local app data.
@@ -54,6 +55,7 @@ The local `release/PANDORA-Windows-Test-Kit-0.1.0-x64.zip` contains cross-built 
 - [ ] Review/cancel a cleanup scan, then clean only disposable old temporary files; verify skipped files and logical-byte totals. Optional browser/Recycle Bin tests need disposable data.
 - [ ] Apply one preference and restore its original behavior. Test profile switching/off and saved Custom choices.
 - [ ] Separately test existing power-plan, pointer, visual-effect and supported launcher changes, then restore after relaunch. Preserve backups.
+- [ ] Review one supported advanced power value, cancel first, then apply and restore after relaunch. Verify battery values and plan selection are unchanged. Record thermal/noise/performance effects separately; Windows power mode and firmware may override the stored policy.
 - [ ] Review all managed changes. Confirm that external edits/unavailable providers produce skipped items and retained originals.
 - [ ] Save a manual game path, reopen, simulate a missing file and forget the path without deleting anything.
 - [ ] Compare physical and VPN adapter data with Windows. Test ICMP/DNS results without interpreting them as your Fortnite server latency.
