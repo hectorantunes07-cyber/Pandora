@@ -2,7 +2,21 @@
 
 PANDORA 0.1.0 is being built in a Linux cloud workspace. Windows-specific checks must be distinguished from Linux unit tests and browser tests. No gaming performance gains have been benchmarked.
 
-## Current expanded Windows test build — 2026-10-13
+## Current NVIDIA/cursor Windows test build — 2026-10-14
+
+Application source: `756b79b2e88bd7fd0db4e7bb1aca761d5ef5269c`. Final documentation commits do not change packaged runtime code.
+
+- **198 backend tests pass on Linux; 12 native-only checks skip there.** All **35 renderer journeys pass**, including NVIDIA search/scope/saving, cursor confirmation/cancellation/rollback, provider failure and readable scaled layouts.
+- Production TypeScript/renderer/Electron build passes. PowerShell parsing and C# compilation pass. Real Electron smoke validates the sandboxed preload, actual inventory, supplied cursor metadata and packaged benchmark import. NVIDIA and cursor pages were visually inspected in Electron.
+- [Native Windows CI](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/38522747218) **passed** at this exact source. Required steps include native cleaner fixtures; explicitly disposable registry/profile/power/startup/pointer/visual/cursor round trips; 35 UI journeys; both executable builds; archive/source verification; packaged launch; and installation/uninstallation with preserved user data.
+- The cursor fixture uses the actual supplied file and verifies persistent Arrow configuration and exact original restoration after recreating the service. A Windows failure identified invalid cursor-reload flags; the verified implementation now uses SPI_SETCURSORS with zero flags. Failed reloads retain retryable backup ownership even if registry restoration already happened.
+- Both local packages passed outer/inner archive integrity, x64 payload, bundled-file matching and SHA256 verification at a **clean** checkout. Their exact bytes are cross-built locally, so `windowsLaunchVerified` remains false in their manifest. Windows CI separately builds and launches its own packages from the same source.
+- Installer: **158,293,776 bytes**, SHA256 `a48d983123ede8460a5461a317d2761b5a5ce2d8dd0fb980a471bde1dc8ea8ed`.
+- Portable: **111,539,203 bytes**, SHA256 `c02a8e5ba6d71074310a399ad7369556d6006547dd885529733d1f3c08d1ad45`.
+- Both remain unsigned. Actual reboot persistence, before/after pointer appearance, third-party cursor utilities, NVIDIA Control Panel launch on installed drivers, all display scaling levels and gaming effects still require physical-PC validation.
+- Overall scope estimate: approximately **85%**, not a claim of complete specification or public-release certification. See FEATURES.md and WINDOWS-HANDOFF.md for missing capabilities.
+
+## Previous expanded Windows test build — 2026-10-13
 
 Application source: `537da29bad7fc2d27c612df7d5a4df3bcd581824`.
 

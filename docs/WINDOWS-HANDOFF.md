@@ -1,10 +1,12 @@
 # PANDORA — Created by Sonnier: Windows test release
 
-PANDORA 0.1.0 is ready for controlled Windows testing. It is an unsigned development release, not completion of the full original specification or a certified public release. Approximately **84% of the original specification is implemented**; this is a rough scope estimate, not a Windows compatibility or performance score. The expanded optimization wishlist is also only partially implemented. The current library has 21 configurable targets: eight registry preferences, seven desktop effects, power-plan selection, pointer acceleration and four launcher startup entries. Presets reuse these targets.
+PANDORA 0.1.0 is ready for controlled Windows testing. It is an unsigned development release, not completion of the full original specification or a certified public release. Approximately **85% of the full requested scope is implemented**; this is a rough scope estimate, not a Windows compatibility or performance score. The expanded optimization wishlist is also only partially implemented. The current library has 21 configurable targets: eight registry preferences, seven desktop effects, power-plan selection, pointer acceleration and four launcher startup entries. Presets reuse these targets. Normal-pointer customization is an additional personalization feature, not an FPS tweak.
 
 ## Implemented (see validation record for platform checks)
 
-- Original purple/black desktop interface, accessible confirmations, responsive navigation and reduced motion.
+- Original purple/black desktop interface, accessible confirmations, responsive navigation and reduced motion. Larger body/navigation text, readable descriptions and 20px section headings without global zoom.
+- NVIDIA Settings with 54 searchable screenshot-based reference entries, Sonnier’s personal setup, persistent notes, Global/Per-Game guidance, hardware context and a Control Panel launcher. Driver configuration is manual; reference values are not detected settings.
+- Quality of Life cursor manager: the supplied crosshair, actual preview/hotspot, validated local CUR/ANI picker, persistent files, normal-pointer-only configuration, exact original backup, confirmation, native reload/read-back and restore after reopening. Optional in-app use is separate; animated files use a static first frame there.
 - Actual hardware inventory, CPU/RAM monitoring, supported GPU utilization, CPU reported-clock snapshot, OS architecture, storage health/provider data, monitor modes and network link rates.
 - PC Cleaner with safe old temporary-file scanning, category selection, measured logical bytes, confirmation, progress and locked/changed-file reporting. Browser caches and Recycle Bin each have separate confirmation.
 - Eight narrow Windows preferences with durable original-value/absence snapshots, current-state verification, individual/batch restore, recovery and conflict refusal.
@@ -14,7 +16,7 @@ PANDORA 0.1.0 is ready for controlled Windows testing. It is an unsigned develop
 - Existing power-plan selection with exact original GUID backup and guarded restoration.
 - Optional pointer acceleration through the documented Windows API, with original thresholds/mode saved, read-back verification and exact effective-value restoration. Raw-input games may ignore it.
 - Guarded disable/restore for four named current-user launcher startup entries: Discord, Steam, Epic Games Launcher and Spotify. Other startup mechanisms remain read-only.
-- Combined restoration of managed preferences, power, pointer, visual preferences, launcher entries and preset ownership, with skipped conflicts/unavailable providers reported individually.
+- Combined restoration of managed preferences, power, pointer acceleration, custom normal cursor, visual preferences, launcher entries and preset ownership, with skipped conflicts/unavailable providers reported individually.
 - Six supported game guides: Fortnite, VALORANT, CS2, Apex Legends, Warzone and GTA V. Automatic supported install detection and native manual executable selection, persisted/missing-path handling and metadata-only removal.
 - Explicit ICMP latency/loss/jitter measurements, physical/virtual/hidden adapter inspection, recognized EEE/interrupt-moderation options, available power-management states and fixed-host DNS timing. These diagnostics do not change network configuration or infer game routing.
 - Performance Lab with manual measurements and validated local frame-time CSV analysis, average/1% low FPS, interval consistency, capture provenance, before/after PC snapshots and export. No fabricated improvement or live game capture.
@@ -33,9 +35,9 @@ Cleanup reports confirmed logical file bytes, not an exact physical free-space i
 
 ## Download
 
-Application source: `537da29bad7fc2d27c612df7d5a4df3bcd581824`. Both packages are built and archive-verified. Native Windows CI passed for this source, including installer lifecycle and 31 UI journeys. Exact checksums are recorded in the accompanying `verification.json`.
+Application source: `756b79b2e88bd7fd0db4e7bb1aca761d5ef5269c`. Both packages are built and archive-verified. Native Windows CI passed for this source, including installer lifecycle and 35 UI journeys. Exact checksums are recorded in the accompanying `verification.json`.
 
-Download **PANDORA-Windows-x64-unsigned** from [verified Windows run 40](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/38457487572). Sign in to GitHub if required and extract the ZIP first.
+Download **PANDORA-Windows-x64-unsigned** from [verified NVIDIA/cursor Windows build](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/38522747218). Sign in to GitHub if required and extract the ZIP first.
 
 - `PANDORA-Setup-0.1.0-x64.exe`: per-user installer with shortcuts and uninstaller.
 - `PANDORA-Portable-0.1.0-x64.exe`: no installation; still stores local app data.
@@ -46,6 +48,8 @@ The local `release/PANDORA-Windows-Test-Kit-0.1.0-x64.zip` contains cross-built 
 ## What you should test on your Windows PC
 
 - [ ] Verify the matching SHA256, install or launch as a normal user, reopen and inspect all pages at your display scaling.
+- [ ] Search the NVIDIA library, save notes and reopen it. Test the Control Panel launcher on your NVIDIA driver installation. Record original values before making manual driver changes; PANDORA rollback does not cover them.
+- [ ] Apply the normal cursor, check all other roles, relaunch, restore the original, and repeat across a Windows restart. Try another supported CUR/ANI file and optional in-app use.
 - [ ] Compare hardware/monitor/link data with Windows. Check missing providers stay unavailable.
 - [ ] Review/cancel a cleanup scan, then clean only disposable old temporary files; verify skipped files and logical-byte totals. Optional browser/Recycle Bin tests need disposable data.
 - [ ] Apply one preference and restore its original behavior. Test profile switching/off and saved Custom choices.

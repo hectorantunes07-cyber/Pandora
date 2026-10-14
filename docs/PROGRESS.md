@@ -174,3 +174,12 @@ Final native Windows run 40 (`38457487572`) passed at application source
 packages, packaged launch and installer lifecycle/data preservation. Local
 manifest correctly keeps Windows launch unverified for the separate cross-built
 bytes. The downloadable test kit includes matching checksums and CI evidence.
+
+
+## NVIDIA reference, normal cursor and readability checkpoint — 2026-10-14
+
+Preserved all previous commits and implemented the user-requested stage: 54 NVIDIA reference cards with search, scope guidance, local notes and native Control Panel launch; supplied-cursor validation/preview, optional normal-pointer apply/restore, persistent content-addressed files, native local picker, separate in-app use and combined rollback; a readable type scale throughout the existing interface.
+
+Saved implementation in 8bd74cd and da48349. Added retryable restoration after native reload failure in 00eb900. Windows CI identified unsupported cursor-reload flags; corrected at `756b79b2e88bd7fd0db4e7bb1aca761d5ef5269c`. [Native build](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/38522747218) passed every required stage, including the actual supplied cursor apply/restore, all other native fixtures, 35 UI journeys, packaging, launch and installer lifecycle. Local checks: 198 backend passes, 12 native skips, native helper compilation and real Electron smoke. Both unsigned local EXEs passed archive/x64/bundled-file/checksum verification.
+
+Keep the 537da29 release checkpoint. Download handoff and the updated test kit use the verified 756b79b runtime source. Read FEATURES and WINDOWS-HANDOFF before choosing the next stage. The project remains approximately 85% implemented by rough scope estimate; outstanding broader driver/network controls, restore points, richer sensors, game automation, signing/update/release certification and physical-PC checks must not be called complete.
