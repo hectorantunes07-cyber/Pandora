@@ -138,8 +138,8 @@ if($code -ne 21) { throw 'A successful no-op must not be called a created restor
 $inventory=& ([scriptblock]::Create([string]$scripts.systemRestoreQuery)) | ConvertFrom-Json
 if(-not $inventory.supported -or -not $inventory.readable -or $inventory.points.Count -ne 0) { throw 'Empty restore inventory schema failed.' }
 function Start-Process {
- param([string]$FilePath,[string[]]$ArgumentList,[string]$Verb,[switch]$Wait,[switch]$PassThru,[string]$ErrorAction)
- if($Verb -ne 'RunAs' -or -not $Wait -or -not $PassThru -or $ArgumentList[3] -ne '-EncodedCommand') { throw 'Unexpected elevation boundary.' }
+ param([string]$FilePath,[string[]]$ArgumentList,[string]$Verb,[string]$WindowStyle,[switch]$Wait,[switch]$PassThru,[string]$ErrorAction)
+ if($Verb -ne 'RunAs' -or $WindowStyle -ne 'Hidden' -or -not $Wait -or -not $PassThru -or $ArgumentList[3] -ne '-EncodedCommand') { throw 'Unexpected elevation boundary.' }
  $decoded=[Text.Encoding]::Unicode.GetString([Convert]::FromBase64String($ArgumentList[4]))
  if($decoded -ne [string]$scripts.systemRestoreCreate) { throw 'Elevated script did not match the fixed verified helper.' }
  [pscustomobject]@{ExitCode=0}

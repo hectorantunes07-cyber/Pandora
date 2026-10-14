@@ -45,7 +45,7 @@ export function buildRestoreElevationScript(id: string): string {
 $ErrorActionPreference='Stop'
 $env:PSModulePath="$PSHOME\Modules"
 try {
- $p=Start-Process -FilePath "$PSHOME\powershell.exe" -ArgumentList @('-NoLogo','-NoProfile','-NonInteractive','-EncodedCommand','${encoded}') -Verb RunAs -Wait -PassThru -ErrorAction Stop
+ $p=Start-Process -FilePath "$PSHOME\powershell.exe" -ArgumentList @('-NoLogo','-NoProfile','-NonInteractive','-EncodedCommand','${encoded}') -Verb RunAs -WindowStyle Hidden -Wait -PassThru -ErrorAction Stop
  if($null -eq $p -or $null -eq $p.ExitCode) { @{exitCode=21;cancelled=$false} | ConvertTo-Json -Compress; return }
  @{exitCode=[int]$p.ExitCode;cancelled=$false} | ConvertTo-Json -Compress
 } catch {
