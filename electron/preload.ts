@@ -1,6 +1,9 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { AppApi, ProgressEvent } from '../shared/types';
 const api: AppApi = {
+  getNvidiaPreset: () => ipcRenderer.invoke('pandora:nvidia-preset'),
+  saveNvidiaPreset: preset => ipcRenderer.invoke('pandora:nvidia-save', preset),
+  openNvidiaControlPanel: () => ipcRenderer.invoke('pandora:nvidia-open'),
   getVisualEffects: () => ipcRenderer.invoke('pandora:visual-effects'),
   changeVisualEffect: (token, restore) => ipcRenderer.invoke('pandora:visual-change', token, restore),
   getPointer: () => ipcRenderer.invoke('pandora:pointer'),

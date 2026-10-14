@@ -9,6 +9,7 @@ async function desktopFixture(page: Page) {
     const states = [{ id: 'transparency', title: 'Reduce transparency', description: 'Use opaque Windows surfaces.', category: 'Quality of life' as const, risk: 'Low' as const, tradeoff: 'Windows surfaces will look opaque.', target: 'HKCU\\Test\\Transparency', desiredValue: 0, restart: 'Sign out may be required.', reference: 'https://support.microsoft.com/', state: 'available' as const, currentValue: 1, managed: false }];
     let visualManaged = false;
     window.pandora = {
+      getNvidiaPreset: async () => null, saveNvidiaPreset: async preset => { track('nvidia-save', preset); return preset; }, openNvidiaControlPanel: async () => { track('nvidia-open'); },
       getVisualEffects: async () => [{ id: 'menu-animation', current: !visualManaged, original: visualManaged ? true : null, managed: visualManaged, token: 'visual-review-token' }],
       changeVisualEffect: async (token, restore) => { track('visual-change', token, restore); visualManaged = !restore; return { id: 'menu-animation', success: true, message: 'Visual preference verified.' }; },
       getPointer: async () => ({ supported: true, current: [6, 10, 1], original: null, managed: false, conflict: false, token: 'pointer-review-token' }),
@@ -606,4 +607,32 @@ test('graphics guidance uses detected hardware and opens only reviewed Windows s
   expect(await page.evaluate(() => (window as any).__calls.find((c: any) => c.method === 'windows-settings').args)).toEqual(['graphics']);
   await expect(guidance.getByRole('link', { name: 'Official driver downloads' })).toHaveAttribute('href', 'https://www.nvidia.com/en-us/drivers/');
   await guidance.screenshot({ path: 'test-results/pandora-graphics-guidance.png' });
+});
+
+
+test('NVIDIA reference is searchable, scoped and never presented as an applied preset', async ({ page }) => {
+  await desktopFixture(page); await page.goto('/');
+  await page.getByRole('button', { name: 'NVIDIA Settings', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Sonnier’s NVIDIA Setup' })).toBeVisible();
+  await expect(page.getByText('Manual review required', { exact: true })).toBeVisible();
+  await page.getByLabel('Search NVIDIA settings').fill('Shader Cache');
+  await expect(page.locator('.nvidia-setting')).toHaveCount(1);
+  await expect(page.locator('.reference-value')).toHaveText('100 GB');
+  await page.getByRole('button', { name: 'Per-Game', exact: true }).click();
+  await page.getByText('Where to find it', { exact: true }).click();
+  await expect(page.locator('.nvidia-setting')).toContainText('Program Settings → select your game');
+  await page.getByLabel('Your configuration notes').fill('Record original values before editing.');
+  await page.getByRole('button', { name: 'Save personal reference' }).click();
+  await page.getByRole('button', { name: 'Open NVIDIA Control Panel', exact: true }).click();
+  const calls = await page.evaluate(() => (window as any).__calls);
+  expect(calls.filter((c: any) => c.method.startsWith('nvidia-')).map((c: any) => c.method)).toEqual(['nvidia-save', 'nvidia-open']);
+});
+
+test('readable typography and NVIDIA cards fit a scaled desktop', async ({ page }) => {
+  await desktopFixture(page); await page.setViewportSize({ width: 1100, height: 720 }); await page.goto('/');
+  const nav = page.getByRole('button', { name: 'NVIDIA Settings', exact: true });
+  expect(await nav.evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(14);
+  await nav.click();
+  expect(await page.locator('.nvidia-setting p').first().evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(14);
+  expect(await page.locator('#main-content').evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
 });

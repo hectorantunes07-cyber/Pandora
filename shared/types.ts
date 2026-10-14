@@ -1,3 +1,4 @@
+export interface NvidiaPreset { version: 1; name: string; savedAt: string; notes: string; values: Record<string, string>; }
 export type Capability = 'available' | 'unavailable' | 'unsupported' | 'permission';
 export interface SystemInfo {
   platform: string; timestamp: string; cpu: string; logicalCores: number; physicalCores: number | null;
@@ -40,6 +41,9 @@ export interface NetworkResult {
   received: number; lossPercent: number; averageMs: number | null; minMs: number | null; maxMs: number | null; jitterMs: number | null;
 }
 export interface AppApi {
+  getNvidiaPreset(): Promise<NvidiaPreset | null>;
+  saveNvidiaPreset(preset: NvidiaPreset): Promise<NvidiaPreset>;
+  openNvidiaControlPanel(): Promise<void>;
   getVisualEffects(): Promise<import('./visual-effects').VisualEffectState[]>;
   changeVisualEffect(token: string, restore: boolean): Promise<OperationResult>;
   getPointer(): Promise<PointerInfo>;

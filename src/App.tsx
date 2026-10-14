@@ -3,14 +3,15 @@ import { Activity, ArrowRight, ArrowUpRight, Bell, BookOpen, Check, ChevronDown,
 import type { AppSettings, GameInfo, Metrics, SystemInfo, TweakState } from '../shared/types';
 import { api, errorMessage, formatBytes, isDesktop, unsupportedMessage } from './api';
 import { ActionLink, Badge, Chart, EmptyState, IconBox, Meter, Notice, PageHeading, PanelTitle, Spinner } from './components';
+import { NvidiaSettings } from './NvidiaSettings';
 import { NetworkDiagnostics } from './Network';
 import { Insights } from './Insights';
 import { Cleaner } from './Cleaner';
 import { Optimizations, Restore, GameProfiles } from './Optimizations';
 import { Processes, PerformanceLab, Preferences } from './Tools';
 
-type Page = 'Overview' | 'System Monitor' | 'Optimizations' | 'Game Profiles' | 'PC Cleaner' | 'Restore & History' | 'Processes & Startup' | 'Performance Lab' | 'Network Diagnostics' | 'Settings';
-const navigation = [{ section: 'WORKSPACE', items: [{ name: 'Overview', icon: Home }, { name: 'System Monitor', icon: Activity }] }, { section: 'OPTIMIZE', items: [{ name: 'Optimizations', icon: Rocket }, { name: 'Game Profiles', icon: Gamepad2 }, { name: 'PC Cleaner', icon: Sparkles }] }, { section: 'TOOLS', items: [{ name: 'Restore & History', icon: History }, { name: 'Processes & Startup', icon: Layers }, { name: 'Performance Lab', icon: Gauge }, { name: 'Network Diagnostics', icon: Wifi }] }];
+type Page = 'NVIDIA Settings' | 'Overview' | 'System Monitor' | 'Optimizations' | 'Game Profiles' | 'PC Cleaner' | 'Restore & History' | 'Processes & Startup' | 'Performance Lab' | 'Network Diagnostics' | 'Settings';
+const navigation = [{ section: 'WORKSPACE', items: [{ name: 'Overview', icon: Home }, { name: 'System Monitor', icon: Activity }] }, { section: 'OPTIMIZE', items: [{ name: 'Optimizations', icon: Rocket }, { name: 'Game Profiles', icon: Gamepad2 }, { name: 'PC Cleaner', icon: Sparkles }, { name: 'NVIDIA Settings', icon: Monitor }] }, { section: 'TOOLS', items: [{ name: 'Restore & History', icon: History }, { name: 'Processes & Startup', icon: Layers }, { name: 'Performance Lab', icon: Gauge }, { name: 'Network Diagnostics', icon: Wifi }] }];
 export default function App() {
   const [page, setPage] = useState<Page>('Overview');
   const [system, setSystem] = useState<SystemInfo | null>(null);
@@ -68,6 +69,7 @@ export default function App() {
   <div className="main-shell"><header className="topbar"><div className="breadcrumb"><button className="icon-button mobile-menu" aria-label="Open navigation" onClick={() => setMenu(!menu)}><Menu size={19}/></button><span>Workspace</span><ChevronRight size={13}/><strong>{page}</strong></div><div className="topbar-right"><span className="connection"><span className={`status-dot ${isDesktop ? '' : 'neutral'}`}/>{isDesktop ? 'Local desktop session' : 'Browser preview'}</span><span className="topbar-divider"/><button className="icon-button" aria-label="About PANDORA" onClick={() => navigate('Settings')}><CircleHelp size={18}/></button>{isDesktop && <div className="window-controls"><button aria-label="Minimize window" onClick={() => api.windowAction('minimize')}><Minus size={14}/></button><button aria-label="Maximize window" onClick={() => api.windowAction('maximize')}><Square size={12}/></button><button className="window-close" aria-label="Close window" disabled={operationBusy} onClick={() => api.windowAction('close')}><X size={16}/></button></div>}</div></header>
   <main id="main-content" className="main-content">{!isDesktop && <div className="preview-banner"><Monitor size={15}/><span>Windows app preview <span className="preview-detail">— hardware readings and system changes are available in the desktop app.</span></span><Badge>READ ONLY</Badge></div>}
     {page === 'Overview' && <Overview system={system} metrics={metrics} samples={samples} loading={loading} error={systemError} applied={applied} tweaks={tweaks} quick={quick} navigate={navigate} refresh={refresh}/>}
+    {page === 'NVIDIA Settings' && <NvidiaSettings system={system} notify={notify}/>}
     {page === 'System Monitor' && <SystemMonitor system={system} metrics={metrics} samples={samples} loading={loading} error={systemError} refresh={refresh} notify={notify}/>}
     {page === 'Optimizations' && <Optimizations system={system} tweaks={tweaks} refresh={refreshTweaks} notify={notify} quickReview={quickReview} onQuickReviewed={() => setQuickReview(false)} onBusyChange={setOperationBusy}/>}
     {page === 'Game Profiles' && <GameProfiles games={games} tweaks={tweaks} review={quick} refreshTweaks={refreshTweaks} onBusyChange={setOperationBusy}/>}

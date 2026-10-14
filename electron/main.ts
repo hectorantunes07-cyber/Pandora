@@ -9,6 +9,7 @@ import { createStartupService } from './startup';
 import { createPowerService } from './power';
 import { createRestoreService } from './restore-all';
 import { createVisualEffectsService } from './visual-effects';
+import { createNvidiaService, openNvidiaControlPanel } from './nvidia';
 import { createPointerService } from './pointer';
 import { createGamePathService, validateGameId } from './game-paths';
 import { createNetworkService } from './network';
@@ -43,6 +44,10 @@ function registerServices() {
       try { return await result; } finally { activeMutations--; }
     });
   }
+  const nvidia = createNvidiaService(app.getPath('userData'));
+  handle('nvidia-preset', () => nvidia.getPreset());
+  handle('nvidia-save', (preset: unknown) => nvidia.savePreset(preset));
+  handle('nvidia-open', openNvidiaControlPanel);
   const startup = createStartupService(app.getPath('userData'));
   const gamePaths = createGamePathService(app.getPath('userData'));
   handle('manual-games', () => gamePaths.list());
