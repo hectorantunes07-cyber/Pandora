@@ -194,3 +194,12 @@ Durable per-plan originals survive relaunch, failed refreshes and inactive-plan 
 Source `f0f75781b041c38deac6de6d934e7bce20ae07e2` is saved to GitHub. Local checks: 211 backend passes, 13 native-only skips, 36 UI journeys, native helper compilation and Electron integration. [Windows CI](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/38536940358) passed native mutation/restore, all UI checks, both package builds, packaged launch and installer lifecycle. Local archives match clean source and are distinguished from CI-built bytes. The previous 756b79b release is retained in release/checkpoints/756b79b-before-power-controls.
 
 Full scope remains approximately 86%, not a finished public release. Follow WINDOWS-HANDOFF.md for physical-PC testing and unfinished functionality. Do not reimplement completed power/NVIDIA/cursor features or repeat successful packaging without source changes.
+
+
+## NVIDIA telemetry checkpoint — 2026-10-14
+
+Added read-only per-device NVIDIA SMI snapshots to System Monitor and system report export: memory used/total, temperature, graphics clock, reported power and utilization. Missing fields remain null, driver failures clear old readings, timestamps remain separate from WMI inventory and memory uses explicit MiB/GiB units. Fixed read-only arguments, installed Windows paths, six-second execution bound, 32-KiB output cap, 15-second cache and concurrent request coalescing. The renderer cannot choose commands or paths; no NVIDIA tool is bundled/downloaded.
+
+Source `ee2fbc9f8addf5d487bf26b83ff3747976857026` is pushed to GitHub. Local results: 230 backend passes, 13 Windows-only skips, 37 distinct UI journeys passed after targeted fixes, production build and real Electron smoke. [Windows run](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/38587202183) passed the full 37-test UI suite, existing native roundtrips, both packages, packaged launch and installation lifecycle. Native telemetry bridge/unavailable handling is checked, but actual sensor accuracy requires a physical NVIDIA GPU. Do not claim that the hosted runner validated RTX readings.
+
+Both local EXEs and the 12-file test kit passed archive/source/checksum/CRC checks; native CI produces separate bytes. Previous advanced-power packages remain at release/checkpoints/f0f7578-before-gpu-readings. Overall approximate scope remains 86%; no new tweak is counted for this diagnostic feature. Consult the updated handoff and FEATURES for remaining work.

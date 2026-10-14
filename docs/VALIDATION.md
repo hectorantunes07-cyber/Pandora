@@ -2,7 +2,20 @@
 
 PANDORA 0.1.0 is being built in a Linux cloud workspace. Windows-specific checks must be distinguished from Linux unit tests and browser tests. No gaming performance gains have been benchmarked.
 
-## Current advanced-power Windows test build — 2026-10-14
+## Current NVIDIA telemetry Windows test build — 2026-10-14
+
+Application source: `ee2fbc9f8addf5d487bf26b83ff3747976857026`. Later documentation commits do not alter packaged runtime code.
+
+- **230 backend tests pass on Linux; 13 Windows-only checks skip there.** The 37 interface journeys passed across the initial suite and targeted correction reruns; the full 37-test suite also passed in native Windows CI. Production build and the real Electron preload/read-only smoke passed.
+- Added 19 telemetry tests for multi-GPU identities, MiB-to-byte conversion, zero versus unsupported values, malformed/oversized/impossible output, query coalescing/cache expiry, failure recovery, fixed paths/arguments, timeouts and unsupported platforms. The UI regression covers explicit readings, unavailable fields, stale-data clearing and memory units. Fixed a duplicate refresh request exposed by React strict-mode testing; cards were visually inspected.
+- [Windows CI](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/38587202183) passed all required checks at this source, including existing native mutation/rollback tests, all UI journeys, both package builds, archive/source verification, packaged launch and installer lifecycle/data preservation. The smoke verifies the new telemetry bridge and honest unavailable handling; **it does not establish physical NVIDIA sensor accuracy**. The hosted runner has no representative NVIDIA GPU.
+- NVIDIA telemetry executes only a fixed read-only query against installed Windows utility locations. It does not search PATH, download executables, change GPU settings, persist identifiers or continuously poll in the background. Cache interval is 15 seconds, execution timeout six seconds and output limit 32 KiB. Only per-device name/index, bounded sensor values, provider and timestamp are exported.
+- Both local EXEs passed archive integrity, x64 payload, bundled-source comparison and SHA256 verification against clean source. Their exact bytes were not launched on Windows; `windowsLaunchVerified` remains false. CI built and launched separate packages from the same source.
+- PANDORA-Setup-0.1.0-x64.exe: **158,314,055 bytes**, SHA256 `09f69f6f69ea2a21357f77a49cff4308ab3b7e3e97bac29bfe3cdb90a99a0ef3`.
+- PANDORA-Portable-0.1.0-x64.exe: **111,555,053 bytes**, SHA256 `c857e55d2d914ed757dddf09b5e1fa85298963b968bdc3af8e5012b8d4709b9b`.
+- Overall requested scope remains approximately **86% implemented**, not a certified release. The optimization library still has 27 configurable targets; telemetry is a diagnostic, not an extra tweak. NVIDIA driver/device comparison on the user's PC, missing utility/field behavior, multi-GPU mapping and sampling semantics remain physical-PC checks. CPU/AMD/Intel and fan sensors are unfinished.
+
+## Previous advanced-power Windows test build — 2026-10-14
 
 Application source: `f0f75781b041c38deac6de6d934e7bce20ae07e2`. Later documentation commits do not alter the packaged runtime.
 

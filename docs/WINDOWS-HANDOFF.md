@@ -8,6 +8,7 @@ PANDORA 0.1.0 is ready for controlled Windows testing. It is an unsigned develop
 - NVIDIA Settings with 54 searchable screenshot-based reference entries, Sonnier’s personal setup, persistent notes, Global/Per-Game guidance, hardware context and a Control Panel launcher. Driver configuration is manual; reference values are not detected settings.
 - Quality of Life cursor manager: the supplied crosshair, actual preview/hotspot, validated local CUR/ANI picker, persistent files, normal-pointer-only configuration, exact original backup, confirmation, native reload/read-back and restore after reopening. Optional in-app use is separate; animated files use a static first frame there.
 - Actual hardware inventory, CPU/RAM monitoring, supported GPU utilization, CPU reported-clock snapshot, OS architecture, storage health/provider data, monitor modes and network link rates.
+- Optional NVIDIA hardware snapshots: per-device VRAM used/total, GPU temperature, graphics clock, reported power and utilization where the installed driver utility supports them. Explicit refresh, bounded execution, separate timestamp and report export. Actual readings still require checking on physical NVIDIA hardware.
 - PC Cleaner with safe old temporary-file scanning, category selection, measured logical bytes, confirmation, progress and locked/changed-file reporting. Browser caches and Recycle Bin each have separate confirmation.
 - Eight narrow Windows preferences with durable original-value/absence snapshots, current-state verification, individual/batch restore, recovery and conflict refusal.
 - Seven Windows visual-effect controls with per-setting API detection, confirmation, durable original effective values and verified apply/restore. These are desktop preferences, not FPS boosts.
@@ -28,7 +29,7 @@ PANDORA 0.1.0 is ready for controlled Windows testing. It is an unsigned develop
 - Direct HAGS, per-game GPU/driver, fullscreen/overlay and broader GPU tuning controls; NVIDIA-specific configuration is not automatically applied.
 - Reversible adapter power/EEE/interrupt-moderation/DNS changes, full network-path diagnostics, and optional bundled-app removal. Current network features are diagnostics.
 - Windows System Restore point creation and broader pre-change system backups. Local setting snapshots do not restore deleted files or Windows itself.
-- Reliable VRAM and CPU/GPU temperatures/fan/power sensors, detailed SSD SMART/error diagnostics and broader hardware compatibility.
+- CPU and AMD/Intel GPU sensors, fan readings, detailed SSD SMART/error diagnostics and broader hardware compatibility. NVIDIA telemetry is implemented but requires physical-GPU validation.
 - Automated game-file configuration, live game telemetry/capture and measured performance benefits on your hardware.
 - Start-with-Windows/tray and fuller retention/logging controls, complete cross-feature history export, signed publisher identity, secure updater and public-release certification.
 
@@ -36,9 +37,9 @@ Cleanup reports confirmed logical file bytes, not an exact physical free-space i
 
 ## Download
 
-Application source: `f0f75781b041c38deac6de6d934e7bce20ae07e2`. Both packages are built and archive-verified. Native Windows CI passed for this source, including installer lifecycle and 36 UI journeys. Exact checksums are recorded in the accompanying `verification.json`.
+Application source: `ee2fbc9f8addf5d487bf26b83ff3747976857026`. Both packages are built and archive-verified. Native Windows CI passed for this source, including installer lifecycle and 37 UI journeys. Exact checksums are recorded in the accompanying `verification.json`.
 
-Download **PANDORA-Windows-x64-unsigned** from [verified advanced-power Windows build](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/38536940358). Sign in to GitHub if required and extract the ZIP first.
+Download **PANDORA-Windows-x64-unsigned** from [verified GPU-readings Windows build](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/38587202183). Sign in to GitHub if required and extract the ZIP first.
 
 - `PANDORA-Setup-0.1.0-x64.exe`: per-user installer with shortcuts and uninstaller.
 - `PANDORA-Portable-0.1.0-x64.exe`: no installation; still stores local app data.
@@ -52,6 +53,7 @@ The local `release/PANDORA-Windows-Test-Kit-0.1.0-x64.zip` contains cross-built 
 - [ ] Search the NVIDIA library, save notes and reopen it. Test the Control Panel launcher on your NVIDIA driver installation. Record original values before making manual driver changes; PANDORA rollback does not cover them.
 - [ ] Apply the normal cursor, check all other roles, relaunch, restore the original, and repeat across a Windows restart. Try another supported CUR/ANI file and optional in-app use.
 - [ ] Compare hardware/monitor/link data with Windows. Check missing providers stay unavailable.
+- [ ] Open System Monitor and compare NVIDIA readings with the installed NVIDIA SMI utility. Confirm each GPU, MiB/GiB memory units and snapshot time. Check refresh caching, unsupported fields and exported readings. No temperature/clock/FPS inference should be assumed.
 - [ ] Review/cancel a cleanup scan, then clean only disposable old temporary files; verify skipped files and logical-byte totals. Optional browser/Recycle Bin tests need disposable data.
 - [ ] Apply one preference and restore its original behavior. Test profile switching/off and saved Custom choices.
 - [ ] Separately test existing power-plan, pointer, visual-effect and supported launcher changes, then restore after relaunch. Preserve backups.
