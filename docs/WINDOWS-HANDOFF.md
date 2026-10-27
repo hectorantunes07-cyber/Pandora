@@ -1,6 +1,6 @@
 # PANDORA — Created by Sonnier: Windows test release
 
-PANDORA 0.1.0 is ready for controlled Windows testing. It is an unsigned development release, not completion of the full original specification or a certified public release. Approximately **86% of the full requested scope is implemented**; this is a rough scope estimate, not a Windows compatibility or performance score. The expanded optimization wishlist is also only partially implemented. The current library has 27 configurable targets: eight registry preferences, seven desktop effects, six advanced power controls, power-plan selection, pointer acceleration and four launcher startup entries. Presets reuse these targets. Normal-pointer customization is an additional personalization feature, not an FPS tweak.
+PANDORA 0.1.0 is ready for controlled Windows testing. It is an unsigned development release, not completion of the full original specification or a certified public release. Approximately **87% of the full requested scope is implemented**; this is a rough scope estimate, not a Windows compatibility or performance score. The expanded optimization wishlist is also only partially implemented. The current library has 27 configurable targets: eight registry preferences, seven desktop effects, six advanced power controls, power-plan selection, pointer acceleration and four launcher startup entries. Presets reuse these targets. Normal-pointer customization is an additional personalization feature, not an FPS tweak.
 
 ## Implemented (see validation record for platform checks)
 
@@ -18,6 +18,7 @@ PANDORA 0.1.0 is ready for controlled Windows testing. It is an unsigned develop
 - Six reviewed plugged-in power controls: CPU minimum/maximum, boost policy, energy preference, PCIe savings and cooling policy. Real stored-state detection, durable originals, read-back and restoration on the original plan; battery values remain unchanged. Hardware may override these preferences.
 - Optional pointer acceleration through the documented Windows API, with original thresholds/mode saved, read-back verification and exact effective-value restoration. Raw-input games may ignore it.
 - Guarded disable/restore for four named current-user launcher startup entries: Discord, Steam, Epic Games Launcher and Spotify. Other startup mechanisms remain read-only.
+- Windows System Restore panel with recent points, reviewed creation through a narrowly scoped administrator helper, verification of a new unique point, and a System Protection shortcut. Windows frequency/protection policies are respected; actual Windows 10/11 creation remains unverified.
 - Combined restoration of managed preferences, power-plan selection and AC policies, pointer acceleration, custom normal cursor, visual preferences, launcher entries and preset ownership, with skipped conflicts/unavailable providers reported individually.
 - Six supported game guides: Fortnite, VALORANT, CS2, Apex Legends, Warzone and GTA V. Automatic supported install detection and native manual executable selection, persisted/missing-path handling and metadata-only removal.
 - Explicit ICMP latency/loss/jitter measurements, physical/virtual/hidden adapter inspection, recognized EEE/interrupt-moderation options, available power-management states and fixed-host DNS timing. These diagnostics do not change network configuration or infer game routing.
@@ -28,7 +29,7 @@ PANDORA 0.1.0 is ready for controlled Windows testing. It is an unsigned develop
 
 - Direct HAGS, per-game GPU/driver, fullscreen/overlay and broader GPU tuning controls; NVIDIA-specific configuration is not automatically applied.
 - Reversible adapter power/EEE/interrupt-moderation/DNS changes, full network-path diagnostics, and optional bundled-app removal. Current network features are diagnostics.
-- Windows System Restore point creation and broader pre-change system backups. Local setting snapshots do not restore deleted files or Windows itself.
+- Windows client verification of the implemented restore-point flow and broader pre-change backups. Actual UAC approval and new checkpoint creation have not yet been tested on Windows 10/11. Local setting snapshots do not restore deleted files or Windows itself.
 - CPU and AMD/Intel GPU sensors, fan readings, detailed SSD SMART/error diagnostics and broader hardware compatibility. NVIDIA telemetry is implemented but requires physical-GPU validation.
 - Automated game-file configuration, live game telemetry/capture and measured performance benefits on your hardware.
 - Start-with-Windows/tray and fuller retention/logging controls, complete cross-feature history export, signed publisher identity, secure updater and public-release certification.
@@ -37,9 +38,9 @@ Cleanup reports confirmed logical file bytes, not an exact physical free-space i
 
 ## Download
 
-Application source: `ee2fbc9f8addf5d487bf26b83ff3747976857026`. Both packages are built and archive-verified. Native Windows CI passed for this source, including installer lifecycle and 37 UI journeys. Exact checksums are recorded in the accompanying `verification.json`.
+Application source: `7a0e69ebfc16d5e7af4c708d152771a2e587a19a`. Both packages are built and archive-verified. Native Windows CI passed for this source, including installer lifecycle and 39 UI journeys. Exact checksums are recorded in the accompanying `verification.json`.
 
-Download **PANDORA-Windows-x64-unsigned** from [verified GPU-readings Windows build](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/38587202183). Sign in to GitHub if required and extract the ZIP first.
+Download **PANDORA-Windows-x64-unsigned** from [verified restore-point Windows build](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/38635250100). Sign in to GitHub if required and extract the ZIP first.
 
 - `PANDORA-Setup-0.1.0-x64.exe`: per-user installer with shortcuts and uninstaller.
 - `PANDORA-Portable-0.1.0-x64.exe`: no installation; still stores local app data.
@@ -58,10 +59,13 @@ The local `release/PANDORA-Windows-Test-Kit-0.1.0-x64.zip` contains cross-built 
 - [ ] Apply one preference and restore its original behavior. Test profile switching/off and saved Custom choices.
 - [ ] Separately test existing power-plan, pointer, visual-effect and supported launcher changes, then restore after relaunch. Preserve backups.
 - [ ] Review one supported advanced power value, cancel first, then apply and restore after relaunch. Verify battery values and plan selection are unchanged. Record thermal/noise/performance effects separately; Windows power mode and firmware may override the stored policy.
+- [ ] In Restore & History, inspect existing Windows points, cancel creation review, then test UAC cancellation. On a protected Windows 10/11 test PC, confirm a reviewed request and verify the new unique point in System Protection. Check disabled protection/daily-limit failures stay unconfirmed. Never test a full-system rollback just to validate this button.
 - [ ] Review all managed changes. Confirm that external edits/unavailable providers produce skipped items and retained originals.
 - [ ] Save a manual game path, reopen, simulate a missing file and forget the path without deleting anything.
 - [ ] Compare physical and VPN adapter data with Windows. Test ICMP/DNS results without interpreting them as your Fortnite server latency.
 - [ ] Import a real repeatable frame-time capture and compare like-for-like before/after results. No actual gain has been established yet.
 - [ ] Uninstall/reinstall and confirm history remains. Restore unwanted changes before uninstalling.
+
+The CI artifact contains the instructions that existed at build time. This repository handoff and the current local test kit include the updated restore-point status.
 
 Native hosted CI passes do not establish every Windows setting's visible effect, performance benefit, vendor compatibility or standard-user behavior on your PC. Complete [windows-validation.md](windows-validation.md) before broader release. Report source/hash, Windows version, steps and errors; keep private paths and journals out of public reports.

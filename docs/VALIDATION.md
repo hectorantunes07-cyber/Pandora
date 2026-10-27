@@ -2,7 +2,21 @@
 
 PANDORA 0.1.0 is being built in a Linux cloud workspace. Windows-specific checks must be distinguished from Linux unit tests and browser tests. No gaming performance gains have been benchmarked.
 
-## Current NVIDIA telemetry Windows test build — 2026-10-14
+## Current restore-point Windows test build — 2026-10-27
+
+Application source: `7a0e69ebfc16d5e7af4c708d152771a2e587a19a`. Restore-point implementation was saved on October 14; this checkpoint completes verification and handoff after recovering an older cloud snapshot. No existing implementation or commit was replaced.
+
+- **242 backend tests pass on Linux; 13 Windows-only checks skip there. All 39 UI journeys pass.** Production build, native script parsing/isolated runtime fixtures, native declaration compilation and the real Electron preload/read-only smoke passed in the recovered workspace.
+- [Windows CI](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/38635250100) passed every required step at this exact source: native safety and apply/restore fixtures, 39 UI journeys, both packages, archive/source checks, packaged launch and install/uninstall with user-data preservation. The run completed on October 14 and its exact source/conclusions were checked again on October 27.
+- The new Restore & History panel lists recent points and offers reviewed creation through a fixed, encoded Checkpoint-Computer helper. Only that operation requests UAC; the UI remains unelevated. The helper confirms a new sequence with the backend-generated description before reporting success. No-op/frequency limits, unreadable providers, timeout, stale tokens and cancellation cannot become a successful backup result. The helper console stays hidden while Windows retains its administrator prompt.
+- Actual helper scripts passed isolated success, existing-point/no-op, Windows Server, unavailable-list, UAC-cancellation and missing-exit-code fixtures. **No real Windows 10/11 checkpoint or UAC prompt was exercised by these fixtures or hosted Server CI.** Client creation, policy behavior and visibility in System Protection remain mandatory physical/VM client tests. No protection/frequency policy is changed, and no restore point is deleted or restored by PANDORA.
+- Both rebuilt local EXEs passed archive integrity, x64 payload, bundled-code comparison and checksums at clean source. Local bytes were not launched on Windows; `windowsLaunchVerified` remains false. CI built and launched separate artifacts from the same source. Never mix their checksums.
+- PANDORA-Setup-0.1.0-x64.exe: **158,321,637 bytes**, SHA256 `1d157cf993ff7572855476f544f23fc467e6f567215db6d449f5e7da711562d1`.
+- PANDORA-Portable-0.1.0-x64.exe: **111,560,709 bytes**, SHA256 `7c694d90bdf7870308b73820d82aee9f67c5d21a93066748da0c3277e1d52121`.
+- The previous locally retained `537da29` packages/kit were preserved in `release/checkpoints/537da29-before-restored-latest`. Only the newest verified local kit is replaced, after ZIP CRC and embedded executable hashes pass.
+- Broad requested scope is approximately **87% implemented**, a rough planning estimate rather than a release-certification score. There are still 27 configurable tuning/preference targets; checkpoints and diagnostics do not increase that count. Physical hardware/driver effects and broader unfinished capabilities remain explicit in FEATURES and WINDOWS-HANDOFF.
+
+## Previous NVIDIA telemetry Windows test build — 2026-10-14
 
 Application source: `ee2fbc9f8addf5d487bf26b83ff3747976857026`. Later documentation commits do not alter packaged runtime code.
 

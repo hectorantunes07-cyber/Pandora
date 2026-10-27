@@ -203,3 +203,14 @@ Added read-only per-device NVIDIA SMI snapshots to System Monitor and system rep
 Source `ee2fbc9f8addf5d487bf26b83ff3747976857026` is pushed to GitHub. Local results: 230 backend passes, 13 Windows-only skips, 37 distinct UI journeys passed after targeted fixes, production build and real Electron smoke. [Windows run](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/38587202183) passed the full 37-test UI suite, existing native roundtrips, both packages, packaged launch and installation lifecycle. Native telemetry bridge/unavailable handling is checked, but actual sensor accuracy requires a physical NVIDIA GPU. Do not claim that the hosted runner validated RTX readings.
 
 Both local EXEs and the 12-file test kit passed archive/source/checksum/CRC checks; native CI produces separate bytes. Previous advanced-power packages remain at release/checkpoints/f0f7578-before-gpu-readings. Overall approximate scope remains 86%; no new tweak is counted for this diagnostic feature. Consult the updated handoff and FEATURES for remaining work.
+
+
+## Reviewed Windows restore points and recovered build checkpoint — 2026-10-27
+
+Preserved the previous source/history and fast-forwarded the clean restored checkout from `43ccb87` to the already-pushed `7a0e69ebfc16d5e7af4c708d152771a2e587a19a`. The cloud snapshot had older packages; newer NVIDIA/cursor/power/telemetry and restore-point commits remained safely on GitHub. Rebuilt the missing final local packages instead of reimplementing those stages.
+
+The restore-point panel and narrow UAC helper were implemented in `2332abd`, with a hidden helper console in `7a0e69e`. It lists up to 100 recent points, allows a single-use five-minute reviewed request, verifies a new unique sequence/description and reports policy/no-op/cancellation/timeout truthfully. It never enables protection, bypasses daily limits, deletes checkpoints, restores the OS or elevates the whole app. System Protection remains the Windows-managed destination for full-system restore.
+
+Recovered-workspace validation: 242 backend passes, 13 Windows-only skips, all 39 UI journeys, production build, native syntax/runtime fixtures and real Electron integration passed. [Exact-source Windows run](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/38635250100) passed all required stages, including native existing controls, packages, launch and installer lifecycle. Windows Server CI and isolated restore fixtures do not validate real Windows 10/11 checkpoint creation or UAC; these remain explicit tests for a client PC/VM.
+
+Local installer/portable archives and the handoff kit are verified separately from CI-built bytes. Current scope is roughly 87% implemented, still not the full master specification or a signed public release. Preserve the retained release checkpoints, read the current handoff, and continue substantive missing features without repeating completed controls.
