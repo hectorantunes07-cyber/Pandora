@@ -9,6 +9,7 @@ PANDORA 0.1.0 is ready for controlled Windows testing. It is an unsigned develop
 - Quality of Life cursor manager: the supplied crosshair, actual preview/hotspot, validated local CUR/ANI picker, persistent files, normal-pointer-only configuration, exact original backup, confirmation, native reload/read-back and restore after reopening. Optional in-app use is separate; animated files use a static first frame there.
 - Actual hardware inventory, CPU/RAM monitoring, supported GPU utilization, CPU reported-clock snapshot, OS architecture, storage health/provider data, monitor modes and network link rates.
 - Optional NVIDIA hardware snapshots: per-device VRAM used/total, GPU temperature, graphics clock, reported power and utilization where the installed driver utility supports them. Explicit refresh, bounded execution, separate timestamp and report export. Actual readings still require checking on physical NVIDIA hardware.
+- Drive diagnostics with explicit read-only Windows Storage snapshots for temperature, reported wear, power-on hours and six exact read/write error counters. Per-device missing/failed readings, 30-second caching and privacy-filtered system report export. No drive-life prediction, self-test or disk modification. Physical drives/controllers still need comparison.
 - PC Cleaner with safe old temporary-file scanning, category selection, measured logical bytes, confirmation, progress and locked/changed-file reporting. Browser caches and Recycle Bin each have separate confirmation.
 - Eight narrow Windows preferences with durable original-value/absence snapshots, current-state verification, individual/batch restore, recovery and conflict refusal.
 - Seven Windows visual-effect controls with per-setting API detection, confirmation, durable original effective values and verified apply/restore. These are desktop preferences, not FPS boosts.
@@ -30,7 +31,7 @@ PANDORA 0.1.0 is ready for controlled Windows testing. It is an unsigned develop
 - Direct HAGS, per-game GPU/driver, fullscreen/overlay and broader GPU tuning controls; NVIDIA-specific configuration is not automatically applied.
 - Reversible adapter power/EEE/interrupt-moderation/DNS changes, full network-path diagnostics, and optional bundled-app removal. Current network features are diagnostics.
 - Windows client verification of the implemented restore-point flow and broader pre-change backups. Actual UAC approval and new checkpoint creation have not yet been tested on Windows 10/11. Local setting snapshots do not restore deleted files or Windows itself.
-- CPU and AMD/Intel GPU sensors, fan readings, detailed SSD SMART/error diagnostics and broader hardware compatibility. NVIDIA telemetry is implemented but requires physical-GPU validation.
+- CPU and AMD/Intel GPU sensors, fan readings, raw vendor-specific SMART/self-test diagnostics and broader hardware compatibility. Windows storage reliability counters and NVIDIA telemetry are implemented but require physical-device validation.
 - Automated game-file configuration, live game telemetry/capture and measured performance benefits on your hardware.
 - Start-with-Windows/tray and fuller retention/logging controls, complete cross-feature history export, signed publisher identity, secure updater and public-release certification.
 
@@ -38,9 +39,9 @@ Cleanup reports confirmed logical file bytes, not an exact physical free-space i
 
 ## Download
 
-Application source: `7a0e69ebfc16d5e7af4c708d152771a2e587a19a`. Both packages are built and archive-verified. Native Windows CI passed for this source, including installer lifecycle and 39 UI journeys. Exact checksums are recorded in the accompanying `verification.json`.
+Application source: `b12930e94dd45daced8ae3682b9168ba80f4cebc`. Both packages are built and archive-verified. Native Windows CI passed for this source, including installer lifecycle and 41 UI journeys. Exact checksums are recorded in the accompanying `verification.json`.
 
-Download **PANDORA-Windows-x64-unsigned** from [verified restore-point Windows build](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/38635250100). Sign in to GitHub if required and extract the ZIP first.
+Download **PANDORA-Windows-x64-unsigned** from [verified drive-diagnostics Windows build](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/40588307698). Sign in to GitHub if required and extract the ZIP first.
 
 - `PANDORA-Setup-0.1.0-x64.exe`: per-user installer with shortcuts and uninstaller.
 - `PANDORA-Portable-0.1.0-x64.exe`: no installation; still stores local app data.
@@ -55,6 +56,7 @@ The local `release/PANDORA-Windows-Test-Kit-0.1.0-x64.zip` contains cross-built 
 - [ ] Apply the normal cursor, check all other roles, relaunch, restore the original, and repeat across a Windows restart. Try another supported CUR/ANI file and optional in-app use.
 - [ ] Compare hardware/monitor/link data with Windows. Check missing providers stay unavailable.
 - [ ] Open System Monitor and compare NVIDIA readings with the installed NVIDIA SMI utility. Confirm each GPU, MiB/GiB memory units and snapshot time. Check refresh caching, unsupported fields and exported readings. No temperature/clock/FPS inference should be assumed.
+- [ ] Read drive counters explicitly. Compare supported values with Windows/the manufacturer’s utility, check standard-user/USB/RAID failures remain unavailable, and verify large error counts stay exact in system JSON. A healthy provider label is not a complete diagnostic.
 - [ ] Review/cancel a cleanup scan, then clean only disposable old temporary files; verify skipped files and logical-byte totals. Optional browser/Recycle Bin tests need disposable data.
 - [ ] Apply one preference and restore its original behavior. Test profile switching/off and saved Custom choices.
 - [ ] Separately test existing power-plan, pointer, visual-effect and supported launcher changes, then restore after relaunch. Preserve backups.
@@ -66,6 +68,6 @@ The local `release/PANDORA-Windows-Test-Kit-0.1.0-x64.zip` contains cross-built 
 - [ ] Import a real repeatable frame-time capture and compare like-for-like before/after results. No actual gain has been established yet.
 - [ ] Uninstall/reinstall and confirm history remains. Restore unwanted changes before uninstalling.
 
-The CI artifact contains the instructions that existed at build time. This repository handoff and the current local test kit include the updated restore-point status.
+The CI artifact contains the instructions that existed at build time. This repository handoff and the current local test kit include the updated feature status.
 
 Native hosted CI passes do not establish every Windows setting's visible effect, performance benefit, vendor compatibility or standard-user behavior on your PC. Complete [windows-validation.md](windows-validation.md) before broader release. Report source/hash, Windows version, steps and errors; keep private paths and journals out of public reports.

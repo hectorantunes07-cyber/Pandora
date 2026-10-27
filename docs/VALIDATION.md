@@ -2,7 +2,21 @@
 
 PANDORA 0.1.0 is being built in a Linux cloud workspace. Windows-specific checks must be distinguished from Linux unit tests and browser tests. No gaming performance gains have been benchmarked.
 
-## Current restore-point Windows test build — 2026-10-27
+## Current drive-diagnostics Windows test build — 2026-10-27
+
+Application source: `b12930e94dd45daced8ae3682b9168ba80f4cebc`. Later documentation commits do not change packaged runtime code.
+
+- **268 backend tests pass on Linux; 14 Windows-only checks skip there. All 41 UI journeys pass.** Production build, native PowerShell parsing/runtime fixtures and the real Electron preload/read-only smoke passed. The rendered diagnostic cards were inspected, including large counters and a narrower viewport.
+- [Native Windows CI](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/40588307698) passed every required stage at this exact source, including real Windows physical-storage inventory/schema, existing disposable native apply/restore checks, all 41 UI journeys, both packages, archive verification, packaged launch and installer lifecycle/user-data preservation. Hosted storage-provider checks allow honest unavailable counters; **they do not certify physical SSD/HDD/controller sensor accuracy**.
+- Storage diagnostics use fixed Get-PhysicalDisk/Get-StorageReliabilityCounter operations with bounded output, a 20-second execution limit and a 30-second cache. Requests coalesce. No storage-reliability query runs just from opening System Monitor; the explicit button or system report requests it. No elevation, remote session, self-test, reset, repair or disk configuration change is requested.
+- Isolated native-script fixtures verify counter/device identity matching, ambiguous/missing responses, exact UInt64 strings, zero versus null, wear above 100, per-device errors, empty/denied inventory and the 32-device limit. Backend tests also check invalid data, caching, stale-success clearing, fixed executable arguments and privacy filtering. UI tests verify explicit reading, provider failure, cached labels, units, exact large integers and readable layout.
+- New temperature/wear/error figures are provider-reported snapshots. Wear means estimated endurance used; zero or “Healthy” does not certify remaining life or error-free operation. Windows/driver permissions and USB/RAID/virtual devices may hide fields. No gaming performance gain has been measured.
+- Both local executable archives pass x64 payload, bundled-code and SHA256 verification at clean runtime source. Their exact bytes are cross-built and not launched on Windows; `windowsLaunchVerified` stays false. CI builds and launches separate bytes. The previous verified kit is preserved at `release/checkpoints/7a0e69e-before-storage-readings`.
+- PANDORA-Setup-0.1.0-x64.exe: **158,327,840 bytes**, SHA256 `efebe6d3c7f87d358456877e5c01d75aa2b8cb199ee2f23f9bfdf6b37bdabf58`.
+- PANDORA-Portable-0.1.0-x64.exe: **111,565,651 bytes**, SHA256 `e23ccddfd34212cce06c45471621b124486b44d67c57787acbd2426ae71ab31a`.
+- Overall scope remains approximately **87% implemented**, a rough estimate, with 27 configurable tuning/preference targets. This diagnostic is not another FPS tweak. Client restore-point creation/UAC, physical sensors/driver effects and the remaining master-spec features still need work/testing.
+
+## Previous restore-point Windows test build — 2026-10-27
 
 Application source: `7a0e69ebfc16d5e7af4c708d152771a2e587a19a`. Restore-point implementation was saved on October 14; this checkpoint completes verification and handoff after recovering an older cloud snapshot. No existing implementation or commit was replaced.
 
