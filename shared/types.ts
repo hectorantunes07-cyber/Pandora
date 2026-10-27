@@ -44,6 +44,7 @@ export interface NetworkResult {
   received: number; lossPercent: number; averageMs: number | null; minMs: number | null; maxMs: number | null; jitterMs: number | null;
 }
 export interface AppApi {
+  getStorageReliability(): Promise<import('./storage-reliability').StorageReliability>;
   getSystemRestore(): Promise<import('./system-restore').SystemRestoreInfo>;
   previewSystemRestore(): Promise<import('./system-restore').RestorePointReview>;
   createSystemRestore(token: string): Promise<OperationResult>;

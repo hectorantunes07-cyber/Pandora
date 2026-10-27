@@ -6,6 +6,7 @@ const api: AppApi = {
   createSystemRestore: token => ipcRenderer.invoke('pandora:system-restore-create', token),
   openSystemProtection: () => ipcRenderer.invoke('pandora:system-protection-open'),
   getGpuTelemetry: () => ipcRenderer.invoke('pandora:gpu-telemetry'),
+  getStorageReliability: () => ipcRenderer.invoke('pandora:storage-reliability'),
   getPowerTuning: () => ipcRenderer.invoke('pandora:power-tuning'),
   previewPowerTuning: (id, value, restore) => ipcRenderer.invoke('pandora:power-tuning-preview', id, value, restore),
   changePowerTuning: token => ipcRenderer.invoke('pandora:power-tuning-change', token),

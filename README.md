@@ -306,3 +306,18 @@ may limit new points to one per day. PANDORA does not change that policy, enable
 protection, delete points or start full-system restoration. Points are not file
 backups; Windows owns retention. Actual UAC/create behavior requires a Windows
 10/11 client test: hosted Windows Server CI cannot validate native creation.
+
+
+## Drive reliability diagnostics
+
+System Monitor includes an explicit **Read drive counters** action. Windows Storage
+can report temperature, endurance wear, power-on hours and read/write error counts
+for supported physical disks. Unsupported counters remain unavailable; driver or
+permission failures do not become a healthy result. A 30-second cache and a bounded
+read-only query prevent continuous polling. System JSON reports include the same
+privacy-filtered snapshot, without serials, device IDs or local paths.
+
+Wear is estimated endurance used, not remaining life. The feature does not run
+SMART self-tests, reset counters or repair disks. Compare the readings with the
+manufacturer's utility on actual SSD/HDD and USB/RAID configurations before relying
+on them; hosted Windows CI cannot establish physical sensor accuracy.

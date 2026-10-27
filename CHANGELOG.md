@@ -1,5 +1,11 @@
 # Changelog
 
+## Read-only drive diagnostics — 2026-10-27
+
+- Added on-request Windows storage-provider snapshots for temperature, reported wear, power-on hours and six read/write error counters, with per-device unavailable states and a 30-second cache.
+- Preserved UInt64 error counts exactly, checked counter/device identity, bounded native queries and excluded private storage identifiers from the report.
+- Added readable System Monitor cards and system JSON export. This is not a complete SMART self-test, repair tool or drive-life prediction; physical SSD/HDD/controller validation remains required.
+
 ## Reviewed Windows restore points — 2026-10-14
 
 - Added restore-point inventory and explicit reviewed creation through a separate Windows administrator helper; the desktop app is not relaunched elevated.

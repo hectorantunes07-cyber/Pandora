@@ -56,6 +56,12 @@ try {
   assert.ok(Array.isArray(gpuReadings.devices));
   assert.ok(Number.isFinite(Date.parse(gpuReadings.timestamp)));
   if (process.platform !== 'win32') assert.equal(gpuReadings.devices.length, 0);
+  const storageReadings = await page.evaluate(() => window.pandora.getStorageReliability());
+  assert.equal(storageReadings.provider, 'Windows Storage');
+  assert.ok(['available', 'unavailable'].includes(storageReadings.status));
+  assert.ok(Array.isArray(storageReadings.devices));
+  assert.ok(Number.isFinite(Date.parse(storageReadings.timestamp)));
+  if (process.platform !== 'win32') assert.equal(storageReadings.devices.length, 0);
   const powerTuning = await page.evaluate(() => window.pandora.getPowerTuning());
   assert.equal(powerTuning.states.length, 6);
   assert.ok(powerTuning.states.every(state => !state.managed));

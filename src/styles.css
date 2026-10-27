@@ -154,3 +154,15 @@
 .system-restore-list summary { cursor: pointer; font-size: 14px; margin-bottom: 12px; }
 .system-restore-list .table-wrap { max-height: 320px; overflow: auto; }
 .system-restore-list td { overflow-wrap: anywhere; }
+
+.storage-device { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--line); }
+.storage-device h3 { font-size: 20px; line-height: 1.4; overflow-wrap: anywhere; }
+.storage-reading-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin: 20px 0; }
+.storage-reading-grid dt { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+.storage-reading-grid dd { font-size: 22px; font-weight: 600; margin: 0; overflow-wrap: anywhere; }
+.storage-errors summary { cursor: pointer; padding: 8px 0; font-size: 14px; }
+.storage-errors .storage-reading-grid dd { font-size: 18px; }
+.storage-diagnostics > .panel-title { flex-wrap: wrap; gap: 14px; }
+.storage-device > .panel-title { flex-wrap: wrap; gap: 12px; }
+@media (max-width: 1000px) { .storage-reading-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .storage-reading-grid { grid-template-columns: minmax(0, 1fr); } }

@@ -12,10 +12,10 @@ const root = fileURLToPath(new URL('..', import.meta.url));
 const directory = await mkdtemp(join(tmpdir(), 'pandora-native-syntax-'));
 try {
   const bundle = join(directory, 'scripts.cjs');
-  await build({ stdin: { contents: "export {SYSTEM_RESTORE_QUERY, buildRestorePointScript, buildRestoreElevationScript} from './electron/system-restore-native'; export {POWER_TUNING_NATIVE_SOURCE} from './electron/power-tuning-native'; export {NVIDIA_LAUNCH_SCRIPT} from './electron/nvidia'; export {CURSOR_NATIVE_SOURCE} from './electron/cursor-native'; export {CLEANER_SCRIPT} from './electron/cleaner-native'; export {WINDOWS_QUERIES} from './electron/system'; export {NETWORK_SCRIPT} from './electron/network'; export {ADAPTER_INSPECTION_SCRIPT, DNS_INSPECTION_SCRIPT} from './electron/network-inspection'; export {POINTER_NATIVE_SOURCE} from './electron/pointer'; export {VISUAL_EFFECTS_NATIVE_SOURCE} from './electron/visual-effects';", resolveDir: root }, outfile: bundle, bundle: true, platform: 'node', format: 'cjs', logLevel: 'silent' });
-  const { SYSTEM_RESTORE_QUERY, buildRestorePointScript, buildRestoreElevationScript, POWER_TUNING_NATIVE_SOURCE, NVIDIA_LAUNCH_SCRIPT, CURSOR_NATIVE_SOURCE, CLEANER_SCRIPT, WINDOWS_QUERIES, NETWORK_SCRIPT, ADAPTER_INSPECTION_SCRIPT, DNS_INSPECTION_SCRIPT, POINTER_NATIVE_SOURCE, VISUAL_EFFECTS_NATIVE_SOURCE } = createRequire(import.meta.url)(bundle);
+  await build({ stdin: { contents: "export {STORAGE_RELIABILITY_QUERY} from './electron/storage-reliability'; export {SYSTEM_RESTORE_QUERY, buildRestorePointScript, buildRestoreElevationScript} from './electron/system-restore-native'; export {POWER_TUNING_NATIVE_SOURCE} from './electron/power-tuning-native'; export {NVIDIA_LAUNCH_SCRIPT} from './electron/nvidia'; export {CURSOR_NATIVE_SOURCE} from './electron/cursor-native'; export {CLEANER_SCRIPT} from './electron/cleaner-native'; export {WINDOWS_QUERIES} from './electron/system'; export {NETWORK_SCRIPT} from './electron/network'; export {ADAPTER_INSPECTION_SCRIPT, DNS_INSPECTION_SCRIPT} from './electron/network-inspection'; export {POINTER_NATIVE_SOURCE} from './electron/pointer'; export {VISUAL_EFFECTS_NATIVE_SOURCE} from './electron/visual-effects';", resolveDir: root }, outfile: bundle, bundle: true, platform: 'node', format: 'cjs', logLevel: 'silent' });
+  const { STORAGE_RELIABILITY_QUERY, SYSTEM_RESTORE_QUERY, buildRestorePointScript, buildRestoreElevationScript, POWER_TUNING_NATIVE_SOURCE, NVIDIA_LAUNCH_SCRIPT, CURSOR_NATIVE_SOURCE, CLEANER_SCRIPT, WINDOWS_QUERIES, NETWORK_SCRIPT, ADAPTER_INSPECTION_SCRIPT, DNS_INSPECTION_SCRIPT, POINTER_NATIVE_SOURCE, VISUAL_EFFECTS_NATIVE_SOURCE } = createRequire(import.meta.url)(bundle);
   const payload = join(directory, 'scripts.json');
-  await writeFile(payload, JSON.stringify({ systemRestoreQuery: SYSTEM_RESTORE_QUERY, systemRestoreCreate: buildRestorePointScript('8c867f33-14c2-4d27-9557-20fd0173f972'), systemRestoreElevate: buildRestoreElevationScript('8c867f33-14c2-4d27-9557-20fd0173f972'), nvidiaLauncher: NVIDIA_LAUNCH_SCRIPT, cleaner: CLEANER_SCRIPT, network: NETWORK_SCRIPT, adapterInspection: ADAPTER_INSPECTION_SCRIPT, dnsInspection: DNS_INSPECTION_SCRIPT, ...WINDOWS_QUERIES }));
+  await writeFile(payload, JSON.stringify({ storageReliability: STORAGE_RELIABILITY_QUERY, systemRestoreQuery: SYSTEM_RESTORE_QUERY, systemRestoreCreate: buildRestorePointScript('8c867f33-14c2-4d27-9557-20fd0173f972'), systemRestoreElevate: buildRestoreElevationScript('8c867f33-14c2-4d27-9557-20fd0173f972'), nvidiaLauncher: NVIDIA_LAUNCH_SCRIPT, cleaner: CLEANER_SCRIPT, network: NETWORK_SCRIPT, adapterInspection: ADAPTER_INSPECTION_SCRIPT, dnsInspection: DNS_INSPECTION_SCRIPT, ...WINDOWS_QUERIES }));
   await writeFile(join(directory, 'power-tuning.cs'), POWER_TUNING_NATIVE_SOURCE);
   await writeFile(join(directory, 'cursor.cs'), CURSOR_NATIVE_SOURCE);
   await writeFile(join(directory, 'pointer.cs'), POINTER_NATIVE_SOURCE);
@@ -165,6 +165,48 @@ $unsupported=& ([scriptblock]::Create([string]$scripts.systemRestoreQuery)) | Co
 if($unsupported.supported) { throw 'Windows Server must be unavailable.' }
 if((& ([scriptblock]::Create($helper))) -ne 22) { throw 'Elevated helper must recheck client edition.' }
 Write-Output 'System Restore query, verified-create and elevation wrapper fixtures passed. No native restore point or administrator prompt was invoked.'
+
+# Storage fixtures run the production read-only query with local functions only.
+$script:storageMode='normal'
+function Get-PhysicalDisk {
+ param([string]$ErrorAction)
+ if($script:storageMode -eq 'denied') { throw 'Fixture inventory denied' }
+ if($script:storageMode -eq 'empty') { return }
+ $count=if($script:storageMode -eq 'many') {33} else {2}
+ for($i=0;$i -lt $count;$i++) { [pscustomobject]@{DeviceId=[string]$i;Model='Fixture SSD';FriendlyName='private friendly label';SerialNumber='private serial';MediaType='SSD';BusType='NVMe';Size=1000000000000;HealthStatus=0} }
+}
+function Get-StorageReliabilityCounter {
+ param($PhysicalDisk,[string]$ErrorAction)
+ if($PhysicalDisk.DeviceId -eq '1') { throw 'Fixture driver denied' }
+ $id=$PhysicalDisk.DeviceId
+ if($script:storageMode -eq 'mismatch') { $id='unexpected-device' }
+ $row=[pscustomobject]@{DeviceId=$id;Temperature=0;Wear=110;PowerOnHours=1200;ReadErrorsTotal=[UInt64]::MaxValue;ReadErrorsCorrected=$null;ReadErrorsUncorrected=[UInt64]0;WriteErrorsTotal=$null;WriteErrorsCorrected=$null;WriteErrorsUncorrected=$null}
+ if($script:storageMode -eq 'ambiguous') { $row;$row;return }
+ if($script:storageMode -eq 'missing') { return }
+ if($script:storageMode -eq 'invalid') { $row.Temperature=-1; $row.Wear=256; $row.PowerOnHours='bad';$row.ReadErrorsTotal='18446744073709551616';$row.ReadErrorsUncorrected=$null }
+ $row
+}
+$storage=& ([scriptblock]::Create([string]$scripts.storageReliability)) | ConvertFrom-Json
+if($storage.devices.Count -ne 2 -or $storage.devices[0].readErrorsTotal -cne '18446744073709551615' -or $storage.devices[0].readErrorsTotal -isnot [string]) { throw 'Exact UInt64 storage counters were lost.' }
+if($storage.devices[0].temperatureC -ne 0 -or $storage.devices[0].wearPercent -ne 110 -or $null -ne $storage.devices[0].writeErrorsTotal) { throw 'Storage zero, wear over 100 and missing readings must remain distinct.' }
+if($storage.devices[0].health -ne 'Healthy' -or $storage.devices[0].countersStatus -ne 'reported' -or $storage.devices[1].countersStatus -ne 'unavailable' -or $storage.devices[1].reason -ne 'provider-unavailable') { throw 'Partial storage provider failure or health mapping failed.' }
+if(($storage | ConvertTo-Json -Depth 6) -match 'private') { throw 'Private storage identity fields must be omitted.' }
+foreach($mode in @('mismatch','ambiguous','missing','invalid')) {
+ $script:storageMode=$mode
+ $result=& ([scriptblock]::Create([string]$scripts.storageReliability)) | ConvertFrom-Json
+ if($result.devices[0].countersStatus -ne 'unavailable' -or $null -ne $result.devices[0].temperatureC -or $null -ne $result.devices[0].readErrorsTotal) { throw ('Invalid storage counters accepted: '+$mode) }
+}
+$script:storageMode='empty'
+$empty=& ([scriptblock]::Create([string]$scripts.storageReliability)) | ConvertFrom-Json
+if($empty.devices.Count -ne 0 -or $empty.truncated) { throw 'Empty inventory must stay empty.' }
+$script:storageMode='many'
+$many=& ([scriptblock]::Create([string]$scripts.storageReliability)) | ConvertFrom-Json
+if($many.devices.Count -ne 32 -or -not $many.truncated -or $many.devices[31].index -ne 31) { throw 'Storage inventory bound failed.' }
+$script:storageMode='denied';$denied=$false
+try { & ([scriptblock]::Create([string]$scripts.storageReliability)) | Out-Null } catch { $denied=$true }
+if(-not $denied) { throw 'Denied inventory must not become a clean health result.' }
+Write-Output 'Storage query passed isolated identity, UInt64, null, partial-failure and bounded-inventory fixtures. No physical storage was queried or changed.'
+
 
 
 

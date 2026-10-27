@@ -15,6 +15,7 @@ async function desktopFixture(page: Page) {
       previewSystemRestore: async () => ({ token: 'system-restore-review', description: 'PANDORA fixture checkpoint' }),
       createSystemRestore: async token => { track('system-restore-create', token); systemPointCreated = true; return { id: 'windows-system-restore', success: true, message: 'New Windows restore point verified.' }; },
       openSystemProtection: async () => { track('system-protection-open'); },
+      getStorageReliability: async () => { track('storage-reliability'); return { timestamp: new Date().toISOString(), provider: 'Windows Storage', status: 'unavailable', cached: false, truncated: false, devices: [], reason: 'No storage fixture configured.' }; },
       getGpuTelemetry: async () => { track('gpu-telemetry'); return { timestamp: new Date().toISOString(), provider: 'NVIDIA SMI', status: 'unavailable', cached: false, devices: [], reason: 'No GPU sensor fixture configured.' }; },
       getPowerTuning: async () => ({ supported: true, planId: '381b4222-f694-41f0-9685-ff5bb260df2e', activePlanId: '381b4222-f694-41f0-9685-ff5bb260df2e', states: [{ id: 'cpu-maximum', current: 100, original: null, applied: null, managed: false, conflict: false }] }),
       previewPowerTuning: async (id, value, restore) => { track('power-tuning-preview', id, value, restore); return { token: 'power-tuning-review', id, planId: '381b4222-f694-41f0-9685-ff5bb260df2e', activePlanId: '381b4222-f694-41f0-9685-ff5bb260df2e', current: 100, desired: value ?? 100, restore }; },
@@ -748,4 +749,53 @@ test('Windows restore-point policy failure is not presented as a completed backu
   await page.getByRole('button', { name: 'Confirm & request administrator approval', exact: true }).click();
   await expect(page.getByText('A new Windows restore point was not confirmed.')).toBeVisible();
   await expect(page.getByText('Windows daily creation limit prevented a new point.')).toBeVisible();
+});
+
+test('drive diagnostics run on request, preserve exact error counts and clear failed snapshots', async ({ page }) => {
+  await desktopFixture(page);
+  await page.addInitScript(() => {
+    let reads = 0;
+    window.pandora!.getStorageReliability = async () => {
+      (window as any).__calls.push({ method: 'storage-reliability', args: [] });
+      reads++;
+      if (reads > 1) throw new Error('Storage provider stopped responding.');
+      return { timestamp: '2026-10-27T12:00:00.000Z', provider: 'Windows Storage', status: 'available', cached: false, truncated: false, devices: [{ index: 0, model: 'Fixture NVMe SSD', media: 'SSD', bus: 'NVMe', bytes: 1e12, health: 'Healthy', countersStatus: 'reported', reason: null, temperatureC: 0, wearPercent: 110, powerOnHours: 1234, readErrorsTotal: '18446744073709551615', readErrorsCorrected: null, readErrorsUncorrected: '0', writeErrorsTotal: '2', writeErrorsCorrected: '0', writeErrorsUncorrected: '2' }] };
+    };
+  });
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'System Monitor', exact: true }).click();
+  const panel = page.getByRole('region', { name: 'Drive diagnostics' });
+  await expect(panel.getByRole('button', { name: 'Read drive counters' })).toBeVisible();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'storage-reliability').length)).toBe(0);
+  await panel.getByRole('button', { name: 'Read drive counters' }).click();
+  await expect(panel.getByText('Fixture NVMe SSD', { exact: true })).toBeVisible();
+  await expect(panel.getByText('0 °C', { exact: true })).toBeVisible();
+  await expect(panel.getByText('110 %', { exact: true })).toBeVisible();
+  await panel.getByText('Read and write error counters', { exact: true }).click();
+  await expect(panel.getByText('18,446,744,073,709,551,615', { exact: true })).toBeVisible();
+  await expect(panel.getByText('Unavailable', { exact: true })).toBeVisible();
+  await expect(panel.getByText(/estimated wear limit has been reached/)).toBeVisible();
+  await expect(panel.getByText(/Windows reports uncorrected errors/)).toBeVisible();
+  await panel.screenshot({ path: 'test-results/pandora-storage-diagnostics.png' });
+  await panel.getByRole('button', { name: 'Refresh drive counters' }).click();
+  await expect(panel.getByText('Storage provider stopped responding.', { exact: true })).toBeVisible();
+  await expect(panel.getByText('Fixture NVMe SSD', { exact: true })).toHaveCount(0);
+});
+
+test('drive diagnostics show per-device unavailability, caching and readable narrow layouts', async ({ page }) => {
+  await desktopFixture(page);
+  await page.addInitScript(() => {
+    window.pandora!.getStorageReliability = async () => ({ timestamp: new Date().toISOString(), provider: 'Windows Storage', status: 'available', cached: true, truncated: false, devices: [{ index: 0, model: 'Storage fixture behind a RAID controller with a long model label', media: 'Unspecified', bus: 'RAID', bytes: null, health: 'Unknown', countersStatus: 'unavailable', reason: 'identity-mismatch', temperatureC: null, wearPercent: null, powerOnHours: null, readErrorsTotal: null, readErrorsCorrected: null, readErrorsUncorrected: null, writeErrorsTotal: null, writeErrorsCorrected: null, writeErrorsUncorrected: null }] });
+  });
+  await page.setViewportSize({ width: 900, height: 720 });
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'System Monitor', exact: true }).click();
+  const panel = page.getByRole('region', { name: 'Drive diagnostics' });
+  await panel.getByRole('button', { name: 'Read drive counters' }).click();
+  await expect(panel.getByText(/counters for a different device/)).toBeVisible();
+  await expect(panel.getByText(/Cached within 30 seconds/)).toBeVisible();
+  await expect(panel.getByText('Counters unavailable', { exact: true })).toBeVisible();
+  await expect(panel.getByText('Unavailable', { exact: true })).toHaveCount(9);
+  const layout = await panel.evaluate(el => ({ overflow: el.scrollWidth > el.clientWidth + 1, description: Number.parseFloat(getComputedStyle(el.querySelector('dt')!).fontSize), statistic: Number.parseFloat(getComputedStyle(el.querySelector('dd')!).fontSize) }));
+  expect(layout.overflow).toBe(false); expect(layout.description).toBeGreaterThanOrEqual(13); expect(layout.statistic).toBeGreaterThanOrEqual(18);
 });

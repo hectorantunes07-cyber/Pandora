@@ -179,3 +179,15 @@ The implementation uses PowerGetActiveScheme, PowerReadACValueIndex, PowerWriteA
 - Keep exact PANDORA setting rollback separate from Windows System Restore. PANDORA must never select a point and automatically restore/reboot the OS, delete points, enable protection or bypass frequency policy.
 
 References: [Microsoft Checkpoint-Computer](https://learn.microsoft.com/powershell/module/microsoft.powershell.management/checkpoint-computer?view=powershell-5.1) and [SystemRestore.CreateRestorePoint](https://learn.microsoft.com/windows/win32/sr/createrestorepoint-systemrestore).
+
+
+## Storage reliability counters
+
+- Open System Monitor without requesting counters; no storage-reliability query should run. Click Read drive counters explicitly. System report export may also request this read-only snapshot.
+- On supported SSD and HDD devices, compare model, provider health, temperature, reported wear, power-on hours and read/write counters with Windows Get-StorageReliabilityCounter and the manufacturer's diagnostics. Record which fields the driver does not expose. Snapshot labels do not map to drive letters or Windows disk numbers.
+- Verify unavailable fields remain unavailable and reported zero stays distinct from a missing value. Wear is endurance used, not percent of life remaining; it can reach or exceed 100. No safe-temperature or remaining-life prediction should appear.
+- Test standard-account permission failures, USB/RAID/virtual disks, missing providers and unplugged external storage. Old successful readings must disappear after a failed refresh. A partial device failure must not replace another disk's data.
+- Refresh within 30 seconds: show a cached timestamp. Refresh after expiry: request a new snapshot. No counter reset, repair, self-test, administrator prompt or disk setting change should occur.
+- Export system JSON and check decimal-string counters retain exact large integers. No storage serial numbers, raw device IDs, local paths or provider exception text should be present.
+
+References: [Get-StorageReliabilityCounter](https://learn.microsoft.com/powershell/module/storage/get-storagereliabilitycounter) and [MSFT_StorageReliabilityCounter](https://learn.microsoft.com/windows-hardware/drivers/storage/msft-storagereliabilitycounter).

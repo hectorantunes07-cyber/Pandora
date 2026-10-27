@@ -11,6 +11,7 @@ const browserSettings = (): AppSettings => {
 export const api: AppApi = window.pandora ?? {
   getSystemRestore: unavailable, previewSystemRestore: unavailable, createSystemRestore: unavailable, openSystemProtection: unavailable,
   getGpuTelemetry: unavailable,
+  getStorageReliability: unavailable,
   getPowerTuning: unavailable, previewPowerTuning: unavailable, changePowerTuning: unavailable,
   getCursor: unavailable, selectCursor: unavailable, changeCursor: unavailable, setAppCursor: unavailable,
   getNvidiaPreset: unavailable, saveNvidiaPreset: unavailable, openNvidiaControlPanel: unavailable,
