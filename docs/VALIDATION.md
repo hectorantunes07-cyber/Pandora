@@ -2,7 +2,21 @@
 
 PANDORA 0.1.0 is being built in a Linux cloud workspace. Windows-specific checks must be distinguished from Linux unit tests and browser tests. No gaming performance gains have been benchmarked.
 
-## Current drive-diagnostics Windows test build — 2026-10-27
+## Current startup-and-tray Windows test build — 2026-10-27
+
+Application source: `9bcbfabb06a7e35d32bd12ef4eec59da49b50d11`. Later documentation commits do not change packaged runtime code.
+
+- **283 backend tests pass on Linux; 14 Windows-only checks skip there. All 43 UI journeys pass.** Production build, native helper parsing/compilation and Linux Electron integration passed. The new Settings panel was visually inspected; its preference labels are at least 14px.
+- [Native Windows CI](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/40604270328) passed all required stages at this exact source, including existing native apply/restore checks, all 43 UI journeys, both package builds, archive/source verification, unpacked/installed app launch and the expanded installer lifecycle test. The portable self-extracting launcher still requires a Windows client launch check.
+- The installed-app integration verified actual per-user Run registration, disable/re-enable, persistence across process relaunch, native tray window hide/reopen, explicit quit, matching-command cleanup on uninstall, preservation of an external replacement, and retained user data/unrelated files. It did not perform a Windows sign-out/in or visually certify the notification-area icon.
+- Sign-in launch is off by default and restricted to a packaged executable matching the current-user installation record and marker. Requests use single-use five-minute review tokens, fresh state checks and read-back. Foreign entries, portable paths and stale reviews are refused. Windows StartupApproved values are not changed; unknown approval is distinct from enabled.
+- Close-to-tray is optional and defaults off for old settings. Tray creation must succeed before enabling hidden-window behavior; explicit exit and second-instance reopening are supported. Active mutations block ordinary close/quit. Forced OS shutdown is not guaranteed graceful. Actual sign-in, Windows approval UI, Explorer restart and tray appearance remain physical-PC checks.
+- Both local executables passed archive integrity, x64 payload, bundled-code comparison and SHA256 checks at clean runtime source. Local `windowsLaunchVerified` stays false because CI builds and launches separate bytes. The previous verified kit is retained at `release/checkpoints/b12930e-before-app-lifecycle`.
+- PANDORA-Setup-0.1.0-x64.exe: **158,336,931 bytes**, SHA256 `06d944d5c513ed26022fcac0b188bf3b3de7c402c4f107322ae6ab5454f69751`.
+- PANDORA-Portable-0.1.0-x64.exe: **111,572,711 bytes**, SHA256 `13e5cef3bec25f7b652e87a12b9d7385f738edd64b91e48ca788a1af27b07731`.
+- Overall scope is roughly **88% implemented**, not a complete or signed public release. There remain 27 configurable tuning/preference targets; startup/tray controls are app behavior, not additional FPS tweaks. Client restore-point creation/UAC, physical sensors and actual performance effects still need Windows client/hardware testing. Remaining broader capabilities are listed in FEATURES and WINDOWS-HANDOFF.
+
+## Previous drive-diagnostics Windows test build — 2026-10-27
 
 Application source: `b12930e94dd45daced8ae3682b9168ba80f4cebc`. Later documentation commits do not change packaged runtime code.
 

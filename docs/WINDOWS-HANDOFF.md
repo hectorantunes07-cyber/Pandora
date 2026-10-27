@@ -1,6 +1,6 @@
 # PANDORA — Created by Sonnier: Windows test release
 
-PANDORA 0.1.0 is ready for controlled Windows testing. It is an unsigned development release, not completion of the full original specification or a certified public release. Approximately **87% of the full requested scope is implemented**; this is a rough scope estimate, not a Windows compatibility or performance score. The expanded optimization wishlist is also only partially implemented. The current library has 27 configurable targets: eight registry preferences, seven desktop effects, six advanced power controls, power-plan selection, pointer acceleration and four launcher startup entries. Presets reuse these targets. Normal-pointer customization is an additional personalization feature, not an FPS tweak.
+PANDORA 0.1.0 is ready for controlled Windows testing. It is an unsigned development release, not completion of the full original specification or a certified public release. Approximately **88% of the full requested scope is implemented**; this is a rough scope estimate, not a Windows compatibility or performance score. The expanded optimization wishlist is also only partially implemented. The current library has 27 configurable targets: eight registry preferences, seven desktop effects, six advanced power controls, power-plan selection, pointer acceleration and four launcher startup entries. Presets reuse these targets. Normal-pointer customization is an additional personalization feature, not an FPS tweak.
 
 ## Implemented (see validation record for platform checks)
 
@@ -24,6 +24,7 @@ PANDORA 0.1.0 is ready for controlled Windows testing. It is an unsigned develop
 - Six supported game guides: Fortnite, VALORANT, CS2, Apex Legends, Warzone and GTA V. Automatic supported install detection and native manual executable selection, persisted/missing-path handling and metadata-only removal.
 - Explicit ICMP latency/loss/jitter measurements, physical/virtual/hidden adapter inspection, recognized EEE/interrupt-moderation options, available power-management states and fixed-host DNS timing. These diagnostics do not change network configuration or infer game routing.
 - Performance Lab with manual measurements and validated local frame-time CSV analysis, average/1% low FPS, interval consistency, capture provenance, before/after PC snapshots and export. No fabricated improvement or live game capture.
+- Optional reviewed sign-in launch for the installed app, with exact current-user registration checks and preserved Windows startup approval. Optional notification-area icon, close-to-tray, reopen and explicit exit; active operations block normal exit. Settings persist, and uninstall removes only its matching startup command. Actual sign-in and tray appearance still need PC testing.
 - Local settings, privacy-filtered reports, portable application and per-user installer with retained rollback data on uninstall.
 
 ## Still incomplete
@@ -33,15 +34,15 @@ PANDORA 0.1.0 is ready for controlled Windows testing. It is an unsigned develop
 - Windows client verification of the implemented restore-point flow and broader pre-change backups. Actual UAC approval and new checkpoint creation have not yet been tested on Windows 10/11. Local setting snapshots do not restore deleted files or Windows itself.
 - CPU and AMD/Intel GPU sensors, fan readings, raw vendor-specific SMART/self-test diagnostics and broader hardware compatibility. Windows storage reliability counters and NVIDIA telemetry are implemented but require physical-device validation.
 - Automated game-file configuration, live game telemetry/capture and measured performance benefits on your hardware.
-- Start-with-Windows/tray and fuller retention/logging controls, complete cross-feature history export, signed publisher identity, secure updater and public-release certification.
+- Fuller retention/logging controls, complete cross-feature history export, signed publisher identity, secure updater and public-release certification.
 
 Cleanup reports confirmed logical file bytes, not an exact physical free-space increase. Quality-of-life/privacy options and pointer acceleration do not imply FPS gains. See [FEATURES.md](../FEATURES.md) for exact scope.
 
 ## Download
 
-Application source: `b12930e94dd45daced8ae3682b9168ba80f4cebc`. Both packages are built and archive-verified. Native Windows CI passed for this source, including installer lifecycle and 41 UI journeys. Exact checksums are recorded in the accompanying `verification.json`.
+Application source: `9bcbfabb06a7e35d32bd12ef4eec59da49b50d11`. Both packages are built and archive-verified. CI launched the unpacked and installed app; the portable self-extracting launcher still needs a Windows client launch check. Native Windows CI passed for this source, including installer lifecycle and 43 UI journeys. Exact checksums are recorded in the accompanying `verification.json`.
 
-Download **PANDORA-Windows-x64-unsigned** from [verified drive-diagnostics Windows build](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/40588307698). Sign in to GitHub if required and extract the ZIP first.
+Download **PANDORA-Windows-x64-unsigned** from [verified startup-and-tray Windows build](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/40604270328). Sign in to GitHub if required and extract the ZIP first.
 
 - `PANDORA-Setup-0.1.0-x64.exe`: per-user installer with shortcuts and uninstaller.
 - `PANDORA-Portable-0.1.0-x64.exe`: no installation; still stores local app data.
@@ -66,6 +67,7 @@ The local `release/PANDORA-Windows-Test-Kit-0.1.0-x64.zip` contains cross-built 
 - [ ] Save a manual game path, reopen, simulate a missing file and forget the path without deleting anything.
 - [ ] Compare physical and VPN adapter data with Windows. Test ICMP/DNS results without interpreting them as your Fortnite server latency.
 - [ ] Import a real repeatable frame-time capture and compare like-for-like before/after results. No actual gain has been established yet.
+- [ ] In Settings, review/cancel sign-in launch, then enable it in the installed app. Check Windows startup approval, sign out/in, disable it and verify it stays off. Portable builds must not register their temporary executable. Enable close-to-tray, close/reopen, inspect the icon at your display scaling and test explicit Exit. No tuning or cleanup should run automatically.
 - [ ] Uninstall/reinstall and confirm history remains. Restore unwanted changes before uninstalling.
 
 The CI artifact contains the instructions that existed at build time. This repository handoff and the current local test kit include the updated feature status.
