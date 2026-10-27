@@ -3,7 +3,7 @@ import type { AppApi, AppSettings } from '../shared/types';
 export const isDesktop = Boolean(window.pandora);
 export const unsupportedMessage = 'Open the PANDORA Windows app to access your PC. This browser cannot read hardware or change Windows settings.';
 const unavailable = async (): Promise<never> => { throw new Error(unsupportedMessage); };
-const defaultSettings: AppSettings = { reduceMotion: false, pollInterval: 2000, scanOnLaunch: true };
+const defaultSettings: AppSettings = { reduceMotion: false, pollInterval: 2000, scanOnLaunch: true, closeToTray: false };
 const browserSettings = (): AppSettings => {
   try { return { ...defaultSettings, ...JSON.parse(localStorage.getItem('pandora.appearance') || '{}') }; }
   catch { return defaultSettings; }
@@ -11,6 +11,7 @@ const browserSettings = (): AppSettings => {
 export const api: AppApi = window.pandora ?? {
   getSystemRestore: unavailable, previewSystemRestore: unavailable, createSystemRestore: unavailable, openSystemProtection: unavailable,
   getGpuTelemetry: unavailable,
+  getAppLifecycle: async () => ({ traySupported: false, login: { supported: false, state: 'unavailable', approved: null, token: null, reason: 'Use the installed Windows app to manage sign-in launch.' } }), changeAppLogin: unavailable,
   getStorageReliability: unavailable,
   getPowerTuning: unavailable, previewPowerTuning: unavailable, changePowerTuning: unavailable,
   getCursor: unavailable, selectCursor: unavailable, changeCursor: unavailable, setAppCursor: unavailable,

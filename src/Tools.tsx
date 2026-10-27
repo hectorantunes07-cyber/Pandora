@@ -3,6 +3,7 @@ import { Activity, ArrowDown, ArrowRight, ArrowUp, ChartNoAxesCombined, Check, D
 import type { AppSettings, ProcessInfo, StartupEntry } from '../shared/types';
 import { api, errorMessage, formatBytes, isDesktop, unsupportedMessage } from './api';
 import { StartupControls } from './StartupControls';
+import { AppLifecycleSettings } from './AppLifecycleSettings';
 import { BenchmarkConfiguration } from './BenchmarkConfiguration';
 import { contextDifferences, contextRows, validBenchmarkContext, type BenchmarkContext } from '../shared/benchmark-context';
 import { FrameImport, CaptureSummary } from './FrameImport';
@@ -178,7 +179,7 @@ export function PerformanceLab({ notify }: { notify: (message: string) => void }
   </>;
 }
 
-export function Preferences({ settings, setSettings, notify }: { settings: AppSettings; setSettings: (settings: AppSettings) => void; notify: (message: string) => void }) {
+export function Preferences({ settings, setSettings, notify, onBusyChange }: { settings: AppSettings; setSettings: (settings: AppSettings) => void; notify: (message: string) => void; onBusyChange: (busy: boolean) => void }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const update = async (change: Partial<AppSettings>) => {
@@ -196,7 +197,7 @@ export function Preferences({ settings, setSettings, notify }: { settings: AppSe
       <div className="setting-row"><div><strong>Live metric refresh</strong><p>Choose how often CPU and memory readings update. GPU readings update at most every 5 seconds.</p></div><select className="select" aria-label="Live metric refresh" value={[1000, 2000, 5000].includes(settings.pollInterval) ? settings.pollInterval : 2000} onChange={event => void update({ pollInterval: Number(event.target.value) })} disabled={saving}><option value={1000}>Every second</option><option value={2000}>Every 2 seconds</option><option value={5000}>Every 5 seconds</option></select></div>
       <div className="setting-row"><div><strong>Detect hardware on launch</strong><p>Read your system information when PANDORA opens. This does not apply optimizations or clean files.</p></div><Toggle label="Detect hardware on launch" checked={settings.scanOnLaunch} onChange={value => void update({ scanOnLaunch: value })} disabled={saving}/></div>
       {saving && <Spinner label="Saving preferences…"/>}
-    </section><Notice>System changes always require your review. Cleanup deletions are permanent; optimization history keeps original values so managed tweaks can be reverted.</Notice></div>
+    </section><AppLifecycleSettings settings={settings} saving={saving} update={update} onBusyChange={onBusyChange}/><Notice>System changes always require your review. Cleanup deletions are permanent; optimization history keeps original values so managed tweaks can be reverted.</Notice></div>
     <section className="panel settings-about"><div className="about-mark"><img src="./logo.svg" alt=""/></div><span className="eyebrow">WINDOWS PC UTILITY</span><h2>PANDORA</h2><p>Created by Sonnier</p><Badge>VERSION 0.1.0</Badge><div className="about-divider"/><p>Hardware monitoring, storage cleanup, and reversible Windows settings.</p><dl className="detail-list"><div><dt>Application</dt><dd>PANDORA — Created by Sonnier</dd></div><div><dt>Session</dt><dd>{isDesktop ? 'Local desktop app' : 'Browser preview'}</dd></div><div><dt>Designed for</dt><dd>Windows 10 / 11 · x64</dd></div><div><dt>Performance promises</dt><dd>Based on your measurements</dd></div></dl><div className="local-privacy"><ShieldCheck size={16}/><span>Hardware readings and configuration history stay on your device.</span></div></section></div>
   </>;
 }

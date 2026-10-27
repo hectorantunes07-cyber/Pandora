@@ -36,7 +36,7 @@ export interface CleanupCategory { id: string; title: string; description: strin
 export interface CleanupScan { id: string; kind: CleanupKind; timestamp: string; categories: CleanupCategory[]; warnings: string[]; }
 export interface CleanupResult { kind?: CleanupKind; deletedBytes: number; deletedFiles: number; skippedFiles: number; failures: { path: string; reason: string }[]; recoveredBytes: number | null; }
 export interface ProgressEvent { operation: 'scan' | 'clean' | 'tweaks'; completed: number; total: number | null; message: string; }
-export interface AppSettings { reduceMotion: boolean; pollInterval: number; scanOnLaunch: boolean; }
+export interface AppSettings { reduceMotion: boolean; pollInterval: number; scanOnLaunch: boolean; closeToTray: boolean; }
 export type WindowsSettingsPage = 'display' | 'power' | 'startup' | 'graphics';
 export type NetworkTarget = 'cloudflare' | 'google';
 export interface NetworkResult {
@@ -44,6 +44,8 @@ export interface NetworkResult {
   received: number; lossPercent: number; averageMs: number | null; minMs: number | null; maxMs: number | null; jitterMs: number | null;
 }
 export interface AppApi {
+  getAppLifecycle(): Promise<import('./app-lifecycle').AppLifecycleState>;
+  changeAppLogin(token: string, enable: boolean): Promise<OperationResult>;
   getStorageReliability(): Promise<import('./storage-reliability').StorageReliability>;
   getSystemRestore(): Promise<import('./system-restore').SystemRestoreInfo>;
   previewSystemRestore(): Promise<import('./system-restore').RestorePointReview>;
@@ -97,7 +99,7 @@ export interface AppApi {
   saveSettings(settings: AppSettings): Promise<AppSettings>;
   exportReport(kind: 'system' | 'history'): Promise<string | null>;
   onProgress(callback: (event: ProgressEvent) => void): () => void;
-  windowAction(action: 'minimize' | 'maximize' | 'close'): void;
+  windowAction(action: 'minimize' | 'maximize' | 'close' | 'quit'): void;
 }
 declare global { interface Window { pandora?: AppApi } }
 export interface NetworkInspection {

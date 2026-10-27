@@ -45,6 +45,10 @@ try {
   assert.equal(cursor.managed, false);
   assert.match(cursor.selected.preview, /^data:image\/png;base64,/);
   assert.equal(await page.evaluate(() => window.pandora.getNvidiaPreset()), null);
+  const lifecycle = await page.evaluate(() => window.pandora.getAppLifecycle());
+  assert.equal(lifecycle.traySupported, process.platform === 'win32');
+  assert.equal(lifecycle.login.state === 'unavailable' || lifecycle.login.state === 'absent', true);
+  assert.equal(await page.evaluate(() => window.pandora.getSettings().then(s => s.closeToTray)), false);
   const restorePoints = await page.evaluate(() => window.pandora.getSystemRestore());
   assert.equal(typeof restorePoints.supported, 'boolean');
   assert.equal(typeof restorePoints.readable, 'boolean');

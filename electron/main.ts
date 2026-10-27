@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, shell, screen, type IpcMainInvokeEvent } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, shell, screen, Tray, Menu, nativeImage, type IpcMainInvokeEvent } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
@@ -19,13 +19,32 @@ import { createPointerService } from './pointer';
 import { createGamePathService, validateGameId } from './game-paths';
 import { createNetworkService } from './network';
 import { createNetworkInspection } from './network-inspection';
-import { createSettingsService } from './settings';
+import { createSettingsService, validateSettings } from './settings';
+import { createLoginService, createWindowsLoginAdapter, LOGIN_NAME } from './app-login';
+import { createDesktopLifecycle } from './desktop-lifecycle';
 import { cleanupKind, validateIds, isTrustedRenderer, externalDocumentation, windowsSettingsUri } from './validation';
 import type { ProgressEvent } from '../shared/types';
 app.setName('PANDORA');
 app.setAppUserModelId('io.sonnier.pandora');
 let window: BrowserWindow | null = null;
 let activeMutations = 0;
+const lifecycle = createDesktopLifecycle({
+  window: () => window && !window.isDestroyed() ? window : null,
+  busy: () => activeMutations > 0,
+  quit: () => app.quit(),
+  notifyBusy: () => { if (window && !window.isDestroyed()) void dialog.showMessageBox(window, { type: 'info', title: 'PANDORA is finishing your operation', message: 'Please wait for the current cleanup or settings change to finish.', detail: 'Keeping PANDORA open lets it report the result and preserve your change history.', buttons: ['Keep PANDORA open'] }); },
+  createTray: (show, quit) => {
+    const image = nativeImage.createFromPath(path.join(__dirname, '../build/icon.png')).resize({ width: 16, height: 16 });
+    if (image.isEmpty()) throw new Error('PANDORA’s notification-area icon is unavailable.');
+    const tray = new Tray(image);
+    try {
+      tray.setToolTip('PANDORA — Created by Sonnier');
+      tray.setContextMenu(Menu.buildFromTemplate([{ label: 'Open PANDORA', click: show }, { type: 'separator' }, { label: 'Exit PANDORA', click: quit }]));
+      tray.on('click', show);
+      return tray;
+    } catch (error) { tray.destroy(); throw error; }
+  },
+});
 const packagedUrl = pathToFileURL(path.join(__dirname, '../dist/index.html')).href;
 const requestedDevUrl = process.env.PANDORA_DEV_URL;
 const devUrl = !app.isPackaged && requestedDevUrl && /^http:\/\/(127\.0\.0\.1|localhost):5173\/?$/.test(requestedDevUrl) ? requestedDevUrl : undefined;
@@ -41,7 +60,7 @@ function registerServices() {
   function handle(name: string, fn: (...args: any[]) => unknown) {
     ipcMain.handle(`pandora:${name}`, async (event, ...args) => {
       checkSender(event);
-      const mutates = ['apply', 'revert', 'clean', 'profile-apply', 'power-apply', 'power-restore', 'power-tuning-change', 'startup-change', 'pointer-change', 'visual-change', 'cursor-change', 'cursor-select', 'cursor-app', 'restore-all', 'system-restore-create'].includes(name);
+      const mutates = ['apply', 'revert', 'clean', 'profile-apply', 'power-apply', 'power-restore', 'power-tuning-change', 'startup-change', 'pointer-change', 'visual-change', 'cursor-change', 'cursor-select', 'cursor-app', 'restore-all', 'system-restore-create', 'app-login-change', 'save-settings'].includes(name);
       if (!mutates) return fn(...args);
       activeMutations++;
       const result = mutationQueue.then(() => fn(...args));
@@ -50,6 +69,13 @@ function registerServices() {
     });
   }
   const systemRestore = createSystemRestoreService();
+  const login = createLoginService(createWindowsLoginAdapter(process.execPath, app.isPackaged, () => {
+    const items = app.getLoginItemSettings({ path: process.execPath, args: [] }).launchItems;
+    const entry = items?.find(item => item.scope === 'user' && item.name === LOGIN_NAME && item.path.toLowerCase() === process.execPath.toLowerCase() && item.args.length === 0);
+    return entry ? entry.enabled : null;
+  }), process.platform === 'win32');
+  handle('app-lifecycle', () => login.get());
+  handle('app-login-change', (token: unknown, enable: unknown) => login.change(token, enable));
   handle('system-restore', () => systemRestore.getInfo());
   handle('system-restore-preview', () => systemRestore.preview());
   handle('system-restore-create', (token: unknown) => systemRestore.create(token));
@@ -141,7 +167,15 @@ function registerServices() {
     return cleaner.clean(id, validateIds(categories), cleanupKind(confirmation));
   });
   handle('settings', () => settings.getSettings());
-  handle('save-settings', (value: unknown) => settings.saveSettings(value));
+  handle('save-settings', async (value: unknown) => {
+    const next = validateSettings(value), wasEnabled = lifecycle.enabled;
+    if (process.platform === 'win32' && next.closeToTray) lifecycle.configure(true);
+    try {
+      const saved = await settings.saveSettings(next);
+      lifecycle.configure(process.platform === 'win32' && saved.closeToTray);
+      return saved;
+    } catch (error) { if (!wasEnabled) lifecycle.configure(false); throw error; }
+  });
   handle('export', async (kind: unknown) => {
     if (kind !== 'system' && kind !== 'history') throw new Error('Unknown report type.');
     if (!window) return null;
@@ -156,10 +190,12 @@ function registerServices() {
   ipcMain.on('pandora:window', (event, action: unknown) => {
     try { checkSender(event); } catch { return; }
     if (!window) return;
+    if (action === 'quit') lifecycle.requestQuit();
     if (action === 'close') window.close();
     if (action === 'minimize') window.minimize();
     if (action === 'maximize') window.isMaximized() ? window.unmaximize() : window.maximize();
   });
+  return settings;
 }
 function createWindow() {
   // Electron reports work-area sizes in logical pixels, including Windows scaling.
@@ -174,18 +210,21 @@ function createWindow() {
   window.webContents.session.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
   window.webContents.session.setPermissionCheckHandler(() => false);
   window.once('ready-to-show', () => window?.show());
-  window.on('close', event => {
-    if (activeMutations > 0) {
-      event.preventDefault();
-      if (window) void dialog.showMessageBox(window, { type: 'info', title: 'PANDORA is finishing your operation', message: 'Please wait for the current cleanup or settings change to finish.', detail: 'Keeping this window open lets PANDORA report the result and preserve your change history.', buttons: ['Keep PANDORA open'] });
-    }
-  });
+  window.on('close', event => lifecycle.close(event));
   window.on('closed', () => { window = null; });
   void window.loadURL(devUrl ?? packagedUrl);
 }
 if (!app.requestSingleInstanceLock()) app.quit();
 else {
-  app.on('second-instance', () => { if (window) { if (window.isMinimized()) window.restore(); window.focus(); } });
-  app.whenReady().then(() => { registerServices(); createWindow(); }).catch(error => { dialog.showErrorBox('PANDORA could not start', String(error)); app.quit(); });
+  app.on('second-instance', () => lifecycle.show());
+  app.on('before-quit', event => lifecycle.beforeQuit(event));
+  app.on('will-quit', () => lifecycle.dispose());
+  app.whenReady().then(async () => {
+    const settings = registerServices();
+    const saved = await settings.getSettings().catch(() => null);
+    if (saved && process.platform === 'win32') try { lifecycle.configure(saved.closeToTray); }
+    catch { dialog.showErrorBox('Notification area unavailable', 'PANDORA could not create its tray icon. Closing the window will exit the app in this session. You can retry the option in Settings.'); }
+    createWindow();
+  }).catch(error => { dialog.showErrorBox('PANDORA could not start', String(error)); app.quit(); });
   app.on('window-all-closed', () => app.quit());
 }

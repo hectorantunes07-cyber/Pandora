@@ -5,12 +5,16 @@ import path from 'node:path';
 import { createSettingsService, defaults, validateSettings } from '../electron/settings';
 import { cleanupKind, validateIds, isTrustedRenderer, externalDocumentation } from '../electron/validation';
 describe('application settings', () => {
+  it('migrates old preferences without enabling background behavior', () => {
+    expect(validateSettings({ reduceMotion: false, scanOnLaunch: true, pollInterval: 2000 }).closeToTray).toBe(false);
+    expect(() => validateSettings({ ...defaults, closeToTray: 'true' })).toThrow();
+  });
   it('persists settings and never silently replaces corrupt user files', async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'pandora-settings-'));
     try {
       const service = createSettingsService(dir);
       expect(await service.getSettings()).toEqual(defaults);
-      const changed = { reduceMotion: true, pollInterval: 5000, scanOnLaunch: false };
+      const changed = { reduceMotion: true, pollInterval: 5000, scanOnLaunch: false, closeToTray: true };
       await service.saveSettings(changed);
       expect(await createSettingsService(dir).getSettings()).toEqual(changed);
       await fs.writeFile(path.join(dir, 'settings.json'), '{bad');

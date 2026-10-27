@@ -321,3 +321,19 @@ Wear is estimated endurance used, not remaining life. The feature does not run
 SMART self-tests, reset counters or repair disks. Compare the readings with the
 manufacturer's utility on actual SSD/HDD and USB/RAID configurations before relying
 on them; hosted Windows CI cannot establish physical sensor accuracy.
+
+
+## Sign-in launch and notification area
+
+Settings includes optional **Launch PANDORA at sign-in** for the per-user installed
+app and **Close to notification area** for the Windows desktop app. Both default
+to off. Sign-in registration uses only PANDORA's named HKCU Run entry and cannot
+overwrite an external replacement or register a portable extraction path. Windows
+startup approval remains under the user's control. Launching never applies tweaks
+or cleans files automatically.
+
+Close-to-tray preserves the window; the icon menu, a click, or a second launch
+reopens it. Use **Exit PANDORA** to quit. Closing and quitting remain guarded during
+active mutations. Uninstall removes a matching sign-in command while preserving
+rollback data, unrelated entries and Windows approval metadata. Actual Windows
+sign-in and shell icon presentation remain physical-PC checks.

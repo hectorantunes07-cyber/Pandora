@@ -23,7 +23,7 @@ export default function App() {
   const [samples, setSamples] = useState<(number | null)[]>([]);
   const [tweaks, setTweaks] = useState<TweakState[]>([]);
   const [games, setGames] = useState<GameInfo[]>([]);
-  const [settings, setSettings] = useState<AppSettings>({ reduceMotion: false, pollInterval: 2000, scanOnLaunch: true });
+  const [settings, setSettings] = useState<AppSettings>({ reduceMotion: false, pollInterval: 2000, scanOnLaunch: true, closeToTray: false });
   const [systemError, setSystemError] = useState('');
   const [loading, setLoading] = useState(isDesktop);
   const [notice, setNotice] = useState('');
@@ -84,7 +84,7 @@ export default function App() {
     {page === 'Processes & Startup' && <Processes onBusyChange={setOperationBusy}/>}
     <div hidden={page !== 'Network Diagnostics'}><NetworkDiagnostics/></div>
     {page === 'Performance Lab' && <PerformanceLab notify={notify}/>}
-    {page === 'Settings' && <Preferences settings={settings} setSettings={setSettings} notify={notify}/>}
+    {page === 'Settings' && <Preferences settings={settings} setSettings={setSettings} notify={notify} onBusyChange={setOperationBusy}/>}
     <footer className="content-footer"><span><ShieldCheck size={13}/> Settings stored locally</span><span>PANDORA <span className="footer-dot">·</span> Created by Sonnier</span></footer>
   </main></div>{notice && <div className="toast" role="status"><InfoIcon/><span>{notice}</span><button className="icon-button" aria-label="Dismiss notification" onClick={() => setNotice('')}><X size={16}/></button></div>}</div>;
 }

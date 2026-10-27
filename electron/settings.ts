@@ -2,12 +2,13 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import type { AppSettings } from '../shared/types';
-export const defaults: AppSettings = { reduceMotion: false, pollInterval: 2000, scanOnLaunch: true };
+export const defaults: AppSettings = { reduceMotion: false, pollInterval: 2000, scanOnLaunch: true, closeToTray: false };
 export function validateSettings(value: unknown): AppSettings {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Invalid settings.');
   const v = value as Record<string, unknown>;
   if (typeof v.reduceMotion !== 'boolean' || typeof v.scanOnLaunch !== 'boolean' || ![1000, 2000, 5000].includes(v.pollInterval as number)) throw new Error('Invalid settings. Choose a supported monitoring interval.');
-  return { reduceMotion: v.reduceMotion, scanOnLaunch: v.scanOnLaunch, pollInterval: v.pollInterval as number };
+  if (v.closeToTray !== undefined && typeof v.closeToTray !== 'boolean') throw new Error('Invalid notification-area preference.');
+  return { reduceMotion: v.reduceMotion, scanOnLaunch: v.scanOnLaunch, pollInterval: v.pollInterval as number, closeToTray: v.closeToTray ?? false };
 }
 export function createSettingsService(directory: string) {
   const file = path.join(directory, 'settings.json');

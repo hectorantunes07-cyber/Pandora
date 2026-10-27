@@ -1,5 +1,11 @@
 # Changelog
 
+## Optional sign-in launch and notification area — 2026-10-27
+
+- Added reviewed per-user sign-in registration for the installed PANDORA executable, with fresh installation/entry checks, read-back and conflict preservation. Portable/development executables cannot register temporary paths. Windows startup approval metadata remains untouched.
+- Added optional close-to-tray, reopening from the icon or a second launch, and explicit Exit PANDORA. Both options default off; close/quit stay blocked during active mutations. Old settings migrate without enabling background behavior.
+- Uninstall removes only a matching sign-in command and preserves external replacements. New hosted Windows integration exercises installation, startup registration, tray hide/reopen, relaunch, exit and uninstallation. Actual Windows sign-in and notification-area visibility still need PC testing.
+
 ## Read-only drive diagnostics — 2026-10-27
 
 - Added on-request Windows storage-provider snapshots for temperature, reported wear, power-on hours and six read/write error counters, with per-device unavailable states and a 30-second cache.

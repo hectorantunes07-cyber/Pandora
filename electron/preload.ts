@@ -1,6 +1,8 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { AppApi, ProgressEvent } from '../shared/types';
 const api: AppApi = {
+  getAppLifecycle: () => ipcRenderer.invoke('pandora:app-lifecycle'),
+  changeAppLogin: (token, enable) => ipcRenderer.invoke('pandora:app-login-change', token, enable),
   getSystemRestore: () => ipcRenderer.invoke('pandora:system-restore'),
   previewSystemRestore: () => ipcRenderer.invoke('pandora:system-restore-preview'),
   createSystemRestore: token => ipcRenderer.invoke('pandora:system-restore-create', token),

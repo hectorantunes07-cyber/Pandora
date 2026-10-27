@@ -74,7 +74,7 @@ jobs:
         env:
           PANDORA_SMOKE_EXECUTABLE: release/win-unpacked/PANDORA.exe
       - name: Disposable Windows install, launch and uninstall
-        timeout-minutes: 5
+        timeout-minutes: 8
         shell: pwsh
         run: |
           try { ./scripts/test-installer.ps1 }

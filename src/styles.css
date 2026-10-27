@@ -166,3 +166,6 @@
 .storage-device > .panel-title { flex-wrap: wrap; gap: 12px; }
 @media (max-width: 1000px) { .storage-reading-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) { .storage-reading-grid { grid-template-columns: minmax(0, 1fr); } }
+
+.lifecycle-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+.setting-row strong { font-size: 14px; }

@@ -191,3 +191,13 @@ References: [Microsoft Checkpoint-Computer](https://learn.microsoft.com/powershe
 - Export system JSON and check decimal-string counters retain exact large integers. No storage serial numbers, raw device IDs, local paths or provider exception text should be present.
 
 References: [Get-StorageReliabilityCounter](https://learn.microsoft.com/powershell/module/storage/get-storagereliabilitycounter) and [MSFT_StorageReliabilityCounter](https://learn.microsoft.com/windows-hardware/drivers/storage/msft-storagereliabilitycounter).
+
+
+## PANDORA sign-in launch and notification area
+
+- Both options must be off on a fresh install and after migrating an older settings file. Portable/development builds must not offer sign-in registration; the installed executable must match the per-user installation record and marker.
+- Cancel Enable sign-in launch review, then confirm a fresh review. Inspect Windows startup settings: registration and Windows approval are separate. If disabled there, PANDORA must report that state and must not override it. Sign out/in on a test PC and confirm PANDORA opens normally without applying tweaks or cleaning files.
+- Disable sign-in launch and confirm the matching Run entry is removed. An external replacement must be preserved and reported as a conflict. Reinstall/uninstall must remove only the command targeting that installation, preserving Windows StartupApproved metadata and unrelated entries.
+- Enable Close to notification area, close the window, and verify the icon remains accessible. Open from its menu/click and from launching a second instance. Hidden live metrics should pause. Disable the option while hidden through a reopened window; the icon should disappear and normal closing should exit.
+- Test Exit PANDORA from Settings and the tray. During a disposable cleanup/settings operation, close/exit must wait and preserve progress. After it finishes, exit should work. OS forced shutdown cannot be treated as a graceful exit.
+- Relaunch and check the tray preference persists. Test notification-area icon visibility at your Windows scaling and Explorer restart behavior; hosted CI cannot fully certify shell presentation or actual sign-in.

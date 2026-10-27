@@ -15,6 +15,8 @@ async function desktopFixture(page: Page) {
       previewSystemRestore: async () => ({ token: 'system-restore-review', description: 'PANDORA fixture checkpoint' }),
       createSystemRestore: async token => { track('system-restore-create', token); systemPointCreated = true; return { id: 'windows-system-restore', success: true, message: 'New Windows restore point verified.' }; },
       openSystemProtection: async () => { track('system-protection-open'); },
+      getAppLifecycle: async () => ({ traySupported: true, login: { supported: true, state: 'absent', approved: null, token: 'login-review', reason: 'Off.' } }),
+      changeAppLogin: async (token, enable) => { track('app-login-change', token, enable); return { id: 'pandora-login', success: true, message: 'Startup registration verified.' }; },
       getStorageReliability: async () => { track('storage-reliability'); return { timestamp: new Date().toISOString(), provider: 'Windows Storage', status: 'unavailable', cached: false, truncated: false, devices: [], reason: 'No storage fixture configured.' }; },
       getGpuTelemetry: async () => { track('gpu-telemetry'); return { timestamp: new Date().toISOString(), provider: 'NVIDIA SMI', status: 'unavailable', cached: false, devices: [], reason: 'No GPU sensor fixture configured.' }; },
       getPowerTuning: async () => ({ supported: true, planId: '381b4222-f694-41f0-9685-ff5bb260df2e', activePlanId: '381b4222-f694-41f0-9685-ff5bb260df2e', states: [{ id: 'cpu-maximum', current: 100, original: null, applied: null, managed: false, conflict: false }] }),
@@ -52,7 +54,7 @@ async function desktopFixture(page: Page) {
       getGames: async () => [{ id: 'fortnite', name: 'Fortnite', installed: false, path: null }],
       getProcesses: async () => [{ pid: 123, name: 'fixture.exe', memoryBytes: 1e8, cpuSeconds: 4 }],
       getStartup: async () => [{ name: 'Fixture launcher', location: 'HKCU Run', status: 'Enabled (read-only)' }],
-      getSettings: async () => ({ reduceMotion: false, scanOnLaunch: true, pollInterval: 2000 }),
+      getSettings: async () => ({ reduceMotion: false, scanOnLaunch: true, pollInterval: 2000, closeToTray: false }),
       saveSettings: async settings => { track('settings', settings); return settings; },
       exportReport: async kind => { track('export', kind); return `PANDORA-${kind}.json`; },
       onProgress: callback => { listeners.push(callback as any); return () => {}; },
@@ -798,4 +800,42 @@ test('drive diagnostics show per-device unavailability, caching and readable nar
   await expect(panel.getByText('Unavailable', { exact: true })).toHaveCount(9);
   const layout = await panel.evaluate(el => ({ overflow: el.scrollWidth > el.clientWidth + 1, description: Number.parseFloat(getComputedStyle(el.querySelector('dt')!).fontSize), statistic: Number.parseFloat(getComputedStyle(el.querySelector('dd')!).fontSize) }));
   expect(layout.overflow).toBe(false); expect(layout.description).toBeGreaterThanOrEqual(13); expect(layout.statistic).toBeGreaterThanOrEqual(18);
+});
+
+test('sign-in launch requires review, distinguishes Windows disapproval and can be disabled', async ({ page }) => {
+  await desktopFixture(page);
+  await page.addInitScript(() => {
+    let enabled = false;
+    window.pandora!.getAppLifecycle = async () => ({ traySupported: true, login: { supported: true, state: enabled ? 'owned' : 'absent', approved: enabled ? false : null, token: 'review-sign-in', reason: enabled ? 'Registered, but disabled in Windows startup settings.' : 'Off.' } });
+    window.pandora!.changeAppLogin = async (token, enable) => { (window as any).__calls.push({ method: 'app-login-change', args: [token, enable] }); enabled = enable; return { id: 'pandora-login', success: true, message: 'PANDORA startup registration verified.' }; };
+  });
+  await page.goto('/'); await page.getByRole('button', { name: 'Settings & About', exact: true }).click();
+  const panel = page.getByRole('region', { name: 'Startup and notification area' });
+  await panel.getByRole('button', { name: 'Enable sign-in launch' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'app-login-change'))).toEqual([]);
+  await panel.getByRole('button', { name: 'Enable sign-in launch' }).click();
+  await page.getByRole('button', { name: 'Confirm sign-in launch', exact: true }).click();
+  await expect(panel.getByText('Disabled by Windows', { exact: true })).toBeVisible();
+  await panel.getByRole('button', { name: 'Disable sign-in launch' }).click();
+  await page.getByRole('button', { name: 'Confirm disable', exact: true }).click();
+  await expect(panel.getByRole('button', { name: 'Enable sign-in launch' })).toBeEnabled();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'app-login-change').map((c: any) => c.args))).toEqual([['review-sign-in', true], ['review-sign-in', false]]);
+  expect(await panel.locator('.setting-row strong').first().evaluate(el => Number.parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(14);
+  await panel.screenshot({ path: 'test-results/pandora-lifecycle.png' });
+});
+
+test('tray preference is optional, exit is explicit and unavailable login registration stays blocked', async ({ page }) => {
+  await desktopFixture(page);
+  await page.addInitScript(() => {
+    window.pandora!.getAppLifecycle = async () => ({ traySupported: true, login: { supported: false, state: 'unavailable', approved: null, token: null, reason: 'Install with Setup to use sign-in launch.' } });
+  });
+  await page.goto('/'); await page.getByRole('button', { name: 'Settings & About', exact: true }).click();
+  const panel = page.getByRole('region', { name: 'Startup and notification area' });
+  await expect(panel.getByRole('button', { name: 'Enable sign-in launch' })).toBeDisabled();
+  const toggle = panel.getByRole('switch', { name: 'Close to notification area' });
+  await expect(toggle).not.toBeChecked(); await toggle.click(); await expect(toggle).toBeChecked();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'settings').at(-1).args[0].closeToTray)).toBe(true);
+  await panel.getByRole('button', { name: 'Exit PANDORA' }).click();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'window').at(-1).args)).toEqual(['quit']);
 });

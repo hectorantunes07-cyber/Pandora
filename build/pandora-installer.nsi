@@ -146,6 +146,11 @@ Section "Uninstall"
   Delete "$INSTDIR\pandora-install.id"
   Delete "$INSTDIR\Uninstall PANDORA.exe"
   RMDir "$INSTDIR"
+  ; Only remove the sign-in command that targets this installation.
+  ; Preserve another application's replacement and Windows StartupApproved data.
+  ReadRegStr $0 HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "io.sonnier.pandora"
+  StrCmpS $0 '$\"$INSTDIR\PANDORA.exe$\"' 0 +2
+    DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "io.sonnier.pandora"
   DeleteRegKey HKCU "${REGKEY}"
   Goto finished
   uninstallFailed:
