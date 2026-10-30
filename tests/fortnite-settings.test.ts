@@ -165,6 +165,20 @@ describe('reviewed Fortnite file changes and original recovery', () => {
     const external = createFortniteFileAdapter(path.join(directory, 'local'), async () => { if (++calls === 4) await fs.appendFile(config, '; external'); return false; }, true);
     await expect(external.replace(snapshot, parseFortniteConfig(original).patch(desired))).rejects.toThrow(/changed/); expect((await fs.readFile(config, 'utf8')).endsWith('; external')).toBe(true);
   });
+  it('accepts a canonical base alias without allowing redirection beneath the fixed configuration suffix', async () => {
+    const realpath = fs.realpath.bind(fs), local = path.join(directory, 'local');
+    const canonicalBase = path.join(directory, 'canonical-base');
+    vi.spyOn(fs, 'realpath').mockImplementation(async file => {
+      const resolved = await realpath(file);
+      return resolved.startsWith(local) ? canonicalBase + resolved.slice(local.length) : resolved;
+    });
+    expect((await adapter.read()).bytes).toEqual(original);
+    vi.mocked(fs.realpath).mockImplementation(async file => {
+      const resolved = await realpath(file);
+      return resolved === config ? path.join(directory, 'outside.ini') : resolved;
+    });
+    await expect(adapter.read()).rejects.toThrow(/Redirected/);
+  });
 });
 
 it.skipIf(process.platform !== 'win32')('queries actual Windows process presence without changing or starting a game', async () => {

@@ -32,10 +32,16 @@ export function createFortniteFileAdapter(localData: string, running = isFortnit
   const locationId = createHash('sha256').update(canonical(path.resolve(file))).digest('hex');
   async function guard() {
     if (!supported || !validRoot) throw new Error('A local Windows Fortnite configuration is required.');
+    // Windows may supply a legitimate 8.3 alias (e.g. RUNNER~1) for LocalAppData
+    // or TEMP. Resolve that trusted base, then require the exact fixed suffix.
+    // Every lexical ancestor is still checked below, including the base itself.
+    const resolvedBase = await fs.realpath(localData);
+    const expected = path.join(resolvedBase, 'FortniteGame', 'Saved', 'Config', 'WindowsClient', 'GameUserSettings.ini');
+    if (canonical(await fs.realpath(file)) !== canonical(expected)) throw new Error('Redirected Fortnite configuration paths are not supported.');
     let current = path.resolve(file);
     while (true) {
       const stat = await fs.lstat(current);
-      if (stat.isSymbolicLink() || canonical(await fs.realpath(current)) !== canonical(current)) throw new Error('Redirected Fortnite configuration paths are not supported.');
+      if (stat.isSymbolicLink()) throw new Error('Redirected Fortnite configuration paths are not supported.');
       if (current === path.resolve(file)) {
         if (!stat.isFile() || stat.nlink !== 1 || stat.size > MAX_FORTNITE_CONFIG || !stat.size) throw new Error('The Fortnite configuration must be a bounded, unlinked regular file.');
         if (!(stat.mode & 0o200)) throw new Error('The Fortnite configuration is read-only. PANDORA will not change its protection.');
