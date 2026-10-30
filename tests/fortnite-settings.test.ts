@@ -1,15 +1,18 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { parseFortniteConfig, MAX_FORTNITE_CONFIG } from '../electron/fortnite-config';
-import { createFortniteFileAdapter, isFortniteRunning, type FortniteAdapter } from '../electron/fortnite-file';
+import { buildFortniteReplaceScript, createFortniteFileAdapter, isFortniteRunning, type FortniteAdapter } from '../electron/fortnite-file';
 import { createFortniteService } from '../electron/fortnite-settings';
 
 const text = '; User configuration — café\r\n[/Script/FortniteGame.FortGameUserSettings]\r\nFrameRateLimit = 144.000000  \r\nbUseVSync=True\r\nbUseDynamicResolution=False\r\nResolutionSizeX=1920\r\nPrivateAccount=PRIVATE_SENTINEL\r\n[Other]\r\nFrameRateLimit=55\r\n';
 const originalValues = { frameRateLimit: 144, vsync: true, dynamicResolution: false };
 const desired = { frameRateLimit: 240, vsync: false, dynamicResolution: true };
 const original = Buffer.from(text);
+vi.setConfig({ testTimeout: 20_000 });
 describe('Fortnite configuration parsing and bounded editing', () => {
   it.each(['utf8', 'utf8-bom', 'utf16le'] as const)('changes only existing values and preserves %s encoding, formatting and unrelated settings', encoding => {
     const bytes = encoding === 'utf16le' ? Buffer.concat([Buffer.from([255, 254]), Buffer.from(text, 'utf16le')]) : Buffer.concat([encoding === 'utf8-bom' ? Buffer.from([239, 187, 191]) : Buffer.alloc(0), original]);
@@ -180,6 +183,28 @@ describe('reviewed Fortnite file changes and original recovery', () => {
     });
     await expect(adapter.read()).rejects.toThrow(/Redirected/);
   });
+  it.skipIf(process.platform !== 'win32')('preserves a custom Windows file ACL through apply and original restoration', async () => {
+    const exe = path.win32.join(process.env.SystemRoot ?? 'C:\\Windows', 'System32/WindowsPowerShell/v1.0/powershell.exe');
+    const quoted = `'${config.replaceAll("'", "''")}'`;
+    async function acl(protect = false) {
+      const script = `$ErrorActionPreference='Stop'; $file=${quoted}; $acl=Get-Acl -LiteralPath $file; ${protect ? '$acl.SetAccessRuleProtection($true,$true); Set-Acl -LiteralPath $file -AclObject $acl;' : ''} (Get-Acl -LiteralPath $file).Sddl`;
+      const { stdout } = await promisify(execFile)(exe, ['-NoLogo', '-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(script, 'utf16le').toString('base64')], { windowsHide: true, timeout: 10_000, maxBuffer: 16_000 }); return stdout.trim();
+    }
+    // Only the disposable fixture's ACL is protected; all its existing grants remain.
+    const before = await acl(true); expect(before).toContain('D:P');
+    expect((await apply()).success).toBe(true); expect(await acl()).toBe(before);
+    const s = service(); expect((await s.change((await s.preview(null, true)).token)).success).toBe(true);
+    expect(await acl()).toBe(before); expect(await fs.readFile(config)).toEqual(original);
+  }, 30_000);
+});
+
+it('bounds the Windows replacement helper to sibling temporary/configuration files and escapes literals', () => {
+  const directory = "C:\\Users\\O'Brien\\Local\\FortniteGame\\Saved\\Config\\WindowsClient\\";
+  const temporary = directory + '.pandora-11111111-1111-1111-1111-111111111111.tmp', target = directory + 'GameUserSettings.ini';
+  const script = buildFortniteReplaceScript(temporary, target, 'a'.repeat(64), 'b'.repeat(64));
+  expect(script).toContain("O''Brien"); expect(script).toContain('[System.IO.File]::Replace('); expect(script).toContain('$null,$false)');
+  for (const invalid of ['C:\\Other\\GameUserSettings.ini', directory + 'Documents.txt', '\\\\server\\GameUserSettings.ini']) expect(() => buildFortniteReplaceScript(temporary, invalid, 'a'.repeat(64), 'b'.repeat(64))).toThrow();
+  expect(() => buildFortniteReplaceScript(temporary, target, "'; Write-Output injected; '", 'b'.repeat(64))).toThrow();
 });
 
 it.skipIf(process.platform !== 'win32')('queries actual Windows process presence without changing or starting a game', async () => {

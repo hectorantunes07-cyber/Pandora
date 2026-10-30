@@ -39,6 +39,8 @@ has been established.
 - Symlinks/junctions, hardlinks and read-only files are refused. Existing
   permissions are not relaxed; no read-only flag is set. A flushed sibling file
   replaces the original after a fresh comparison, followed by content read-back.
+  Windows File.Replace preserves the destination access-control list and refuses
+  metadata-merge errors; there is no fallback that discards custom permissions.
 - Restoration changes only the values that PANDORA changed. It retains newer
   unrelated settings and formatting. A managed value must still match the applied
   or original value. A conflicting value, malformed file or failed provider

@@ -12,6 +12,37 @@ export interface FortniteAdapter {
   replace(expected: FortniteSnapshot, bytes: Buffer): Promise<void>;
 }
 export const FORTNITE_PROCESS_QUERY = "$ErrorActionPreference='Stop'; $processes=@(Get-Process -ErrorAction Stop); ConvertTo-Json -Compress -InputObject ([bool](@($processes | Where-Object { $_.ProcessName -like 'Fortnite*' }).Count -gt 0))";
+export function buildFortniteReplaceScript(temporary: string, target: string, expectedHash: string, desiredHash: string): string {
+  const local = (v: string) => /^[a-z]:\\/i.test(v) && !v.includes('\0') && v.length < 4096;
+  if (!local(temporary) || !local(target) || !/^\.pandora-[a-f0-9-]{36}\.tmp$/i.test(path.win32.basename(temporary)) ||
+      path.win32.basename(target) !== 'GameUserSettings.ini' || path.win32.dirname(temporary).toLowerCase() !== path.win32.dirname(target).toLowerCase() ||
+      !/^[a-f0-9]{64}$/.test(expectedHash) || !/^[a-f0-9]{64}$/.test(desiredHash)) throw new Error('Invalid Fortnite replacement paths or hashes.');
+  const quote = (v: string) => `'${v.replaceAll("'", "''")}'`;
+  // File.Replace uses Windows ReplaceFile: retain the destination ACL/metadata.
+  // Do not ignore metadata errors or fall back to an ACL-losing rename.
+  return `$ErrorActionPreference='Stop'; $temporary=${quote(temporary)}; $target=${quote(target)};
+foreach($file in @($temporary,$target)) {
+  $cursor=$file;
+  while($cursor) { if(([IO.File]::GetAttributes($cursor) -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw 'Redirected path refused.' }; $cursor=[IO.Path]::GetDirectoryName($cursor) }
+  $size=(Get-Item -LiteralPath $file -Force -ErrorAction Stop).Length;
+  if($size -le 0 -or $size -gt ${MAX_FORTNITE_CONFIG}) { throw 'Invalid configuration size.' }
+}
+if(@(Get-Process -ErrorAction Stop | Where-Object { $_.ProcessName -like 'Fortnite*' }).Count -gt 0) { throw 'Close Fortnite before changing its configuration.' }
+$hash=[Security.Cryptography.SHA256]::Create();
+try {
+  $observed=([BitConverter]::ToString($hash.ComputeHash([IO.File]::ReadAllBytes($target)))).Replace('-','').ToLowerInvariant();
+  $replacement=([BitConverter]::ToString($hash.ComputeHash([IO.File]::ReadAllBytes($temporary)))).Replace('-','').ToLowerInvariant();
+  if($observed -ne '${expectedHash}' -or $replacement -ne '${desiredHash}') { throw 'Configuration changed before replacement.' }
+} finally { $hash.Dispose() }
+[System.IO.File]::Replace($temporary,$target,$null,$false)`;
+}
+async function replacePreservingPermissions(temporary: string, target: string, expected: Buffer, desired: Buffer) {
+  if (process.platform !== 'win32') { await fs.rename(temporary, target); return; }
+  const hash = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex');
+  const script = buildFortniteReplaceScript(temporary, target, hash(expected), hash(desired));
+  const exe = path.win32.join(process.env.SystemRoot ?? 'C:\\Windows', 'System32/WindowsPowerShell/v1.0/powershell.exe');
+  await promisify(execFile)(exe, ['-NoLogo', '-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(script, 'utf16le').toString('base64')], { windowsHide: true, timeout: 15_000, maxBuffer: 4096 });
+}
 export async function isFortniteRunning(): Promise<boolean> {
   if (process.platform !== 'win32') throw new Error('Fortnite process checks require Windows.');
   try {
@@ -86,7 +117,7 @@ export function createFortniteFileAdapter(localData: string, running = isFortnit
         try { await handle.writeFile(bytes); await handle.sync(); } finally { await handle.close(); }
         if (await running()) throw new Error('Fortnite started before the change. Nothing was overwritten.');
         if (!sameFortniteSnapshot(await read(), expected)) throw new Error('Fortnite configuration changed before replacement. Nothing was overwritten.');
-        await fs.rename(temporary, file);
+        await replacePreservingPermissions(temporary, file, expected.bytes, bytes);
         if (process.platform !== 'win32') { const directory = await fs.open(path.dirname(file), 'r'); try { await directory.sync(); } finally { await directory.close(); } }
       } catch (error) {
         if ((error as NodeJS.ErrnoException).code) throw new Error('The Fortnite configuration could not be replaced. Its backup is retained; refresh before retrying.');
