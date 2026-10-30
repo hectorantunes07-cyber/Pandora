@@ -187,7 +187,10 @@ describe('reviewed Fortnite file changes and original recovery', () => {
     const exe = path.win32.join(process.env.SystemRoot ?? 'C:\\Windows', 'System32/WindowsPowerShell/v1.0/powershell.exe');
     const quoted = `'${config.replaceAll("'", "''")}'`;
     async function acl(protect = false) {
-      const script = `$ErrorActionPreference='Stop'; $file=${quoted}; $acl=Get-Acl -LiteralPath $file; ${protect ? '$acl.SetAccessRuleProtection($true,$true); Set-Acl -LiteralPath $file -AclObject $acl;' : ''} (Get-Acl -LiteralPath $file).Sddl`;
+      // Use Windows PowerShell's .NET Framework ACL APIs directly. A pwsh-hosted
+      // runner can pass a PSModulePath that makes Get-Acl autoload a newer,
+      // incompatible Microsoft.PowerShell.Security module into Windows PS 5.1.
+      const script = `$ErrorActionPreference='Stop'; $file=${quoted}; $acl=[IO.File]::GetAccessControl($file); ${protect ? '$acl.SetAccessRuleProtection($true,$true); [IO.File]::SetAccessControl($file,$acl);' : ''} ([IO.File]::GetAccessControl($file)).GetSecurityDescriptorSddlForm([Security.AccessControl.AccessControlSections]::All)`;
       const { stdout } = await promisify(execFile)(exe, ['-NoLogo', '-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(script, 'utf16le').toString('base64')], { windowsHide: true, timeout: 10_000, maxBuffer: 16_000 }); return stdout.trim();
     }
     // Only the disposable fixture's ACL is protected; all its existing grants remain.
