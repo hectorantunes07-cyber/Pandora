@@ -337,3 +337,18 @@ reopens it. Use **Exit PANDORA** to quit. Closing and quitting remain guarded du
 active mutations. Uninstall removes a matching sign-in command while preserving
 rollback data, unrelated entries and Windows approval metadata. Actual Windows
 sign-in and shell icon presentation remain physical-PC checks.
+
+
+## Managed settings report
+
+In **Restore & History**, use **Export managed report** to save a privacy-filtered
+JSON report. It includes preference operation history and current snapshots of
+managed power, startup, pointer, cursor, visual and preset settings. Sections that
+cannot be read are marked unavailable; missing readings do not become false or
+zero. The collection interval and schema version are included.
+
+This report is for diagnosis and cannot restore settings. Keep the original local
+PANDORA backups. Startup commands, local paths, cursor images, review tokens, raw
+errors and custom power-plan names are excluded. Other than preference history,
+these sections are current snapshots, not an exhaustive event log. Windows or
+other applications can still change settings while the report is collected.

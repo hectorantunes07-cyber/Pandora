@@ -22,6 +22,7 @@ import { createNetworkInspection } from './network-inspection';
 import { createSettingsService, validateSettings } from './settings';
 import { createLoginService, createWindowsLoginAdapter, LOGIN_NAME } from './app-login';
 import { createDesktopLifecycle } from './desktop-lifecycle';
+import { collectHistoryReport } from './history-report';
 import { cleanupKind, validateIds, isTrustedRenderer, externalDocumentation, windowsSettingsUri } from './validation';
 import type { ProgressEvent } from '../shared/types';
 app.setName('PANDORA');
@@ -60,7 +61,9 @@ function registerServices() {
   function handle(name: string, fn: (...args: any[]) => unknown) {
     ipcMain.handle(`pandora:${name}`, async (event, ...args) => {
       checkSender(event);
-      const mutates = ['apply', 'revert', 'clean', 'profile-apply', 'power-apply', 'power-restore', 'power-tuning-change', 'startup-change', 'pointer-change', 'visual-change', 'cursor-change', 'cursor-select', 'cursor-app', 'restore-all', 'system-restore-create', 'app-login-change', 'save-settings'].includes(name);
+      // Export collection also waits for pending writes so a PANDORA operation cannot
+      // change ownership halfway through its report. Native save-dialog cancellation releases the queue.
+      const mutates = ['apply', 'revert', 'clean', 'profile-apply', 'power-apply', 'power-restore', 'power-tuning-change', 'startup-change', 'pointer-change', 'visual-change', 'cursor-change', 'cursor-select', 'cursor-app', 'restore-all', 'system-restore-create', 'app-login-change', 'save-settings', 'export'].includes(name);
       if (!mutates) return fn(...args);
       activeMutations++;
       const result = mutationQueue.then(() => fn(...args));
@@ -179,11 +182,11 @@ function registerServices() {
   handle('export', async (kind: unknown) => {
     if (kind !== 'system' && kind !== 'history') throw new Error('Unknown report type.');
     if (!window) return null;
-    // Fixed schema intentionally excludes usernames, network addresses, serials, paths and hardware IDs.
-    const info = kind === 'system' ? await getSystem() : null;
-    const report = info ? { product: 'PANDORA', version: app.getVersion(), createdBy: 'Sonnier', gpuReadings: await gpuTelemetry.get(), storageReadings: await storageReliability.get(), timestamp: info.timestamp, platform: info.platform, cpu: info.cpu, logicalCores: info.logicalCores, physicalCores: info.physicalCores, cpuReportedMHz: info.cpuReportedMHz, architecture: info.architecture, gpu: info.gpu, gpuDriver: info.gpuDriver, ramBytes: info.ramBytes, installedRamBytes: info.installedRamBytes, deviceType: info.deviceType, physicalDisks: info.physicalDisks, networkAdapters: info.networkAdapters, ramSpeedMHz: info.ramSpeedMHz, os: info.os, motherboard: info.motherboard, volumes: info.volumes.map(v => ({ totalBytes: v.totalBytes, freeBytes: v.freeBytes })), monitors: info.monitors.map(m => ({ width: m.width, height: m.height, refreshHz: m.refreshHz })) } : { product: 'PANDORA', timestamp: new Date().toISOString(), history: (await tweaks.getHistory()).map(h => ({ tweakId: h.tweakId, title: h.title, timestamp: h.timestamp, status: h.status, originalValue: h.originalValue, appliedValue: h.appliedValue })) };
     const result = await dialog.showSaveDialog(window, { title: 'Save privacy-filtered PANDORA report', defaultPath: `PANDORA-${kind}-${new Date().toISOString().slice(0, 10)}.json`, filters: [{ name: 'JSON report', extensions: ['json'] }] });
     if (result.canceled || !result.filePath) return null;
+    // Fixed schema intentionally excludes usernames, network addresses, serials, paths and hardware IDs.
+    const info = kind === 'system' ? await getSystem() : null;
+    const report = info ? { product: 'PANDORA', version: app.getVersion(), createdBy: 'Sonnier', gpuReadings: await gpuTelemetry.get(), storageReadings: await storageReliability.get(), timestamp: info.timestamp, platform: info.platform, cpu: info.cpu, logicalCores: info.logicalCores, physicalCores: info.physicalCores, cpuReportedMHz: info.cpuReportedMHz, architecture: info.architecture, gpu: info.gpu, gpuDriver: info.gpuDriver, ramBytes: info.ramBytes, installedRamBytes: info.installedRamBytes, deviceType: info.deviceType, physicalDisks: info.physicalDisks, networkAdapters: info.networkAdapters, ramSpeedMHz: info.ramSpeedMHz, os: info.os, motherboard: info.motherboard, volumes: info.volumes.map(v => ({ totalBytes: v.totalBytes, freeBytes: v.freeBytes })), monitors: info.monitors.map(m => ({ width: m.width, height: m.height, refreshHz: m.refreshHz })) } : await collectHistoryReport({ history: () => tweaks.getHistory(), preferences: () => tweaks.getTweaks(), profile: () => tweaks.getProfile(), power: () => power.getInfo(), powerTuning: () => powerTuning.getInfo(), startup: () => startup.getControls(), pointer: () => pointer.getInfo(), visual: () => visual.getStates(), cursor: () => cursor.getInfo() }, app.getVersion());
     await fs.writeFile(result.filePath, JSON.stringify(report, null, 2), { mode: 0o600 });
     return path.basename(result.filePath);
   });

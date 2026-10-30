@@ -1,5 +1,12 @@
 # Changelog
 
+## Managed settings reports and portable launch checks — 2026-10-30
+
+- Expanded report export to schema version 2: preference operation history plus current preference, preset, power-plan, AC policy, launcher, pointer, visual-effect and cursor snapshots. Failed sections are explicitly unavailable; null readings, saved originals and conflicts remain distinct.
+- Reports use fixed fields and catalog labels. Private paths, startup commands, cursor pixels, review tokens, raw errors and custom power-plan names are omitted. This is a diagnostic report, not an importable backup or complete historical event log.
+- Native report collection is serialized with changes, save-dialog cancellation stops before provider collection, and repeated UI export clicks are blocked. Controls reload their review tokens after collection.
+- Added a hosted Windows check that executes the actual portable self-extracting launcher, checks its sandboxed renderer and hardware bridge, and verifies clean exit. Native outcome is recorded in the validation handoff, separately from archive integrity.
+
 ## Optional sign-in launch and notification area — 2026-10-27
 
 - Added reviewed per-user sign-in registration for the installed PANDORA executable, with fresh installation/entry checks, read-back and conflict preservation. Portable/development executables cannot register temporary paths. Windows startup approval metadata remains untouched.

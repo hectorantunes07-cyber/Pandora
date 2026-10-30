@@ -1,6 +1,6 @@
 // Read-only packaged-renderer smoke check. Never applies a tweak or deletes files.
 import { _electron as electron } from '@playwright/test';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -94,12 +94,24 @@ try {
   assert.equal(await page.getByRole('spinbutton', { name: 'Before Average FPS', exact: true }).inputValue(), '100.00');
   assert.equal(await page.getByRole('spinbutton', { name: 'Before 1% low FPS', exact: true }).inputValue(), '100.00');
   assert.equal(await page.getByRole('spinbutton', { name: 'Before Latency', exact: true }).inputValue(), '');
+  // Exercise the real native export route while choosing only a disposable test file.
+  const reportFile = join(directory, 'managed-report.json');
+  await app.evaluate(({ dialog }, file) => { dialog.showSaveDialog = async () => ({ canceled: false, filePath: file }); }, reportFile);
+  assert.equal(await page.evaluate(() => window.pandora.exportReport('history')), 'managed-report.json');
+  const report = JSON.parse(await readFile(reportFile, 'utf8'));
+  assert.equal(report.schemaVersion, 2); assert.equal(report.product, 'PANDORA');
+  assert.equal(Object.keys(report.sections).length, 9);
+  assert.equal(report.sections.history.status, 'available');
+  assert.ok(Array.isArray(report.sections.history.data));
+  assert.equal(JSON.stringify(report).includes(directory), false);
+  await app.evaluate(({ dialog }) => { dialog.showSaveDialog = async () => ({ canceled: true, filePath: '' }); });
+  assert.equal(await page.evaluate(() => window.pandora.exportReport('history')), null);
   assert.deepEqual(errors, []);
   const sandboxConfigured = await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences().sandbox);
   assert.equal(sandboxConfigured, true);
   console.log(JSON.stringify({ passed: true, platform: info.platform, realHardwareRead: true,
     bridgeLoaded: true, rendererNodeAccess: false, unavailableWindowsActionsGuarded: process.platform !== 'win32',
-    frameCaptureFixtureVerified: true, containerTestFlags: containerMode }, null, 2));
+    frameCaptureFixtureVerified: true, managedReportExportVerified: true, containerTestFlags: containerMode }, null, 2));
 } catch (error) {
   if (process.env.GITHUB_ACTIONS === 'true') {
     const message = String(error).replaceAll('%', '%25').replaceAll('\r', '%0D').replaceAll('\n', '%0A');

@@ -1,7 +1,7 @@
 import { PowerTuning } from './PowerTuning';
 import { SystemRestore } from './SystemRestore';
 import { CursorCustomization } from './CursorCustomization';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, ArrowUpRight, Check, CheckCircle2, ChevronRight, CircleAlert, FileCheck2, Gamepad2, History, Info, ListFilter, RefreshCw, RotateCcw, Search, ShieldCheck, SlidersHorizontal, Sparkles, X, Zap } from 'lucide-react';
 import type { GameInfo, HistoryEntry, ManualGamePath, OperationResult, SystemInfo, TweakState } from '../shared/types';
 import { GraphicsGuidance } from './GraphicsGuidance';
@@ -95,16 +95,24 @@ export function Restore({ tweaks, notify, refreshTweaks, onBusyChange }: { tweak
     } catch (err) { setError(errorMessage(err)); setSelection(null); }
     finally { setBusy(false); onBusyChange(false); }
   };
+  const exporting = useRef(false);
   const exportHistory = async () => {
-    try { const path = await api.exportReport('history'); if (path) notify(`History report saved to ${path}`); }
+    if (exporting.current || busy) return;
+    exporting.current = true; setBusy(true); onBusyChange(true); setError('');
+    try { const path = await api.exportReport('history'); if (path) notify(`Managed settings report saved to ${path}`); }
     catch (err) { setError(errorMessage(err)); }
+    finally {
+      // State collection refreshes native review tokens. Reopen controls with fresh reviews.
+      setRevision(n => n + 1); exporting.current = false; setBusy(false); onBusyChange(false);
+    }
   };
   return <>
     <PageHeading eyebrow="BACKUP & RESTORE" title="Restore & History" description="Review your change history and restore saved settings.">
       <button className="button secondary" disabled={loading || busy || !isDesktop} onClick={() => void load()}><RefreshCw size={15} className={loading ? 'spin' : ''}/>Refresh</button>
-      <button className="button secondary" disabled={busy || !isDesktop} onClick={exportHistory}><History size={15}/>Export history</button>
+      <button className="button secondary" disabled={busy || !isDesktop} onClick={exportHistory}><History size={15}/>Export managed report</button>
       <button className="button primary" disabled={loading || busy || !current.length} onClick={() => review(current)}><RotateCcw size={15}/>Restore all preferences</button>
     </PageHeading>
+    <p className="accounting-note">The managed report includes preference history and current power, pointer, cursor, visual, startup and preset snapshots. Private paths and commands are excluded. It is a diagnostic report, not a restorable backup.</p>
     <SystemRestore onBusyChange={onBusyChange}/>
     <RestoreAll onBusyChange={onBusyChange} onRestored={async () => { await load(); await refreshTweaks(); setRevision(n => n + 1); }}/>
     <ProfileControls key={`profile-${revision}`} tweaks={tweaks} refreshTweaks={refreshTweaks} onBusyChange={onBusyChange} restoreOnly/>

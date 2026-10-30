@@ -1,4 +1,5 @@
 import { createPowerTuningService } from '../electron/power-tuning';
+import { collectHistoryReport } from '../electron/history-report';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -36,6 +37,21 @@ describe('reviewed restoration across all managed features', () => {
     for (const id of ['discord', 'steam']) expect((await s.startup.change(entries.find(e => e.id === id)!.token!, false)).success).toBe(true);
     writes.length = 0;
   }
+  it('exports saved cross-feature originals after relaunch without changing Windows or deleting backups', async () => {
+    await populate(services());
+    const s = services();
+    const report = await collectHistoryReport({ history: () => s.tweaks.getHistory(), preferences: () => s.tweaks.getTweaks(), profile: () => s.tweaks.getProfile(), power: () => s.power.getInfo(), powerTuning: () => s.powerTuning.getInfo(), startup: () => s.startup.getControls(), pointer: () => s.pointer.getInfo(), visual: () => s.visual.getStates(), cursor: () => s.cursor.getInfo() }, 'test');
+    expect(report.collectionComplete).toBe(true);
+    expect(report.sections.power).toMatchObject({ data: { currentPlanId: B, backup: { originalPlanId: A, appliedPlanId: B, status: 'applied' } } });
+    expect(report.sections.startup).toMatchObject({ data: expect.arrayContaining([{ id: 'discord', name: 'Discord', managed: true, state: 'disabled', currentEntryPresent: false, savedOriginalPresent: true }]) });
+    expect(report.sections.profile).toMatchObject({ data: { ownedIds: ['file-extensions'] } });
+    expect(JSON.stringify(report)).not.toContain('original.exe');
+    expect(writes).toEqual([]);
+    const recovery = createRestoreService(services());
+    const results = await recovery.restore((await recovery.preview()).token);
+    expect(results.every(r => r.success)).toBe(true);
+    expect(current).toBe(A); expect(launchers.get('discord')).toEqual(command);
+  });
   it('restores originals after relaunch, including multiple startup tokens and individual preferences', async () => {
     await populate(services());
     const reopened = services(), recovery = createRestoreService(reopened);

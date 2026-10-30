@@ -839,3 +839,31 @@ test('tray preference is optional, exit is explicit and unavailable login regist
   await panel.getByRole('button', { name: 'Exit PANDORA' }).click();
   expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'window').at(-1).args)).toEqual(['quit']);
 });
+
+
+test('managed report export explains scope, prevents duplicate requests and recovers after cancellation or failure', async ({ page }) => {
+  await desktopFixture(page);
+  await page.addInitScript(() => {
+    window.pandora!.exportReport = async kind => {
+      (window as any).__calls.push({ method: 'export', args: [kind] });
+      return new Promise((resolve, reject) => { (window as any).__finishExport = { resolve, reject }; });
+    };
+  });
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Restore & History', exact: true }).click();
+  await expect(page.getByText(/The managed report includes preference history/)).toBeVisible();
+  const exportButton = page.getByRole('button', { name: 'Export managed report', exact: true });
+  await exportButton.click(); await expect(exportButton).toBeDisabled();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'export'))).toHaveLength(1);
+  await page.evaluate(() => (window as any).__finishExport.resolve(null));
+  await expect(exportButton).toBeEnabled();
+  await expect(page.getByText(/Managed settings report saved/)).toHaveCount(0);
+  await exportButton.click();
+  await page.evaluate(() => (window as any).__finishExport.reject(new Error('Report file could not be saved.')));
+  await expect(page.getByText('Report file could not be saved.')).toBeVisible();
+  await expect(exportButton).toBeEnabled();
+  await exportButton.click();
+  await page.evaluate(() => (window as any).__finishExport.resolve('PANDORA-history.json'));
+  await expect(page.getByText('Managed settings report saved to PANDORA-history.json')).toBeVisible();
+  await expect(exportButton).toBeEnabled();
+});
