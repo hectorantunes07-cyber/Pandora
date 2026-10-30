@@ -25,6 +25,7 @@ PANDORA 0.1.0 is ready for controlled Windows testing. It is an unsigned develop
 - Explicit ICMP latency/loss/jitter measurements, physical/virtual/hidden adapter inspection, recognized EEE/interrupt-moderation options, available power-management states and fixed-host DNS timing. These diagnostics do not change network configuration or infer game routing.
 - Performance Lab with manual measurements and validated local frame-time CSV analysis, average/1% low FPS, interval consistency, capture provenance, before/after PC snapshots and export. No fabricated improvement or live game capture.
 - Optional reviewed sign-in launch for the installed app, with exact current-user registration checks and preserved Windows startup approval. Optional notification-area icon, close-to-tray, reopen and explicit exit; active operations block normal exit. Settings persist, and uninstall removes only its matching startup command. Actual sign-in and tray appearance still need PC testing.
+- Expanded managed report: schema-v2 preference operation history plus current preference, preset, power-plan, AC-policy, launcher, pointer, visual and cursor snapshots. Failed sections are marked unavailable. Private paths, commands, cursor images, review tokens and raw errors are omitted. This is a diagnostic report, not an importable backup or a full cross-feature event log.
 - Local settings, privacy-filtered reports, portable application and per-user installer with retained rollback data on uninstall.
 
 ## Still incomplete
@@ -34,15 +35,15 @@ PANDORA 0.1.0 is ready for controlled Windows testing. It is an unsigned develop
 - Windows client verification of the implemented restore-point flow and broader pre-change backups. Actual UAC approval and new checkpoint creation have not yet been tested on Windows 10/11. Local setting snapshots do not restore deleted files or Windows itself.
 - CPU and AMD/Intel GPU sensors, fan readings, raw vendor-specific SMART/self-test diagnostics and broader hardware compatibility. Windows storage reliability counters and NVIDIA telemetry are implemented but require physical-device validation.
 - Automated game-file configuration, live game telemetry/capture and measured performance benefits on your hardware.
-- Fuller retention/logging controls, complete cross-feature history export, signed publisher identity, secure updater and public-release certification.
+- Fuller retention/logging controls, a complete cross-feature chronological event log, signed publisher identity, secure updater and public-release certification.
 
 Cleanup reports confirmed logical file bytes, not an exact physical free-space increase. Quality-of-life/privacy options and pointer acceleration do not imply FPS gains. See [FEATURES.md](../FEATURES.md) for exact scope.
 
 ## Download
 
-Application source: `9bcbfabb06a7e35d32bd12ef4eec59da49b50d11`. Both packages are built and archive-verified. CI launched the unpacked and installed app; the portable self-extracting launcher still needs a Windows client launch check. Native Windows CI passed for this source, including installer lifecycle and 43 UI journeys. Exact checksums are recorded in the accompanying `verification.json`.
+Application source: `aac58630f5ac51c999a3026f0a1a25fdf36a3ed6`. Both packages are built and archive-verified. CI launched the unpacked and installed app and the actual portable self-extracting launcher. The portable check verifies extraction, the sandboxed bridge, actual hardware inventory, bundled cursor, cleaner navigation and clean exit with an isolated profile. Native Windows CI passed for this source, including installer lifecycle and 44 UI journeys. Exact checksums are recorded in the accompanying `verification.json`.
 
-Download **PANDORA-Windows-x64-unsigned** from [verified startup-and-tray Windows build](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/40604270328). Sign in to GitHub if required and extract the ZIP first.
+Download **PANDORA-Windows-x64-unsigned** from [verified managed-report and portable-launch Windows build](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/41015274494). Sign in to GitHub if required and extract the ZIP first.
 
 - `PANDORA-Setup-0.1.0-x64.exe`: per-user installer with shortcuts and uninstaller.
 - `PANDORA-Portable-0.1.0-x64.exe`: no installation; still stores local app data.
@@ -68,6 +69,7 @@ The local `release/PANDORA-Windows-Test-Kit-0.1.0-x64.zip` contains cross-built 
 - [ ] Compare physical and VPN adapter data with Windows. Test ICMP/DNS results without interpreting them as your Fortnite server latency.
 - [ ] Import a real repeatable frame-time capture and compare like-for-like before/after results. No actual gain has been established yet.
 - [ ] In Settings, review/cancel sign-in launch, then enable it in the installed app. Check Windows startup approval, sign out/in, disable it and verify it stays off. Portable builds must not register their temporary executable. Enable close-to-tray, close/reopen, inspect the icon at your display scaling and test explicit Exit. No tuning or cleanup should run automatically.
+- [ ] Export the managed report, cancel once, then save and inspect all nine sections. Check originals/conflicts after a managed change and after reopening. Unavailable sections must be marked; private paths/commands must be absent. Verify ordinary rollback still works after export. Keep local backups: the JSON is not an importable backup.
 - [ ] Uninstall/reinstall and confirm history remains. Restore unwanted changes before uninstalling.
 
 The CI artifact contains the instructions that existed at build time. This repository handoff and the current local test kit include the updated feature status.

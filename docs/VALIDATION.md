@@ -2,7 +2,21 @@
 
 PANDORA 0.1.0 is being built in a Linux cloud workspace. Windows-specific checks must be distinguished from Linux unit tests and browser tests. No gaming performance gains have been benchmarked.
 
-## Current startup-and-tray Windows test build — 2026-10-27
+## Current managed-report and portable-launch test build — 2026-10-30
+
+Application source: `aac58630f5ac51c999a3026f0a1a25fdf36a3ed6`. Later documentation commits do not change packaged runtime code.
+
+- **290 distinct backend cases passed locally** across the full suite and the focused cross-feature relaunch/export/restore integration rerun; 14 Windows-only checks skip on Linux. **All 44 UI journeys passed.** Production build and actual Linux Electron export integration passed, including native-dialog cancellation and schema-v2 file output.
+- [Native Windows CI](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/41015274494) passed all required stages at this exact source: backend/native apply-restore checks, all 44 UI journeys, both package builds, archive/source verification, unpacked/installed launch and report export, installer lifecycle, and the **actual portable self-extracting launcher**. The portable launches its own extracted app with an isolated profile; the test checks sandboxed preload, actual Windows inventory, cursor pixels, PC Cleaner navigation, disabled portable sign-in registration and clean launcher exit. No tuning or cleanup is performed by that portable test.
+- Reports now include nine explicit sections: preference history, current preferences, preset ownership, power-plan backup, AC policies, launcher entries, pointer behavior, visual effects and normal cursor. Tests retain null versus zero, original values, conflicts, unavailable native readings, per-section errors and collection interval. A relaunch/export/restore integration verifies originals remain usable and export performs no native mutation.
+- Only fixed fields and catalog labels are exported. Commands, local paths, cursor pixels, tokens, internal record IDs, custom plan names and raw provider errors are omitted. Invalid identities fail the section. collectionComplete describes collection success, not universal provider support. Current snapshots are not a complete chronological event log; the report cannot be imported to restore settings.
+- Export waits behind PANDORA mutations, native save cancellation stops before collection, and the renderer prevents duplicate requests and refreshes review tokens afterward. External Windows changes remain possible during collection and are disclosed.
+- Both local EXEs passed archive integrity, x64 payload, bundled-code comparison and SHA256 verification at clean source. Local `windowsLaunchVerified` remains false: these are cross-built bytes, while Windows CI builds and launches its own separate bytes. Prior packages/kit are preserved at `release/checkpoints/9bcbfab-before-managed-reports`.
+- PANDORA-Setup-0.1.0-x64.exe: **158,341,304 bytes**, SHA256 `712adb4b382fbe3b3ca11c17840fcd4d7dd5056669e0a4c6a1d74f3185a5acd6`.
+- PANDORA-Portable-0.1.0-x64.exe: **111,576,273 bytes**, SHA256 `7dc5b03674ea0356db815118a9fdd75cbd3877806795aec7a4fa8b66557904c5`.
+- Overall implementation remains roughly **88% of the broad requested scope**, not a finished or signed public release. There are still 27 tuning/preference targets; report export and launcher verification do not add FPS tweaks. Actual Windows sign-in, tray presentation, client restore-point creation/UAC, physical sensors, driver effects and measured gaming benefits still need client/hardware testing.
+
+## Previous startup-and-tray Windows test build — 2026-10-27
 
 Application source: `9bcbfabb06a7e35d32bd12ef4eec59da49b50d11`. Later documentation commits do not change packaged runtime code.
 
