@@ -11,6 +11,9 @@ async function desktopFixture(page: Page) {
     let cursorManaged = false, appCursor = false;
     const cursorInfo = () => ({ supported: true, current: { kind: 'String' as const, value: cursorManaged ? 'C:\\fixture.cur' : '' }, original: cursorManaged ? { kind: 'String' as const, value: '' } : null, currentPreview: null, selected: { id: 'fixture', name: 'Sonnier’s cursor', kind: 'cur' as const, width: 32, height: 32, x: 15, y: 16, preview: './cursors/sonnier.png', cssCursor: 'data:image/x-icon;base64,AA==' }, useInApp: appCursor, managed: cursorManaged, conflict: false, token: 'cursor-review' });
     window.pandora = {
+      getFortniteSettings: async () => ({ supported: true, current: null, original: null, managed: false, managedFields: [], conflict: false, running: null, canChange: false, reason: 'No Fortnite configuration fixture configured.' }),
+      previewFortniteSettings: async () => { throw new Error('No Fortnite configuration fixture configured.'); },
+      changeFortniteSettings: async () => { throw new Error('No Fortnite configuration fixture configured.'); },
       getActivity: async () => ({ available: true, entries: [], limit: 500, discarded: 0, clearedAt: null, incomplete: false, warning: null }),
       previewClearActivity: async () => ({ token: 'activity-clear-review', count: 0 }),
       clearActivity: async () => ({ id: 'activity-clear', success: true, message: 'Activity cleared; backups kept.' }),
@@ -927,4 +930,86 @@ test('activity failures remain visible and interrupted outcomes are not presente
   await expect(panel.getByText('The log could not be read. Backups remain separate.')).toBeVisible();
   await expect(panel.getByRole('button', { name: 'Clear activity', exact: true })).toBeDisabled();
   await expect(panel.getByText('No recorded activity yet.')).toHaveCount(0);
+});
+
+async function fortniteFixture(page: Page) {
+  await desktopFixture(page);
+  await page.addInitScript(() => {
+    const original = { frameRateLimit: 144, vsync: true, dynamicResolution: false };
+    let current = { ...original }, managed = false;
+    let review: import('../../shared/fortnite-settings').FortniteReview;
+    (window as any).__fortniteMode = 'ready';
+    const api = window.pandora!;
+    api.getFortniteSettings = async () => {
+      const mode = (window as any).__fortniteMode;
+      if (mode === 'broken') throw new Error('The Fortnite backup is invalid. It has been preserved.');
+      return { supported: true, current, original: managed ? original : null, managed, managedFields: managed ? ['frameRateLimit', 'vsync'] : [], conflict: mode === 'conflict', running: mode === 'running', canChange: mode === 'ready', reason: mode === 'running' ? 'Close Fortnite before reviewing or restoring these settings.' : mode === 'conflict' ? 'The file changed outside PANDORA. Automatic restoration is blocked.' : null };
+    };
+    api.previewFortniteSettings = async (value, restore) => {
+      (window as any).__calls.push({ method: 'fortnite-preview', args: [value, restore] });
+      if ((window as any).__fortniteMode !== 'ready') throw new Error('The configuration changed after review. Nothing was overwritten.');
+      review = { token: 'fortnite-review', restore, current: { ...current }, desired: restore ? { ...original } : { ...value! } }; return review;
+    };
+    api.changeFortniteSettings = async token => {
+      (window as any).__calls.push({ method: 'fortnite-change', args: [token] });
+      if ((window as any).__fortniteMode !== 'ready') throw new Error('The configuration changed after review. Nothing was overwritten.');
+      current = { ...review.desired }; managed = !review.restore;
+      return { id: 'fortnite-config', success: true, message: review.restore ? 'Original configuration restored and verified.' : 'Display preferences saved and verified.' };
+    };
+  });
+}
+
+test('Fortnite preferences require review, preserve cancel, and expose original restore after navigation', async ({ page }) => {
+  await fortniteFixture(page); await page.goto('/');
+  await page.getByRole('button', { name: 'Game Profiles', exact: true }).click();
+  const panel = page.getByRole('region', { name: 'Fortnite display preferences', exact: true });
+  await expect(panel.getByRole('combobox', { name: 'Frame rate limit', exact: true })).toHaveValue('144');
+  await expect(panel.getByRole('button', { name: 'Review Fortnite changes' })).toBeDisabled();
+  await panel.getByRole('combobox', { name: 'Frame rate limit', exact: true }).selectOption('240');
+  await panel.getByRole('combobox', { name: 'V-Sync', exact: true }).selectOption('false');
+  await panel.getByRole('button', { name: 'Review Fortnite changes' }).click();
+  await expect(page.getByRole('dialog')).toContainText('144 FPS → 240 FPS');
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'fortnite-change'))).toEqual([]);
+  await panel.getByRole('button', { name: 'Review Fortnite changes' }).click();
+  await page.getByRole('button', { name: 'Apply Fortnite preferences', exact: true }).click();
+  await expect(panel.getByText('Display preferences saved and verified.')).toBeVisible();
+  await expect(panel.getByRole('combobox', { name: 'Frame rate limit', exact: true })).toBeDisabled();
+  await page.getByRole('button', { name: 'Restore & History', exact: true }).click();
+  await panel.getByRole('button', { name: 'Review original configuration' }).click();
+  await expect(page.getByRole('dialog')).toContainText('240 FPS → 144 FPS');
+  await page.getByRole('button', { name: 'Restore Fortnite configuration', exact: true }).click();
+  await expect(panel).toHaveCount(0);
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'fortnite-change').length)).toBe(2);
+});
+
+test('Fortnite controls handle running games, stale confirmation, unreadable backups and responsive layout', async ({ page }) => {
+  await fortniteFixture(page); await page.goto('/');
+  await page.getByRole('button', { name: 'Game Profiles', exact: true }).click();
+  const panel = page.getByRole('region', { name: 'Fortnite display preferences', exact: true });
+  await page.evaluate(() => { (window as any).__fortniteMode = 'running'; });
+  await panel.getByRole('button', { name: 'Read Fortnite settings' }).click();
+  await expect(panel.getByRole('combobox', { name: 'Frame rate limit', exact: true })).toBeDisabled();
+  await expect(panel.getByText('Close Fortnite before reviewing or restoring these settings.')).toBeVisible();
+  await page.evaluate(() => { (window as any).__fortniteMode = 'ready'; });
+  await panel.getByRole('button', { name: 'Read Fortnite settings' }).click();
+  await panel.getByRole('combobox', { name: 'Frame rate limit', exact: true }).selectOption('240');
+  await panel.getByRole('button', { name: 'Review Fortnite changes' }).click();
+  await page.evaluate(() => { (window as any).__fortniteMode = 'conflict'; });
+  await page.getByRole('button', { name: 'Apply Fortnite preferences', exact: true }).click();
+  await expect(panel.getByText('The configuration changed after review. Nothing was overwritten.')).toBeVisible();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page.evaluate(() => { (window as any).__fortniteMode = 'broken'; });
+  await panel.getByRole('button', { name: 'Read Fortnite settings' }).click();
+  await expect(panel.getByText('The Fortnite backup is invalid. It has been preserved.')).toBeVisible();
+  await expect(panel.getByRole('button', { name: 'Review Fortnite changes' })).toBeDisabled();
+  await page.evaluate(() => { (window as any).__fortniteMode = 'ready'; });
+  await panel.getByRole('button', { name: 'Read Fortnite settings' }).click();
+  for (const width of [1440, 1024, 800]) {
+    await page.setViewportSize({ width, height: 960 });
+    expect(await panel.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+  }
+  await page.setViewportSize({ width: 1440, height: 960 });
+  await panel.scrollIntoViewIfNeeded();
+  await panel.screenshot({ path: 'test-results/pandora-fortnite.png' });
 });

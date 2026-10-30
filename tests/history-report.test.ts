@@ -4,6 +4,7 @@ const plan = '381b4222-f694-41f0-9685-ff5bb260df2e';
 const privateText = 'C:\\Users\\PRIVATE_SENTINEL\\secret.exe --private';
 function fixture(): HistoryReportSources {
   return {
+    fortnite: async () => ({ supported: true, current: { frameRateLimit: 0, vsync: false, dynamicResolution: true }, original: null, managed: false, managedFields: [], conflict: false, running: false, canChange: true, reason: privateText }),
     activity: async () => ({ available: true, entries: [], limit: 500, discarded: 0, clearedAt: null, incomplete: false, warning: null }),
     history: async () => [{ id: privateText, tweakId: 'game-mode', title: privateText, timestamp: '2026-10-01T00:00:00Z', status: 'applied', originalValue: null, appliedValue: 1, message: privateText }],
     preferences: async () => [],
@@ -30,13 +31,14 @@ describe('managed settings report', () => {
   it('includes all supported snapshot sections and preserves null originals, zero values and conflicts', async () => {
     const sources = fixture(); const r = await collectHistoryReport(sources, '0.1.0');
     expect(r.schemaVersion).toBe(2); expect(r.collectionComplete).toBe(true);
-    expect(Object.keys(r.sections)).toHaveLength(9);
+    expect(Object.keys(r.sections)).toHaveLength(10);
     expect(r.sections.history).toMatchObject({ data: [{ originalValue: null, appliedValue: 1 }] });
     expect(r.sections.powerTuning).toMatchObject({ data: { states: [{ original: 5, applied: 0, current: 25, conflict: true }] } });
     expect(r.sections.pointer).toMatchObject({ data: { original: [6, 10, 1], current: [6, 10, 0] } });
     expect(r.sections.profile).toMatchObject({ data: { selection: { id: 'custom' }, ownedIds: ['game-mode'] } });
     expect(r.sections.startup).toMatchObject({ data: [{ name: 'Discord', currentEntryPresent: false, savedOriginalPresent: true }] });
     expect(r.sections.cursor).toMatchObject({ data: { originalSaved: true, currentReadable: true, conflict: true, selectedFormat: 'cur' } });
+    expect(r.sections.fortnite).toMatchObject({ data: { current: { frameRateLimit: 0, vsync: false, dynamicResolution: true }, original: null, canChange: true } });
     expect(r.restoration).toContain('cannot be imported'); expect(r.scope).toContain('not a complete historical event log');
   });
   it('omits sensitive free text, paths, commands, cursor pixels and review tokens throughout JSON', async () => {

@@ -1,3 +1,5 @@
+import { createFortniteService } from '../electron/fortnite-settings';
+import { createFortniteFileAdapter } from '../electron/fortnite-file';
 import { createPowerTuningService } from '../electron/power-tuning';
 import { createActivityService } from '../electron/activity';
 import { collectHistoryReport } from '../electron/history-report';
@@ -21,6 +23,7 @@ describe('reviewed restoration across all managed features', () => {
   afterEach(async () => { await fs.rm(dir, { recursive: true, force: true }); });
   function services() {
     return {
+      fortnite: createFortniteService(dir, createFortniteFileAdapter(dir, async () => false, false)),
       powerTuning: createPowerTuningService(dir, { supported: false, read: async () => { throw new Error('unavailable'); }, write: async () => {} }),
       cursor: createCursorService(dir, path.resolve('public/cursors/sonnier.cur'), { supported: false, read: async () => { throw new Error('Unavailable'); }, write: async () => {}, preview: async () => null }),
       visual: createVisualEffectsService(dir, { supported: false, read: async () => { throw new Error('unavailable'); }, write: async () => {} }),
@@ -38,10 +41,32 @@ describe('reviewed restoration across all managed features', () => {
     for (const id of ['discord', 'steam']) expect((await s.startup.change(entries.find(e => e.id === id)!.token!, false)).success).toBe(true);
     writes.length = 0;
   }
+  it('restores a saved Fortnite configuration with other changes and skips a running game', async () => {
+    const s = services(), local = path.join(dir, 'local');
+    const config = path.join(local, 'FortniteGame/Saved/Config/WindowsClient/GameUserSettings.ini');
+    const original = Buffer.from('[/Script/FortniteGame.FortGameUserSettings]\r\nFrameRateLimit=144.000000\r\nbUseVSync=True\r\nbUseDynamicResolution=False\r\n');
+    await fs.mkdir(path.dirname(config), { recursive: true }); await fs.writeFile(config, original);
+    let running = false;
+    const adapter = createFortniteFileAdapter(local, async () => running, true);
+    s.fortnite = createFortniteService(dir, adapter);
+    await s.fortnite.change((await s.fortnite.preview({ frameRateLimit: 240, vsync: false, dynamicResolution: false }, false)).token);
+    await populate(s); running = true;
+    const recovery = createRestoreService(s), blocked = await recovery.preview();
+    expect(blocked.items.find(i => i.id === 'fortnite-config')).toMatchObject({ eligible: false });
+    const results = await recovery.restore(blocked.token);
+    expect(results.filter(r => !r.success)).toMatchObject([{ id: 'fortnite-config' }]);
+    expect((await s.fortnite.getInfo()).managed).toBe(true);
+    running = false; s.fortnite = createFortniteService(dir, adapter);
+    const reopened = createRestoreService(s), reviewed = await reopened.preview();
+    expect(reviewed.items).toHaveLength(1);
+    expect(reviewed.items[0]).toMatchObject({ id: 'fortnite-config', eligible: true, original: 'Frame rate limit: 144 FPS · V-Sync: On' });
+    expect((await reopened.restore(reviewed.token))[0].success).toBe(true);
+    expect(await fs.readFile(config)).toEqual(original);
+  });
   it('exports saved cross-feature originals after relaunch without changing Windows or deleting backups', async () => {
     await populate(services());
     const s = services();
-    const report = await collectHistoryReport({ activity: () => createActivityService(dir).get(), history: () => s.tweaks.getHistory(), preferences: () => s.tweaks.getTweaks(), profile: () => s.tweaks.getProfile(), power: () => s.power.getInfo(), powerTuning: () => s.powerTuning.getInfo(), startup: () => s.startup.getControls(), pointer: () => s.pointer.getInfo(), visual: () => s.visual.getStates(), cursor: () => s.cursor.getInfo() }, 'test');
+    const report = await collectHistoryReport({ fortnite: () => s.fortnite.getInfo(), activity: () => createActivityService(dir).get(), history: () => s.tweaks.getHistory(), preferences: () => s.tweaks.getTweaks(), profile: () => s.tweaks.getProfile(), power: () => s.power.getInfo(), powerTuning: () => s.powerTuning.getInfo(), startup: () => s.startup.getControls(), pointer: () => s.pointer.getInfo(), visual: () => s.visual.getStates(), cursor: () => s.cursor.getInfo() }, 'test');
     expect(report.collectionComplete).toBe(true);
     expect(report.sections.power).toMatchObject({ data: { currentPlanId: B, backup: { originalPlanId: A, appliedPlanId: B, status: 'applied' } } });
     expect(report.sections.startup).toMatchObject({ data: expect.arrayContaining([{ id: 'discord', name: 'Discord', managed: true, state: 'disabled', currentEntryPresent: false, savedOriginalPresent: true }]) });

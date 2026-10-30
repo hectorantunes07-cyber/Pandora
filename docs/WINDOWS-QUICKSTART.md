@@ -36,3 +36,7 @@ This is an unsigned 0.1.0 development build. Use Windows 11 x64, initially on a 
 Record the source commit from `verification.json`, artifact SHA256, Windows version/build, page, steps, exact error and whether Windows still reflects the original preference. Do not share private file paths or your full backup journal publicly. A failed operation should retain a clear result; never repeatedly force it or manually delete the journal to get past an error.
 
 Cloud-verified checks cover build, backend safety logic, interface workflows and both installer and portable archive integrity. Native hardware accuracy, actual Windows cleanup, registry shell effects and installation still require this Windows testing. See [windows-validation.md](windows-validation.md) for the complete release checklist.
+
+## Fortnite configuration test
+
+Close Fortnite and configuration editors. Under Game Profiles → Fortnite, read the existing values, change one option, review and cancel once; then review and confirm. Restore before starting the game to check exact original recovery. Next, verify one change in Fortnite's video menu and close the game before restoring. Unrelated newer settings should survive rollback; conflicting managed values must block it. Keep your own copy of the configuration for this development test. No live game compatibility or performance benefit is implied by the hosted Windows tests.

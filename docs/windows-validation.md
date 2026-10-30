@@ -206,7 +206,7 @@ References: [Get-StorageReliabilityCounter](https://learn.microsoft.com/powershe
 ## Managed settings report
 
 - In Restore & History, export a managed report, cancel once, then choose a disposable JSON file. Cancellation must not claim a saved report or refresh native review state. Repeated clicks while saving must not open duplicate dialogs.
-- Confirm schemaVersion 2 and all nine sections. Apply one reviewed setting in a disposable environment and compare original/current/applied values, then relaunch and export again. After exporting, fresh UI reviews and normal rollback must still work.
+- Confirm schemaVersion 2 and all ten sections. Apply one reviewed setting in a disposable environment and compare original/current/applied values, then relaunch and export again. After exporting, fresh UI reviews and normal rollback must still work.
 - Check missing native providers retain null values and supported flags. A section whose journal cannot be read must be explicitly unavailable and collectionComplete false; no raw error or private path should appear. collectionComplete means sections were collected, not that every Windows provider is supported.
 - Inspect startup and cursor sections for absence of commands, paths, pixels and review tokens. Saved originals remain in the local backups; this report cannot be imported or used as a replacement backup. It is not a complete cross-feature chronological log.
 

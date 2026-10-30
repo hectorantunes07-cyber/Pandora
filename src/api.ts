@@ -9,6 +9,7 @@ const browserSettings = (): AppSettings => {
   catch { return defaultSettings; }
 };
 export const api: AppApi = window.pandora ?? {
+  getFortniteSettings: unavailable, previewFortniteSettings: unavailable, changeFortniteSettings: unavailable,
   getActivity: unavailable, previewClearActivity: unavailable, clearActivity: unavailable,
   getSystemRestore: unavailable, previewSystemRestore: unavailable, createSystemRestore: unavailable, openSystemProtection: unavailable,
   getGpuTelemetry: unavailable,

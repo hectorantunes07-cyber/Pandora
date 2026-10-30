@@ -1,6 +1,9 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import type { AppApi, ProgressEvent } from '../shared/types';
 const api: AppApi = {
+  getFortniteSettings: () => ipcRenderer.invoke('pandora:fortnite-settings'),
+  previewFortniteSettings: (value, restore) => ipcRenderer.invoke('pandora:fortnite-preview', value, restore),
+  changeFortniteSettings: token => ipcRenderer.invoke('pandora:fortnite-change', token),
   getActivity: () => ipcRenderer.invoke('pandora:activity'),
   previewClearActivity: () => ipcRenderer.invoke('pandora:activity-clear-preview'),
   clearActivity: token => ipcRenderer.invoke('pandora:activity-clear', token),

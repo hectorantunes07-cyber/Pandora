@@ -1,5 +1,12 @@
 # Changelog
 
+## Reviewed Fortnite display preferences — 2026-10-30
+
+- Added actual local-configuration controls for the existing Fortnite frame cap, V-Sync and dynamic-resolution keys. The review shows current and requested values, tradeoffs and game-verification requirements; no changes happen on selection or cancellation.
+- Preserved UTF-8/UTF-16LE encoding, comments, whitespace and unrelated settings. Bounded reads, fixed configuration location, process checks, redirect/hardlink/read-only guards, expiring single-use reviews and verified atomic replacement protect the operation. No missing keys are invented and no read-only flag is set.
+- Saved a durable full original before writing. Restoration changes only owned display values, preserves newer unrelated settings, refuses conflicting values and survives relaunch. Added integration with combined rollback, activity and privacy-filtered reports (now ten snapshot sections).
+- This is configuration-file editing, not a live game API or proof of current Fortnite support/performance. Rendering-mode behavior, cloud synchronization, game updates and actual gains need real-game verification.
+
 ## Persistent activity timeline — 2026-10-30
 
 - Added durable activity across supported cleanup, tuning, restoration, preset, startup, cursor, game-location and app-setting operations. Pending operations are recorded before execution; completed, partial, cancelled and unconfirmed outcomes remain distinct after reopening.

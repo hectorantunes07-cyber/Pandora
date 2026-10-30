@@ -1,4 +1,5 @@
 export const ACTIVITY_ACTIONS = {
+  'fortnite-change': 'Change or restore Fortnite display preferences',
   apply: 'Apply Windows preferences', revert: 'Restore Windows preferences', clean: 'PC cleanup',
   'profile-apply': 'Change gaming preset', 'power-apply': 'Change power plan', 'power-restore': 'Restore power plan',
   'power-tuning-change': 'Change plugged-in power policy', 'startup-change': 'Change launcher startup',

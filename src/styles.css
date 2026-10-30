@@ -175,3 +175,16 @@
 .activity-filters input::placeholder { color: var(--muted); }
 [aria-label="Activity timeline"] .panel-title .lifecycle-actions { margin-top: 0; }
 @media (max-width: 640px) { .activity-filters { grid-template-columns: 1fr; } }
+
+/* Scoped game preferences: readable labels without scaling the desktop shell. */
+.fortnite-settings-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 20px 0; }
+.fortnite-setting { display: flex; flex-direction: column; gap: 12px; padding: 20px; border: 1px solid var(--line); border-radius: 12px; background: #151020; min-width: 0; }
+.fortnite-setting h3 { margin: 0; font-size: 18px; }
+.fortnite-setting p { font-size: 14px; line-height: 1.65; color: #bcb1cd; margin: 0; flex: 1; }
+.fortnite-setting label { display: flex; flex-direction: column; gap: 8px; font-size: 14px; font-weight: 500; }
+.fortnite-setting select { width: 100%; border: 1px solid #514066; border-radius: 8px; background: #21182f; color: #f1eafc; padding: 11px 12px; font: inherit; }
+.fortnite-setting select:disabled { opacity: .65; }
+.fortnite-setting select:focus-visible { outline: 2px solid #b98af7; outline-offset: 2px; }
+@media (max-width: 1050px) { .fortnite-settings-grid { grid-template-columns: 1fr; } }
+
+.fortnite-settings .button-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 18px; }

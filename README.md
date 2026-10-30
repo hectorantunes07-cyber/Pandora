@@ -368,3 +368,7 @@ PANDORA reports the gap and keeps the underlying operation/rollback available.
 A damaged activity file is preserved. Private paths, commands, filenames and raw
 error details are not recorded. Read-only scans/diagnostics and external Windows
 changes are outside this timeline; it does not reconstruct older activity.
+
+### Fortnite display preferences
+
+Game Profiles → Fortnite now reads the existing local frame cap, V-Sync and dynamic-resolution values. Close Fortnite, choose your values, review, then confirm. Originals are saved first. Restore original configuration or combined rollback restores only PANDORA-owned values while preserving newer unrelated settings. External conflicts and unfamiliar formats are refused. This does not launch the game or touch executables/anti-cheat. Verify the video menu and measure performance yourself; game updates or cloud sync may override stored preferences. See [scope and validation](docs/FORTNITE-SETTINGS.md).

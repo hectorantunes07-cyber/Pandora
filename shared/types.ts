@@ -44,6 +44,9 @@ export interface NetworkResult {
   received: number; lossPercent: number; averageMs: number | null; minMs: number | null; maxMs: number | null; jitterMs: number | null;
 }
 export interface AppApi {
+  getFortniteSettings(): Promise<import('./fortnite-settings').FortniteInfo>;
+  previewFortniteSettings(value: import('./fortnite-settings').FortniteValues | null, restore: boolean): Promise<import('./fortnite-settings').FortniteReview>;
+  changeFortniteSettings(token: string): Promise<OperationResult>;
   getActivity(): Promise<import('./activity').ActivityInfo>;
   previewClearActivity(): Promise<import('./activity').ActivityClearReview>;
   clearActivity(token: string): Promise<OperationResult>;

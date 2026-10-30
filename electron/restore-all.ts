@@ -1,4 +1,6 @@
 import type { createPowerTuningService } from './power-tuning';
+import type { createFortniteService } from './fortnite-settings';
+import { fortniteSummary } from '../shared/fortnite-settings';
 import { POWER_CONTROLS, powerValueLabel } from '../shared/power-tuning';
 import type { createCursorService } from './cursor';
 import { VISUAL_EFFECTS } from '../shared/visual-effects';
@@ -9,15 +11,19 @@ import type { createPowerService } from './power';
 import type { createStartupService } from './startup';
 import type { createPointerService } from './pointer';
 import type { OperationResult, RestoreReview } from '../shared/types';
-type Services = { powerTuning: ReturnType<typeof createPowerTuningService>; cursor: ReturnType<typeof createCursorService>; visual: ReturnType<typeof createVisualEffectsService>; tweaks: ReturnType<typeof createTweakService>; power: ReturnType<typeof createPowerService>; startup: ReturnType<typeof createStartupService>; pointer: ReturnType<typeof createPointerService> };
-export function createRestoreService({ tweaks, power, startup, pointer, visual, cursor, powerTuning }: Services) {
+type Services = { fortnite: ReturnType<typeof createFortniteService>; powerTuning: ReturnType<typeof createPowerTuningService>; cursor: ReturnType<typeof createCursorService>; visual: ReturnType<typeof createVisualEffectsService>; tweaks: ReturnType<typeof createTweakService>; power: ReturnType<typeof createPowerService>; startup: ReturnType<typeof createStartupService>; pointer: ReturnType<typeof createPointerService> };
+export function createRestoreService({ tweaks, power, startup, pointer, visual, cursor, powerTuning, fortnite }: Services) {
   let approved: { token: string; fingerprint: string; expires: number } | null = null;
   async function plan() {
     // Reject unreadable journals instead of silently omitting one class of backup.
     const [history, states, profile, energy, launchers, mouse, effects] = await Promise.all([tweaks.getHistory(), tweaks.getTweaks(), tweaks.getProfile(), power.getInfo(), startup.getControls(), pointer.getInfo(), visual.getStates()]);
     const customCursor = await cursor.getInfo();
     const tuned = await powerTuning.getInfo();
+    const game = await fortnite.getInfo();
     const tasks: { item: RestoreReview['items'][number]; run: () => Promise<OperationResult> }[] = [];
+    if (game.managed) {
+      tasks.push({ item: { id: 'fortnite-config', category: 'Game configuration', title: 'Fortnite display preferences', original: fortniteSummary(game.original, game.managedFields), current: fortniteSummary(game.current, game.managedFields), eligible: game.canChange, reason: game.reason ?? 'Restore original managed display values and preserve unrelated settings. Keep Fortnite closed; conflicting values block restoration.' }, run: async () => fortnite.change((await fortnite.preview(null, true)).token) });
+    }
     for (const record of history.filter(r => ['pending', 'applied', 'conflict'].includes(r.status))) {
       const state = states.find(t => t.id === record.tweakId);
       const id = `preference:${record.id}`;

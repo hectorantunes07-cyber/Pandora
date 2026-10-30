@@ -8,8 +8,10 @@ import { VISUAL_EFFECTS } from '../shared/visual-effects';
 import { STARTUP_APPS } from './startup';
 import { TWEAKS_BY_ID } from './tweak-catalog';
 import { ACTIVITY_ACTIONS, type ActivityInfo } from '../shared/activity';
+import { FORTNITE_FIELDS, validFortniteValues, type FortniteInfo, type FortniteValues } from '../shared/fortnite-settings';
 
 export interface HistoryReportSources {
+  fortnite(): Promise<FortniteInfo>;
   activity(): Promise<ActivityInfo>;
   history(): Promise<HistoryEntry[]>;
   preferences(): Promise<TweakState[]>;
@@ -77,7 +79,17 @@ export async function collectHistoryReport(sources: HistoryReportSources, versio
       selectedFormat: value.selected?.kind ?? null,
     }; }),
   ]);
-  const sections = { history, preferences, profile, power, powerTuning, startup, pointer, visual, cursor };
+  const fortnite = await section(async () => {
+    const value = await sources.fortnite();
+    const values = (v: FortniteValues | null) => {
+      if (v === null) return null;
+      if (!validFortniteValues(v)) throw new Error('Invalid game display values.');
+      return { frameRateLimit: v.frameRateLimit, vsync: v.vsync, dynamicResolution: v.dynamicResolution };
+    };
+    if (value.managedFields.some(key => !FORTNITE_FIELDS.includes(key))) throw new Error('Unknown managed game setting.');
+    return { supported: value.supported, managed: value.managed, managedFields: [...value.managedFields], conflict: value.conflict, running: value.running, current: values(value.current), original: values(value.original), canChange: value.canChange };
+  });
+  const sections = { history, preferences, profile, power, powerTuning, startup, pointer, visual, cursor, fortnite };
   const activity = await section(async () => {
     const value = await sources.activity();
     if (!value.available) throw new Error('Activity unavailable.');

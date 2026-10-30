@@ -45,6 +45,11 @@ try {
   assert.equal(cursor.managed, false);
   assert.match(cursor.selected.preview, /^data:image\/png;base64,/);
   assert.equal(await page.evaluate(() => window.pandora.getNvidiaPreset()), null);
+  const fortnite = await page.evaluate(() => window.pandora.getFortniteSettings());
+  assert.equal(typeof fortnite.supported, 'boolean');
+  assert.equal(fortnite.managed, false);
+  if (process.platform !== 'win32') assert.equal(fortnite.supported, false);
+  assert.equal(await page.evaluate(async () => { try { await window.pandora.changeFortniteSettings('unreviewed'); return false; } catch { return true; } }), true);
   const lifecycle = await page.evaluate(() => window.pandora.getAppLifecycle());
   assert.equal(lifecycle.traySupported, process.platform === 'win32');
   assert.equal(lifecycle.login.state === 'unavailable' || lifecycle.login.state === 'absent', true);
@@ -95,28 +100,31 @@ try {
   assert.equal(await page.getByRole('spinbutton', { name: 'Before 1% low FPS', exact: true }).inputValue(), '100.00');
   assert.equal(await page.getByRole('spinbutton', { name: 'Before Latency', exact: true }).inputValue(), '');
   // Local app-state-only activity fixture. No Windows preferences or cleanup are changed.
-  assert.equal((await page.evaluate(() => window.pandora.getActivity())).entries.length, 0);
+  // The rejected unreviewed game request is recorded honestly as unconfirmed.
+  const rejectedActivity = (await page.evaluate(() => window.pandora.getActivity())).entries;
+  assert.equal(rejectedActivity.length, 1);
+  assert.equal(rejectedActivity[0].action, 'fortnite-change'); assert.equal(rejectedActivity[0].status, 'unconfirmed');
   await page.evaluate(async () => window.pandora.saveSettings(await window.pandora.getSettings()));
   const activity = await page.evaluate(() => window.pandora.getActivity());
-  assert.equal(activity.available, true); assert.equal(activity.entries.length, 1);
-  assert.equal(activity.entries[0].action, 'save-settings'); assert.equal(activity.entries[0].status, 'completed');
+  assert.equal(activity.available, true); assert.equal(activity.entries.length, 2);
+  const savedActivity = activity.entries.find(e => e.action === 'save-settings'); assert.equal(savedActivity.status, 'completed');
   // Exercise the real native export route while choosing only a disposable test file.
   const reportFile = join(directory, 'managed-report.json');
   await app.evaluate(({ dialog }, file) => { dialog.showSaveDialog = async () => ({ canceled: false, filePath: file }); }, reportFile);
   assert.equal(await page.evaluate(() => window.pandora.exportReport('history')), 'managed-report.json');
   const report = JSON.parse(await readFile(reportFile, 'utf8'));
   assert.equal(report.schemaVersion, 2); assert.equal(report.product, 'PANDORA');
-  assert.equal(Object.keys(report.sections).length, 9);
+  assert.equal(Object.keys(report.sections).length, 10);
   assert.equal(report.activity.status, 'available');
-  assert.equal(report.activity.data.entries[0].action, 'save-settings');
+  assert.equal(report.activity.data.entries.find(e => e.action === 'save-settings').status, 'completed');
   assert.equal(report.sections.history.status, 'available');
   assert.ok(Array.isArray(report.sections.history.data));
   assert.equal(JSON.stringify(report).includes(directory), false);
   await app.evaluate(({ dialog }) => { dialog.showSaveDialog = async () => ({ canceled: true, filePath: '' }); });
   assert.equal(await page.evaluate(() => window.pandora.exportReport('history')), null);
   const clearActivity = await page.evaluate(() => window.pandora.previewClearActivity());
-  assert.equal(clearActivity.count, 1);
-  assert.equal((await page.evaluate(() => window.pandora.getActivity())).entries.length, 1);
+  assert.equal(clearActivity.count, 2);
+  assert.equal((await page.evaluate(() => window.pandora.getActivity())).entries.length, 2);
   assert.equal((await page.evaluate(token => window.pandora.clearActivity(token), clearActivity.token)).success, true);
   assert.equal((await page.evaluate(() => window.pandora.getActivity())).entries.length, 0);
   assert.deepEqual(errors, []);
