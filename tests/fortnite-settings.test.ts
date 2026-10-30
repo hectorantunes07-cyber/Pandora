@@ -167,15 +167,16 @@ describe('reviewed Fortnite file changes and original recovery', () => {
   });
   it('accepts a canonical base alias without allowing redirection beneath the fixed configuration suffix', async () => {
     const realpath = fs.realpath.bind(fs), local = path.join(directory, 'local');
+    const resolvedLocal = await realpath(local), resolvedConfig = await realpath(config);
     const canonicalBase = path.join(directory, 'canonical-base');
     vi.spyOn(fs, 'realpath').mockImplementation(async file => {
       const resolved = await realpath(file);
-      return resolved.startsWith(local) ? canonicalBase + resolved.slice(local.length) : resolved;
+      return resolved.startsWith(resolvedLocal) ? canonicalBase + resolved.slice(resolvedLocal.length) : resolved;
     });
     expect((await adapter.read()).bytes).toEqual(original);
     vi.mocked(fs.realpath).mockImplementation(async file => {
       const resolved = await realpath(file);
-      return resolved === config ? path.join(directory, 'outside.ini') : resolved;
+      return resolved === resolvedConfig ? path.join(directory, 'outside.ini') : resolved;
     });
     await expect(adapter.read()).rejects.toThrow(/Redirected/);
   });
