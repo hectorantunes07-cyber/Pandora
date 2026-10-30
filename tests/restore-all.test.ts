@@ -62,7 +62,7 @@ describe('reviewed restoration across all managed features', () => {
     expect(reviewed.items[0]).toMatchObject({ id: 'fortnite-config', eligible: true, original: 'Frame rate limit: 144 FPS · V-Sync: On' });
     expect((await reopened.restore(reviewed.token))[0].success).toBe(true);
     expect(await fs.readFile(config)).toEqual(original);
-  });
+  }, 30_000); // Includes two cold native Windows file replacements.
   it('exports saved cross-feature originals after relaunch without changing Windows or deleting backups', async () => {
     await populate(services());
     const s = services();
