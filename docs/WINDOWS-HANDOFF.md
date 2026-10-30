@@ -46,9 +46,9 @@ Cleanup reports confirmed logical file bytes, not an exact physical free-space i
 
 ## Download
 
-Application source: `c603e84f36fb9ab2106d086429fdd95284e20cf9`. Both packages are built and archive-verified. CI launched the unpacked and installed app and the actual portable self-extracting launcher. The portable check verifies extraction, the sandboxed bridge, actual hardware inventory, bundled cursor, cleaner navigation and clean exit with an isolated profile. Native Windows CI passed for this source, including custom file-permission preservation during apply/rollback, installer lifecycle and the complete UI suite. Exact checksums are recorded in the accompanying `verification.json`.
+Application source: `8d35ea6addf9ce4d7dd30fb80cf23b45e089b6d8`. Both packages are built and archive-verified. CI launched the unpacked and installed app and the actual portable self-extracting launcher. The portable check verifies extraction, the sandboxed bridge, actual hardware inventory, bundled cursor, cleaner navigation and clean exit with an isolated profile. Native Windows CI passed for this source, including separate AC/DC policy apply/rollback, absent-battery apply refusal, custom game-file permission preservation, installer lifecycle and all 54 UI journeys. Exact checksums are recorded in the accompanying `verification.json`.
 
-Download **PANDORA-Windows-x64-unsigned** from [verified Windows build](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/41097684577). Sign in to GitHub if required and extract the ZIP first.
+Download **PANDORA-Windows-x64-unsigned** from [verified Windows build](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/41122650946). Sign in to GitHub if required and extract the ZIP first.
 
 - `PANDORA-Setup-0.1.0-x64.exe`: per-user installer with shortcuts and uninstaller.
 - `PANDORA-Portable-0.1.0-x64.exe`: no installation; still stores local app data.

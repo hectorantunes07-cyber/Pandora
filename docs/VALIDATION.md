@@ -2,7 +2,22 @@
 
 PANDORA 0.1.0 is being built in a Linux cloud workspace. Windows-specific checks must be distinguished from Linux unit tests and browser tests. No gaming performance gains have been benchmarked.
 
-## Current optional-app and process-inspection build — 2026-10-30
+## Current separate-battery-policy Windows test build — 2026-10-30
+
+Application source: `8d35ea6addf9ce4d7dd30fb80cf23b45e089b6d8`. Later documentation commits do not change packaged runtime code.
+
+- **376 backend tests passed locally; 19 Windows-only checks skipped there. All 54 UI journeys passed.** Typecheck, production build, native PowerShell/C# helpers, isolated runtime fixtures and real Linux Electron integration passed. The battery panel was visually inspected at 1440 and 800 logical pixels, with overflow checks also at 1024.
+- [Exact-source Windows CI](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/41122650946) passed every required stage: unit/native tests, disposable Windows policy restoration, interface tests, both packages, source/archive/hash checks, unpacked and installed bridge checks, installer lifecycle, actual portable launcher and artifact upload.
+- Separate AC/DC services preserve original values in independent source-tagged journals. Legacy AC journals remain accepted only for AC. Five-minute single-use confirmations, CPU-bound validation, active-plan/state rechecks, durable pre-write originals, native read-back and external-conflict refusal apply independently to each source.
+- New DC changes require GetSystemPowerStatus to positively report a battery at review, confirmation and native write. Unknown/absent batteries disable new apply. Restoration of a saved DC original remains available without a current battery, including combined restoration and inactive saved plans.
+- Hosted Windows tests change available AC and DC policies on a disposable copied plan, restore exact originals after service relaunch, compare full policy output, and verify the opposite source after each apply. The DC fixture supplies a test-only positive battery observation and uses the native restoration path because hosted runners normally lack batteries; a separate actual native write asserts absent/unknown-battery apply refusal. This validates policy APIs and guards, **not physical laptop battery life or OEM behavior**.
+- Local cases cover battery disappearance after review, source/token/journal isolation, legacy migration, failed refresh recovery, external conflicts, exact restore after relaunch without a battery, CPU bounds, both sources in combined rollback and separate privacy-filtered report sections. UI checks cover read-only desktops, DC review/cancel/confirm and restoring both sources. A busy-counter imbalance found by the navigation test was fixed; the complete UI suite then passed.
+- Both local EXEs passed clean-source archive, x64 payload, bundled-code and SHA256 checks. These cross-built bytes are distinct from CI-built/Windows-launched packages; local `windowsLaunchVerified` remains false. Previous verified packages and kit are retained at `release/checkpoints/c603e84-before-battery-power`.
+- PANDORA-Setup-0.1.0-x64.exe: **158,384,238 bytes**, SHA256 `5deb13437b78696bff52f7a579755246e80897f056bb90a63bacb36a3450b483`.
+- PANDORA-Portable-0.1.0-x64.exe: **111,609,970 bytes**, SHA256 `cd6fba3fffa5c9ebd7bbee87796cf41c3898bab13e8bde77c2b826da1b34dffb`.
+- Rough implementation estimate: **91% of the broad requested scope**. There are 33 separately configurable Windows policy/preference values plus three Fortnite display values. Six new DC values are counterparts of the existing power controls, not six new types of FPS optimization. Physical Windows testing and broader GPU/network automation, direct debloat, sensors/game capture, signing/updating remain incomplete.
+
+## Previous optional-app and process-inspection build — 2026-10-30
 
 Application source: `c603e84f36fb9ab2106d086429fdd95284e20cf9`. Later documentation commits do not change packaged runtime code.
 
