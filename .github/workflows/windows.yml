@@ -122,8 +122,14 @@ jobs:
             physicalHardwareTesting = 'still required'
           }
           $manifest | ConvertTo-Json -Depth 8 | Set-Content release/verification.json -Encoding utf8
-          node scripts/prepare-windows-handoff.mjs
-          if ($LASTEXITCODE -ne 0) { throw 'Download instructions could not be prepared.' }
+          & node scripts/prepare-windows-handoff.mjs 2>&1 | Tee-Object -FilePath handoff-windows.log
+          $handoffExit = $LASTEXITCODE
+          if ($handoffExit -ne 0) {
+            $detail = (Get-Content handoff-windows.log -Tail 30) -join "`n"
+            $detail = $detail.Replace('%', '%25').Replace("`r", '%0D').Replace("`n", '%0A')
+            Write-Output "::error title=Download instructions::$detail"
+            exit $handoffExit
+          }
       - uses: actions/upload-artifact@v5
         with:
           name: PANDORA-Windows-x64-unsigned
@@ -148,6 +154,7 @@ jobs:
             native-windows.log
             unit-windows.log
             unit-windows.json
+            handoff-windows.log
             playwright-report
             test-results
 
