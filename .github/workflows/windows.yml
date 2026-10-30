@@ -27,9 +27,21 @@ jobs:
       - name: Unit and filesystem safety tests
         shell: pwsh
         run: |
-          & npm.cmd test 2>&1 | Tee-Object -FilePath unit-windows.log
+          & npm.cmd test -- --reporter=default --reporter=json --outputFile.json=unit-windows.json 2>&1 | Tee-Object -FilePath unit-windows.log
           $testExit = $LASTEXITCODE
           if ($testExit -ne 0) {
+            if (Test-Path unit-windows.json) {
+              $results = Get-Content unit-windows.json -Raw | ConvertFrom-Json
+              foreach ($suite in $results.testResults) {
+                foreach ($test in $suite.assertionResults) {
+                  if ($test.status -eq 'failed') {
+                    $detail = ($test.fullName + "`n" + ($test.failureMessages -join "`n")) -replace '\x1B\[[0-9;]*[A-Za-z]', ''
+                    $detail = $detail.Replace('%', '%25').Replace("`r", '%0D').Replace("`n", '%0A')
+                    Write-Output "::error title=Failed Windows assertion::$detail"
+                  }
+                }
+              }
+            }
             $tail = (Get-Content unit-windows.log -Tail 120) -join "`n"
             $annotation = $tail.Replace('%', '%25').Replace("`r", '%0D').Replace("`n", '%0A')
             Write-Output "::error title=Windows unit validation::$annotation"
@@ -135,6 +147,7 @@ jobs:
             build-windows.log
             native-windows.log
             unit-windows.log
+            unit-windows.json
             playwright-report
             test-results
 
