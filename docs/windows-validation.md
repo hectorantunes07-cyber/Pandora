@@ -238,3 +238,14 @@ Follow [the detailed Fortnite validation sequence](FORTNITE-SETTINGS.md). Use an
 - Cancel a review, then open Installed apps. Check the Windows Settings shortcut and app-name guidance. If you choose to uninstall a disposable optional app, back up its data first, use Windows' own confirmation, return and refresh. PANDORA rollback cannot restore that app or its data. Do not test against personal recordings/projects/tasks.
 - Open Details for a normal process and compare its PID, start time and image path with native tools. Company/version are file metadata only. Protected/ended processes must report unavailable details without requesting elevation.
 - Open file location only after reviewing it. Test a process exiting after review and a moved/deleted executable: the folder request must fail safely. Paths stay in this local view and must not appear in exported reports or activity. No process may be terminated or launched by these controls.
+
+## Separate battery power policies
+
+- [ ] On a laptop, compare each supported AC/DC stored value with `powercfg /qh` for the shown plan. Review and cancel a battery change; confirm no value changed.
+- [ ] Apply one supported battery value, relaunch and restore its exact original. Confirm all plugged-in values and active-plan selection are unchanged. Test standard-user permission failures without elevating the entire app.
+- [ ] On a desktop without a battery, battery policies are read-only. A saved DC original must remain individually and jointly restorable even when a battery is no longer detected.
+- [ ] Apply separate AC/DC values and review Restore All. Confirm both originals are listed separately, conflicting external changes are preserved, and CPU bounds restore in a valid order.
+- [ ] Export the managed report and inspect separate `powerTuning` and `batteryPowerTuning` sections (11 sections total). Original backups must remain usable.
+- [ ] Test actual behavior on AC and battery with controlled workloads. Observe runtime, heat and fan noise; stored settings and hosted runner tests do not establish improved performance or safe behavior on every laptop.
+
+Hosted Windows DC tests use a disposable plan and a fixture-only positive battery reading to exercise read/write/restore on runners without a physical battery. They also verify the real native apply path refuses an absent/unknown battery. Never enable mutation-fixture environment flags on your PC.

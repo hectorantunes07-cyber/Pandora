@@ -9,6 +9,7 @@ import { createProcessDetailsService } from './process-details';
 import { createOptionalAppsService } from './optional-apps';
 import { createStartupService } from './startup';
 import { createPowerTuningService } from './power-tuning';
+import { powerSource } from '../shared/power-tuning';
 import { createGpuTelemetryService } from './gpu-telemetry';
 import { createStorageReliabilityService } from './storage-reliability';
 import { createSystemRestoreService } from './system-restore';
@@ -142,10 +143,12 @@ function registerServices() {
     return result.canceled || !result.filePaths[0] ? null : cursor.select(result.filePaths[0]);
   });
   const powerTuning = createPowerTuningService(app.getPath('userData'));
-  handle('power-tuning', () => powerTuning.getInfo());
-  handle('power-tuning-preview', (id: unknown, value: unknown, restore: unknown) => powerTuning.preview(id, value, restore));
-  handle('power-tuning-change', (token: unknown) => powerTuning.change(token));
-  const recovery = createRestoreService({ tweaks, power, startup, pointer, visual, cursor, powerTuning, fortnite });
+  const batteryPowerTuning = createPowerTuningService(app.getPath('userData'), undefined, 'dc');
+  const powerPolicy = (source: unknown) => powerSource(source) === 'dc' ? batteryPowerTuning : powerTuning;
+  handle('power-tuning', (source: unknown) => powerPolicy(source).getInfo());
+  handle('power-tuning-preview', (id: unknown, value: unknown, restore: unknown, source: unknown) => powerPolicy(source).preview(id, value, restore));
+  handle('power-tuning-change', (token: unknown, source: unknown) => powerPolicy(source).change(token));
+  const recovery = createRestoreService({ tweaks, power, startup, pointer, visual, cursor, powerTuning, batteryPowerTuning, fortnite });
   handle('restore-preview', () => recovery.preview());
   handle('restore-all', (token: unknown) => recovery.restore(token));
   handle('power', () => power.getInfo());
@@ -205,7 +208,7 @@ function registerServices() {
     if (result.canceled || !result.filePath) return null;
     // Fixed schema intentionally excludes usernames, network addresses, serials, paths and hardware IDs.
     const info = kind === 'system' ? await getSystem() : null;
-    const report = info ? { product: 'PANDORA', version: app.getVersion(), createdBy: 'Sonnier', gpuReadings: await gpuTelemetry.get(), storageReadings: await storageReliability.get(), timestamp: info.timestamp, platform: info.platform, cpu: info.cpu, logicalCores: info.logicalCores, physicalCores: info.physicalCores, cpuReportedMHz: info.cpuReportedMHz, architecture: info.architecture, gpu: info.gpu, gpuDriver: info.gpuDriver, ramBytes: info.ramBytes, installedRamBytes: info.installedRamBytes, deviceType: info.deviceType, physicalDisks: info.physicalDisks, networkAdapters: info.networkAdapters, ramSpeedMHz: info.ramSpeedMHz, os: info.os, motherboard: info.motherboard, volumes: info.volumes.map(v => ({ totalBytes: v.totalBytes, freeBytes: v.freeBytes })), monitors: info.monitors.map(m => ({ width: m.width, height: m.height, refreshHz: m.refreshHz })) } : await collectHistoryReport({ fortnite: () => fortnite.getInfo(), activity: () => activity.get(), history: () => tweaks.getHistory(), preferences: () => tweaks.getTweaks(), profile: () => tweaks.getProfile(), power: () => power.getInfo(), powerTuning: () => powerTuning.getInfo(), startup: () => startup.getControls(), pointer: () => pointer.getInfo(), visual: () => visual.getStates(), cursor: () => cursor.getInfo() }, app.getVersion());
+    const report = info ? { product: 'PANDORA', version: app.getVersion(), createdBy: 'Sonnier', gpuReadings: await gpuTelemetry.get(), storageReadings: await storageReliability.get(), timestamp: info.timestamp, platform: info.platform, cpu: info.cpu, logicalCores: info.logicalCores, physicalCores: info.physicalCores, cpuReportedMHz: info.cpuReportedMHz, architecture: info.architecture, gpu: info.gpu, gpuDriver: info.gpuDriver, ramBytes: info.ramBytes, installedRamBytes: info.installedRamBytes, deviceType: info.deviceType, physicalDisks: info.physicalDisks, networkAdapters: info.networkAdapters, ramSpeedMHz: info.ramSpeedMHz, os: info.os, motherboard: info.motherboard, volumes: info.volumes.map(v => ({ totalBytes: v.totalBytes, freeBytes: v.freeBytes })), monitors: info.monitors.map(m => ({ width: m.width, height: m.height, refreshHz: m.refreshHz })) } : await collectHistoryReport({ fortnite: () => fortnite.getInfo(), activity: () => activity.get(), history: () => tweaks.getHistory(), preferences: () => tweaks.getTweaks(), profile: () => tweaks.getProfile(), power: () => power.getInfo(), powerTuning: () => powerTuning.getInfo(), batteryPowerTuning: () => batteryPowerTuning.getInfo(), startup: () => startup.getControls(), pointer: () => pointer.getInfo(), visual: () => visual.getStates(), cursor: () => cursor.getInfo() }, app.getVersion());
     await fs.writeFile(result.filePath, JSON.stringify(report, null, 2), { mode: 0o600 });
     return path.basename(result.filePath);
   });

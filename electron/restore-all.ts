@@ -11,14 +11,14 @@ import type { createPowerService } from './power';
 import type { createStartupService } from './startup';
 import type { createPointerService } from './pointer';
 import type { OperationResult, RestoreReview } from '../shared/types';
-type Services = { fortnite: ReturnType<typeof createFortniteService>; powerTuning: ReturnType<typeof createPowerTuningService>; cursor: ReturnType<typeof createCursorService>; visual: ReturnType<typeof createVisualEffectsService>; tweaks: ReturnType<typeof createTweakService>; power: ReturnType<typeof createPowerService>; startup: ReturnType<typeof createStartupService>; pointer: ReturnType<typeof createPointerService> };
-export function createRestoreService({ tweaks, power, startup, pointer, visual, cursor, powerTuning, fortnite }: Services) {
+type Services = { batteryPowerTuning: ReturnType<typeof createPowerTuningService>; fortnite: ReturnType<typeof createFortniteService>; powerTuning: ReturnType<typeof createPowerTuningService>; cursor: ReturnType<typeof createCursorService>; visual: ReturnType<typeof createVisualEffectsService>; tweaks: ReturnType<typeof createTweakService>; power: ReturnType<typeof createPowerService>; startup: ReturnType<typeof createStartupService>; pointer: ReturnType<typeof createPointerService> };
+export function createRestoreService({ tweaks, power, startup, pointer, visual, cursor, powerTuning, batteryPowerTuning, fortnite }: Services) {
   let approved: { token: string; fingerprint: string; expires: number } | null = null;
   async function plan() {
     // Reject unreadable journals instead of silently omitting one class of backup.
     const [history, states, profile, energy, launchers, mouse, effects] = await Promise.all([tweaks.getHistory(), tweaks.getTweaks(), tweaks.getProfile(), power.getInfo(), startup.getControls(), pointer.getInfo(), visual.getStates()]);
     const customCursor = await cursor.getInfo();
-    const tuned = await powerTuning.getInfo();
+    const policies = await Promise.all([powerTuning.getInfo(), batteryPowerTuning.getInfo()]);
     const game = await fortnite.getInfo();
     const tasks: { item: RestoreReview['items'][number]; run: () => Promise<OperationResult> }[] = [];
     if (game.managed) {
@@ -46,11 +46,15 @@ export function createRestoreService({ tweaks, power, startup, pointer, visual, 
     if (customCursor?.managed && cursor) {
       tasks.push({ item: { id: 'cursor', category: 'Normal pointer', title: 'Custom Windows cursor', original: customCursor.original?.value || 'Windows scheme default', current: customCursor.current ? customCursor.current.value || 'Windows scheme default' : 'Unavailable', eligible: Boolean(customCursor.token) && !customCursor.conflict, reason: customCursor.conflict ? 'External cursor change preserved; restore skipped.' : !customCursor.current ? 'Cursor provider unavailable; original retained.' : 'Restore the exact original normal pointer. Other roles are preserved.' }, run: () => cursor.change(customCursor.token, true) });
     }
+    for (const tuned of policies) {
+    const service = tuned.source === 'dc' ? batteryPowerTuning : powerTuning;
+    const label = tuned.source === 'dc' ? 'Battery' : 'Plugged-in';
     // Relax CPU bounds before tightening them so combined restore respects min <= max.
     const priority = (s: typeof tuned.states[number]) => (s.id === 'cpu-minimum' && s.original! < s.current! || s.id === 'cpu-maximum' && s.original! > s.current!) ? 0 : 1;
     for (const state of tuned.states.filter(s => s.managed).sort((a, b) => priority(a) - priority(b))) {
-      const id = `power-tuning:${state.id}`;
-      tasks.push({ item: { id, category: 'Plugged-in power policy', title: POWER_CONTROLS.find(c => c.id === state.id)!.title + ` (${tuned.planId})`, original: powerValueLabel(state.id, state.original), current: powerValueLabel(state.id, state.current), eligible: state.current !== null && !state.conflict && Boolean(tuned.activePlanId), reason: state.conflict ? 'External power-policy value preserved.' : state.current === null ? 'Power-policy provider unavailable; backup retained.' : 'Restore the exact original AC value on the saved plan; preserve battery settings and current plan selection.' }, run: async () => { const review = await powerTuning.preview(state.id, null, true); return powerTuning.change(review.token); } });
+      const id = `${tuned.source === 'dc' ? 'battery-power' : 'power-tuning'}:${state.id}`;
+      tasks.push({ item: { id, category: `${label} power policy`, title: POWER_CONTROLS.find(c => c.id === state.id)!.title + ` (${tuned.planId})`, original: powerValueLabel(state.id, state.original), current: powerValueLabel(state.id, state.current), eligible: state.current !== null && !state.conflict && Boolean(tuned.activePlanId), reason: state.conflict ? 'External power-policy value preserved.' : state.current === null ? 'Power-policy provider unavailable; backup retained.' : `Restore the exact original ${tuned.source.toUpperCase()} value on the saved plan; preserve the other power source and current plan selection.` }, run: async () => { const review = await service.preview(state.id, null, true); return service.change(review.token); } });
+    }
     }
     if (profile.selection) {
       tasks.push({ item: { id: 'profile', category: 'Profile selection', title: 'Saved preset selection', original: 'No preset selected', current: profile.selection.id, eligible: true, reason: 'Clear the active preset only after all profile-owned preferences have been restored. Saved custom choices are retained.' }, run: async () => {

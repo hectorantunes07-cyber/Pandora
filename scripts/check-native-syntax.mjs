@@ -25,7 +25,10 @@ try {
 $ErrorActionPreference = 'Stop'
 $scripts = Get-Content -Raw -LiteralPath $InputFile | ConvertFrom-Json
 Add-Type -TypeDefinition (Get-Content -Raw -LiteralPath (Join-Path (Split-Path $InputFile) 'power-tuning.cs'))
-Write-Output 'Advanced power API compiled; no power setting was changed.'
+$powerStatusType = [PandoraPowerTuning].GetNestedType('SystemPowerStatus', [System.Reflection.BindingFlags]::NonPublic)
+$powerSizeMethod = [System.Runtime.InteropServices.Marshal].GetMethod('SizeOf', [type[]]@([type]))
+if ($powerSizeMethod.Invoke($null, [object[]]@($powerStatusType)) -ne 12) { throw 'Incorrect SYSTEM_POWER_STATUS layout.' }
+Write-Output 'AC/DC power APIs and battery status layout compiled; no power setting was changed.'
 Add-Type -TypeDefinition (Get-Content -Raw -LiteralPath (Join-Path (Split-Path $InputFile) 'cursor.cs'))
 Write-Output 'Cursor API and registry declarations compiled; no native cursor API was invoked.'
 Add-Type -TypeDefinition (Get-Content -Raw -LiteralPath (Join-Path (Split-Path $InputFile) 'pointer.cs'))

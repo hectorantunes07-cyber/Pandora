@@ -82,6 +82,13 @@ try {
   assert.ok(Number.isFinite(Date.parse(storageReadings.timestamp)));
   if (process.platform !== 'win32') assert.equal(storageReadings.devices.length, 0);
   const powerTuning = await page.evaluate(() => window.pandora.getPowerTuning());
+  assert.equal(powerTuning.source, 'ac');
+  const batteryPolicy = await page.evaluate(() => window.pandora.getPowerTuning('dc'));
+  assert.equal(batteryPolicy.source, 'dc');
+  assert.equal(batteryPolicy.states.length, 6);
+  assert.ok(batteryPolicy.states.every(state => !state.managed));
+  assert.equal(batteryPolicy.supported, process.platform === 'win32');
+  if (batteryPolicy.batteryPresent !== true) assert.equal(batteryPolicy.canApply, false);
   assert.equal(powerTuning.states.length, 6);
   assert.ok(powerTuning.states.every(state => !state.managed));
   assert.equal(powerTuning.supported, process.platform === 'win32');
@@ -124,7 +131,7 @@ try {
   assert.equal(await page.evaluate(() => window.pandora.exportReport('history')), 'managed-report.json');
   const report = JSON.parse(await readFile(reportFile, 'utf8'));
   assert.equal(report.schemaVersion, 2); assert.equal(report.product, 'PANDORA');
-  assert.equal(Object.keys(report.sections).length, 10);
+  assert.equal(Object.keys(report.sections).length, 11);
   assert.equal(report.activity.status, 'available');
   assert.equal(report.activity.data.entries.find(e => e.action === 'save-settings').status, 'completed');
   assert.equal(report.sections.history.status, 'available');

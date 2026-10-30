@@ -24,6 +24,7 @@ describe('reviewed restoration across all managed features', () => {
   function services() {
     return {
       fortnite: createFortniteService(dir, createFortniteFileAdapter(dir, async () => false, false)),
+      batteryPowerTuning: createPowerTuningService(dir, { supported: false, read: async () => { throw new Error('unavailable'); }, write: async () => {} }, 'dc'),
       powerTuning: createPowerTuningService(dir, { supported: false, read: async () => { throw new Error('unavailable'); }, write: async () => {} }),
       cursor: createCursorService(dir, path.resolve('public/cursors/sonnier.cur'), { supported: false, read: async () => { throw new Error('Unavailable'); }, write: async () => {}, preview: async () => null }),
       visual: createVisualEffectsService(dir, { supported: false, read: async () => { throw new Error('unavailable'); }, write: async () => {} }),
@@ -66,7 +67,7 @@ describe('reviewed restoration across all managed features', () => {
   it('exports saved cross-feature originals after relaunch without changing Windows or deleting backups', async () => {
     await populate(services());
     const s = services();
-    const report = await collectHistoryReport({ fortnite: () => s.fortnite.getInfo(), activity: () => createActivityService(dir).get(), history: () => s.tweaks.getHistory(), preferences: () => s.tweaks.getTweaks(), profile: () => s.tweaks.getProfile(), power: () => s.power.getInfo(), powerTuning: () => s.powerTuning.getInfo(), startup: () => s.startup.getControls(), pointer: () => s.pointer.getInfo(), visual: () => s.visual.getStates(), cursor: () => s.cursor.getInfo() }, 'test');
+    const report = await collectHistoryReport({ fortnite: () => s.fortnite.getInfo(), activity: () => createActivityService(dir).get(), history: () => s.tweaks.getHistory(), preferences: () => s.tweaks.getTweaks(), profile: () => s.tweaks.getProfile(), power: () => s.power.getInfo(), powerTuning: () => s.powerTuning.getInfo(), batteryPowerTuning: () => s.batteryPowerTuning.getInfo(), startup: () => s.startup.getControls(), pointer: () => s.pointer.getInfo(), visual: () => s.visual.getStates(), cursor: () => s.cursor.getInfo() }, 'test');
     expect(report.collectionComplete).toBe(true);
     expect(report.sections.power).toMatchObject({ data: { currentPlanId: B, backup: { originalPlanId: A, appliedPlanId: B, status: 'applied' } } });
     expect(report.sections.startup).toMatchObject({ data: expect.arrayContaining([{ id: 'discord', name: 'Discord', managed: true, state: 'disabled', currentEntryPresent: false, savedOriginalPresent: true }]) });
@@ -176,6 +177,22 @@ describe('reviewed restoration across all managed features', () => {
     const recovery = createRestoreService(s), review = await recovery.preview();
     expect((await recovery.restore(review.token)).every(r => r.success)).toBe(true);
     expect(policy).toEqual({ 'cpu-minimum': originalMin, 'cpu-maximum': originalMax });
+  });
+
+  it('restores separate AC and DC originals together even when the battery disappears', async () => {
+    const s = services(), values = { ac: 50, dc: 75 }; let battery = true;
+    for (const source of ['ac', 'dc'] as const) {
+      const policy = createPowerTuningService(dir, { supported: true, read: async () => ({ planId: A, activePlanId: A, batteryPresent: battery, values: { 'cpu-energy': values[source] } }), write: async (_plan, _active, _id, expected, desired) => { expect(values[source]).toBe(expected); values[source] = desired; } }, source);
+      if (source === 'ac') s.powerTuning = policy; else s.batteryPowerTuning = policy;
+      expect((await policy.change((await policy.preview('cpu-energy', 0, false)).token)).success).toBe(true);
+    }
+    battery = false;
+    const recovery = createRestoreService(s), review = await recovery.preview();
+    expect(review.items.map(i => [i.id, i.eligible])).toEqual([['power-tuning:cpu-energy', true], ['battery-power:cpu-energy', true]]);
+    expect((await recovery.restore(review.token)).every(r => r.success)).toBe(true);
+    expect(values).toEqual({ ac: 50, dc: 75 });
+    await fs.writeFile(path.join(dir, 'backups/battery-power-v1.json'), '{bad');
+    await expect(recovery.preview()).rejects.toThrow('preserved');
   });
 
 });

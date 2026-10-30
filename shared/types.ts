@@ -58,9 +58,9 @@ export interface AppApi {
   createSystemRestore(token: string): Promise<OperationResult>;
   openSystemProtection(): Promise<void>;
   getGpuTelemetry(): Promise<import('./gpu-telemetry').GpuTelemetry>;
-  getPowerTuning(): Promise<import('./power-tuning').PowerTuningInfo>;
-  previewPowerTuning(id: string, value: number | null, restore: boolean): Promise<import('./power-tuning').PowerTuningReview>;
-  changePowerTuning(token: string): Promise<OperationResult>;
+  getPowerTuning(source?: import('./power-tuning').PowerSource): Promise<import('./power-tuning').PowerTuningInfo>;
+  previewPowerTuning(id: string, value: number | null, restore: boolean, source?: import('./power-tuning').PowerSource): Promise<import('./power-tuning').PowerTuningReview>;
+  changePowerTuning(token: string, source?: import('./power-tuning').PowerSource): Promise<OperationResult>;
   getCursor(): Promise<CursorInfo>;
   selectCursor(bundled: boolean): Promise<CursorInfo | null>;
   changeCursor(token: string, restore: boolean): Promise<OperationResult>;

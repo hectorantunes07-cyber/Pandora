@@ -18,6 +18,7 @@ export interface HistoryReportSources {
   profile(): Promise<ProfileStatus>;
   power(): Promise<PowerInfo>;
   powerTuning(): Promise<PowerTuningInfo>;
+  batteryPowerTuning(): Promise<PowerTuningInfo>;
   startup(): Promise<StartupControl[]>;
   pointer(): Promise<PointerInfo>;
   visual(): Promise<VisualEffectState[]>;
@@ -37,10 +38,16 @@ const preferenceId = (id: string) => { if (!TWEAKS_BY_ID.has(id)) throw new Erro
 const catalogEntry = <T extends { id: string }>(catalog: readonly T[], id: string) => {
   const value = catalog.find(item => item.id === id); if (!value) throw new Error('Unknown setting.'); return value;
 };
+const powerSection = (read: () => Promise<PowerTuningInfo>) => section(async () => { const value = await read(); return {
+      source: value.source, batteryPresent: value.batteryPresent, canApply: value.canApply, supported: value.supported, savedPlanId: guid(value.planId), activePlanId: guid(value.activePlanId), states: value.states.map(s => ({
+        id: catalogEntry(POWER_CONTROLS, s.id).id, title: catalogEntry(POWER_CONTROLS, s.id).title,
+        current: s.current, original: s.original, applied: s.applied, managed: s.managed, conflict: s.conflict,
+      })),
+    }; });
 /** Explicit fields only: never serialize a service result, command, path, token or raw error. */
 export async function collectHistoryReport(sources: HistoryReportSources, version: string, now = () => new Date()) {
   const startedAt = now().toISOString();
-  const [history, preferences, profile, power, powerTuning, startup, pointer, visual, cursor] = await Promise.all([
+  const [history, preferences, profile, power, powerTuning, batteryPowerTuning, startup, pointer, visual, cursor] = await Promise.all([
     section(async () => (await sources.history()).map(record => ({
       tweakId: preferenceId(record.tweakId), title: TWEAKS_BY_ID.get(record.tweakId)!.title,
       timestamp: timestamp(record.timestamp), status: record.status, originalValue: record.originalValue, appliedValue: record.appliedValue,
@@ -54,12 +61,8 @@ export async function collectHistoryReport(sources: HistoryReportSources, versio
       supported: value.supported, currentPlanId: guid(value.currentId), conflict: value.conflict,
       backup: value.backup ? { originalPlanId: guid(value.backup.originalId), appliedPlanId: guid(value.backup.appliedId), status: value.backup.status, intent: value.backup.intent, timestamp: timestamp(value.backup.timestamp) } : null,
     }; }),
-    section(async () => { const value = await sources.powerTuning(); return {
-      supported: value.supported, savedPlanId: guid(value.planId), activePlanId: guid(value.activePlanId), states: value.states.map(s => ({
-        id: catalogEntry(POWER_CONTROLS, s.id).id, title: catalogEntry(POWER_CONTROLS, s.id).title,
-        current: s.current, original: s.original, applied: s.applied, managed: s.managed, conflict: s.conflict,
-      })),
-    }; }),
+    powerSection(sources.powerTuning),
+    powerSection(sources.batteryPowerTuning),
     section(async () => (await sources.startup()).map(value => ({
       id: catalogEntry(STARTUP_APPS, value.id).id, name: catalogEntry(STARTUP_APPS, value.id).name,
       managed: value.managed, state: value.status, currentEntryPresent: value.status === 'unavailable' ? null : value.current !== null, savedOriginalPresent: value.original !== null,
@@ -89,7 +92,7 @@ export async function collectHistoryReport(sources: HistoryReportSources, versio
     if (value.managedFields.some(key => !FORTNITE_FIELDS.includes(key))) throw new Error('Unknown managed game setting.');
     return { supported: value.supported, managed: value.managed, managedFields: [...value.managedFields], conflict: value.conflict, running: value.running, current: values(value.current), original: values(value.original), canChange: value.canChange };
   });
-  const sections = { history, preferences, profile, power, powerTuning, startup, pointer, visual, cursor, fortnite };
+  const sections = { history, preferences, profile, power, powerTuning, batteryPowerTuning, startup, pointer, visual, cursor, fortnite };
   const activity = await section(async () => {
     const value = await sources.activity();
     if (!value.available) throw new Error('Activity unavailable.');

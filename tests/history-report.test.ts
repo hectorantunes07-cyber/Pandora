@@ -10,7 +10,8 @@ function fixture(): HistoryReportSources {
     preferences: async () => [],
     profile: async () => ({ selection: { id: 'custom', ids: ['game-mode'] }, ownedIds: ['game-mode'], customIds: ['game-mode'], complete: true }),
     power: async () => ({ supported: true, currentId: plan, plans: [{ id: plan, name: privateText }], backup: { version: 1, originalId: plan, appliedId: plan, status: 'applied', intent: 'apply', timestamp: '2026-10-01T00:00:00Z' }, conflict: false, reason: privateText }),
-    powerTuning: async () => ({ supported: true, planId: plan, activePlanId: plan, states: [{ id: 'cpu-minimum', managed: true, original: 5, applied: 0, current: 25, conflict: true }], reason: privateText }),
+    powerTuning: async () => ({ source: 'ac', batteryPresent: false, canApply: true, supported: true, planId: plan, activePlanId: plan, states: [{ id: 'cpu-minimum', managed: true, original: 5, applied: 0, current: 25, conflict: true }], reason: privateText }),
+    batteryPowerTuning: async () => ({ source: 'dc', batteryPresent: false, canApply: false, supported: true, planId: plan, activePlanId: plan, states: [], reason: privateText }),
     startup: async () => [{ id: 'discord', name: privateText, current: null, original: privateText, managed: true, status: 'disabled', token: privateText, reason: privateText }],
     pointer: async () => ({ supported: true, managed: true, conflict: false, current: [6, 10, 0], original: [6, 10, 1], token: privateText, reason: privateText }),
     visual: async () => [{ id: 'menu-animation', managed: true, current: false, original: true, token: privateText, reason: privateText }],
@@ -31,7 +32,8 @@ describe('managed settings report', () => {
   it('includes all supported snapshot sections and preserves null originals, zero values and conflicts', async () => {
     const sources = fixture(); const r = await collectHistoryReport(sources, '0.1.0');
     expect(r.schemaVersion).toBe(2); expect(r.collectionComplete).toBe(true);
-    expect(Object.keys(r.sections)).toHaveLength(10);
+    expect(Object.keys(r.sections)).toHaveLength(11);
+    expect(r.sections.batteryPowerTuning).toMatchObject({ status: 'available', data: { source: 'dc', batteryPresent: false, canApply: false } });
     expect(r.sections.history).toMatchObject({ data: [{ originalValue: null, appliedValue: 1 }] });
     expect(r.sections.powerTuning).toMatchObject({ data: { states: [{ original: 5, applied: 0, current: 25, conflict: true }] } });
     expect(r.sections.pointer).toMatchObject({ data: { original: [6, 10, 1], current: [6, 10, 0] } });

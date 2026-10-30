@@ -1,7 +1,9 @@
+export type PowerSource = 'ac' | 'dc';
+export function powerSource(value: unknown): PowerSource { if (value === undefined || value === 'ac') return 'ac'; if (value === 'dc') return 'dc'; throw new Error('Choose plugged-in or battery power settings.'); }
 export interface PowerControl { id: string; title: string; description: string; tradeoff: string; subgroup: string; setting: string; maximum: number; options: { value: number; label: string }[]; }
 const processor = '54533251-82be-4824-96c1-47b60b740d00';
 const percent = (values: number[]) => values.map(value => ({ value, label: `${value}%` }));
-/** GUIDs and policy values from Microsoft Windows SDK winnt.h. AC values only. */
+/** GUIDs and policy values from Microsoft Windows SDK winnt.h. AC and DC policies are read and backed up separately. */
 export const POWER_CONTROLS: readonly PowerControl[] = [
   { id: 'cpu-minimum', title: 'Minimum processor state', subgroup: processor, setting: '893dee8e-2bef-41e0-89c6-b55d0929964c', maximum: 100, options: percent([0, 5, 10, 25, 50, 100]), description: 'Set the lower processor performance-state preference while plugged in.', tradeoff: 'A high minimum can increase idle power, heat and fan noise without improving games. This is a policy percentage, not a fixed clock speed; hardware may interpret it differently.' },
   { id: 'cpu-maximum', title: 'Maximum processor state', subgroup: processor, setting: 'bc5038f7-23e0-4960-96da-33abaf5935ec', maximum: 100, options: percent([50, 75, 99, 100]), description: 'Control the upper processor performance-state preference while plugged in.', tradeoff: 'Lower limits can reduce heat and performance. 100% permits normal maximum performance; 99% is not a reliable universal boost-disable method. Hardware thermal protections remain active.' },
@@ -12,5 +14,5 @@ export const POWER_CONTROLS: readonly PowerControl[] = [
 ];
 export const powerValueLabel = (id: string, value: number | null) => value === null ? 'Unavailable' : POWER_CONTROLS.find(c => c.id === id)?.options.find(o => o.value === value)?.label ?? `Current value: ${value}`;
 export interface PowerControlState { id: string; current: number | null; original: number | null; applied: number | null; managed: boolean; conflict: boolean; }
-export interface PowerTuningInfo { supported: boolean; planId: string | null; activePlanId: string | null; states: PowerControlState[]; reason?: string; }
-export interface PowerTuningReview { token: string; id: string; planId: string; activePlanId: string; current: number; desired: number; restore: boolean; }
+export interface PowerTuningInfo { source: PowerSource; batteryPresent: boolean | null; canApply: boolean; supported: boolean; planId: string | null; activePlanId: string | null; states: PowerControlState[]; reason?: string; }
+export interface PowerTuningReview { source: PowerSource; token: string; id: string; planId: string; activePlanId: string; current: number; desired: number; restore: boolean; }

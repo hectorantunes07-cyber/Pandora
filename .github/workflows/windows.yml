@@ -118,6 +118,7 @@ jobs:
             runner = $env:RUNNER_OS
             runUrl = "$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
             nativeCleanerFixtures = 'passed'
+            nativeBatteryPowerFixtures = 'passed (disposable plan; absent-battery apply refusal; separate AC/DC restore)'
             disposableRegistryApplyRestore = 'passed'
             physicalHardwareTesting = 'still required'
           }

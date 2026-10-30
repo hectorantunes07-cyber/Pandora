@@ -28,9 +28,9 @@ async function desktopFixture(page: Page) {
       changeAppLogin: async (token, enable) => { track('app-login-change', token, enable); return { id: 'pandora-login', success: true, message: 'Startup registration verified.' }; },
       getStorageReliability: async () => { track('storage-reliability'); return { timestamp: new Date().toISOString(), provider: 'Windows Storage', status: 'unavailable', cached: false, truncated: false, devices: [], reason: 'No storage fixture configured.' }; },
       getGpuTelemetry: async () => { track('gpu-telemetry'); return { timestamp: new Date().toISOString(), provider: 'NVIDIA SMI', status: 'unavailable', cached: false, devices: [], reason: 'No GPU sensor fixture configured.' }; },
-      getPowerTuning: async () => ({ supported: true, planId: '381b4222-f694-41f0-9685-ff5bb260df2e', activePlanId: '381b4222-f694-41f0-9685-ff5bb260df2e', states: [{ id: 'cpu-maximum', current: 100, original: null, applied: null, managed: false, conflict: false }] }),
-      previewPowerTuning: async (id, value, restore) => { track('power-tuning-preview', id, value, restore); return { token: 'power-tuning-review', id, planId: '381b4222-f694-41f0-9685-ff5bb260df2e', activePlanId: '381b4222-f694-41f0-9685-ff5bb260df2e', current: 100, desired: value ?? 100, restore }; },
-      changePowerTuning: async token => { track('power-tuning-change', token); return { id: 'power-tuning:cpu-maximum', success: true, message: 'Power value verified.' }; },
+      getPowerTuning: async (source = 'ac') => ({ source, batteryPresent: false, canApply: source === 'ac', supported: true, planId: '381b4222-f694-41f0-9685-ff5bb260df2e', activePlanId: '381b4222-f694-41f0-9685-ff5bb260df2e', states: [{ id: 'cpu-maximum', current: 100, original: null, applied: null, managed: false, conflict: false }] }),
+      previewPowerTuning: async (id, value, restore, source = 'ac') => { track('power-tuning-preview', id, value, restore, source); return { source, token: 'power-tuning-review', id, planId: '381b4222-f694-41f0-9685-ff5bb260df2e', activePlanId: '381b4222-f694-41f0-9685-ff5bb260df2e', current: 100, desired: value ?? 100, restore }; },
+      changePowerTuning: async (token, source) => { track('power-tuning-change', token, source); return { id: 'power-tuning:cpu-maximum', success: true, message: 'Power value verified.' }; },
       getCursor: async () => cursorInfo(), selectCursor: async bundled => { track('cursor-select', bundled); return bundled ? cursorInfo() : null; },
       changeCursor: async (token, restore) => { track('cursor-change', token, restore); cursorManaged = !restore; return { id: 'cursor', success: true, message: 'Normal pointer verified.' }; },
       setAppCursor: async enabled => { track('cursor-app', enabled); appCursor = enabled; return cursorInfo(); },
@@ -705,7 +705,7 @@ test('advanced power controls review exact values and cancel without changing th
   await card.getByRole('button', { name: 'Review power change' }).click();
   await page.getByRole('button', { name: 'Confirm power setting', exact: true }).click();
   await expect(page.locator('.power-tuning')).toContainText('Power value verified.');
-  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'power-tuning-change').map((c: any) => c.args))).toEqual([['power-tuning-review']]);
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'power-tuning-change').map((c: any) => c.args))).toEqual([['power-tuning-review', 'ac']]);
 });
 
 test('GPU telemetry shows separate real-provider fields, preserves unavailable values and clears stale readings on failure', async ({ page }) => {
@@ -1083,4 +1083,58 @@ test('process details show metadata and only open a reviewed location on request
   await page.getByRole('button', { name: 'Inspect fixture.exe (123)' }).click();
   await expect(page.getByRole('dialog')).toContainText('This process exited.');
   await expect(page.getByRole('button', { name: 'Open file location' })).toBeDisabled();
+});
+
+test('battery policies stay read only when Windows cannot confirm a battery', async ({ page }) => {
+  await desktopFixture(page); await page.goto('/');
+  await page.getByRole('button', { name: 'Optimizations', exact: true }).click();
+  await page.getByRole('button', { name: 'On battery', exact: true }).click();
+  const panel = page.getByRole('region', { name: 'Battery power controls', exact: true });
+  await expect(panel.getByLabel('Maximum processor state')).toBeDisabled();
+  await expect(panel.getByRole('button', { name: 'Review power change' })).toHaveCount(6);
+  for (const button of await panel.getByRole('button', { name: 'Review power change' }).all()) await expect(button).toBeDisabled();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'power-tuning-preview'))).toHaveLength(0);
+  await page.getByRole('button', { name: 'Plugged in', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Advanced power controls', exact: true }).getByLabel('Maximum processor state')).toBeEnabled();
+});
+
+test('battery review identifies DC scope and sends only the confirmed source', async ({ page }) => {
+  await desktopFixture(page);
+  await page.addInitScript(() => {
+    const get = window.pandora!.getPowerTuning;
+    window.pandora!.getPowerTuning = async source => ({ ...await get(source), batteryPresent: true, canApply: true });
+  });
+  await page.goto('/'); await page.getByRole('button', { name: 'Optimizations', exact: true }).click();
+  await page.getByRole('button', { name: 'On battery', exact: true }).click();
+  const panel = page.getByRole('region', { name: 'Battery power controls', exact: true });
+  const card = panel.locator('.tweak-card').filter({ has: page.getByRole('heading', { name: 'Maximum processor state', exact: true }) });
+  await card.getByLabel('Maximum processor state').selectOption('75');
+  await card.getByRole('button', { name: 'Review power change' }).click();
+  await expect(page.getByRole('dialog')).toContainText('one battery power-plan value');
+  await expect(page.getByRole('dialog')).toContainText('Plugged-in settings are unchanged');
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'power-tuning-change'))).toHaveLength(0);
+  await card.getByRole('button', { name: 'Review power change' }).click();
+  await page.getByRole('button', { name: 'Confirm power setting', exact: true }).click();
+  await expect(panel).toContainText('Power value verified.');
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'power-tuning-preview').map((c: any) => c.args))).toEqual([['cpu-maximum', 75, false, 'dc'], ['cpu-maximum', 75, false, 'dc']]);
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'power-tuning-change').map((c: any) => c.args))).toEqual([['power-tuning-review', 'dc']]);
+});
+
+test('history exposes both power sources and allows battery restoration without a detected battery', async ({ page }) => {
+  await desktopFixture(page);
+  await page.addInitScript(() => {
+    const get = window.pandora!.getPowerTuning;
+    window.pandora!.getPowerTuning = async source => {
+      const info = await get(source);
+      return { ...info, states: info.states.map(s => ({ ...s, managed: true, original: 100, applied: 75, current: 75 })) };
+    };
+  });
+  await page.goto('/'); await page.getByRole('button', { name: 'Restore & History', exact: true }).click();
+  const battery = page.getByRole('region', { name: 'Battery power controls', exact: true });
+  await expect(page.getByRole('region', { name: 'Advanced power controls', exact: true }).getByRole('button', { name: 'Review restore', exact: true })).toBeEnabled();
+  await battery.getByRole('button', { name: 'Review restore', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('one battery power-plan value');
+  await page.getByRole('button', { name: 'Confirm power setting', exact: true }).click();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'power-tuning-change').map((c: any) => c.args))).toEqual([['power-tuning-review', 'dc']]);
 });
