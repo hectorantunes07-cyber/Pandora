@@ -67,3 +67,8 @@ automatic driver updates, packet capture, automatic game benchmarking, and
 secure auto-update are absent. Game guidance must remain visibly distinct from
 automatic config modification. Native integration checks belong on disposable
 Windows machines and are tracked independently from adapter tests.
+
+
+## Game display configuration
+
+The Fortnite service uses a fixed current-user configuration path and recognizes only three existing scalar fields. A bounded parser retains encoding and unrelated bytes. Expiring review tokens bind the complete observed file and backup state. Process checks, ancestor/link guards, a durable original, atomic replacement and read-back bound each write. Restoration changes only owned values, preserves newer unrelated configuration, and refuses conflicting managed values. No renderer path or command is accepted. See [the game configuration contract](FORTNITE-SETTINGS.md) for limitations; actual game compatibility is a separate validation gate.

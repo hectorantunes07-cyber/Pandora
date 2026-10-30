@@ -224,3 +224,8 @@ References: [Get-StorageReliabilityCounter](https://learn.microsoft.com/powershe
 - Export a managed report and inspect retained activity for absence of commands, paths, filenames, raw errors and internal event IDs. Check the retention count and last-cleared time. Only activity recorded by this version is included.
 - On a disposable profile only, interrupt an operation after its pending record is saved. Relaunch: no recorded outcome means Not confirmed, never success. Inspect the actual setting before deciding what to do next.
 - On a disposable profile only, make the activity file unreadable. Verify the log is unavailable, its file remains untouched, and supported rollback is still governed by its own original backups. Logging failures must not change the underlying operation result. Real power-loss/disk-failure behavior still requires client testing.
+
+
+## Fortnite display configuration
+
+Follow [the detailed Fortnite validation sequence](FORTNITE-SETTINGS.md). Use an isolated copy first, then a backed-up real configuration. Verify all three existing values against the game menu; cancel before confirming. Check original restoration after PANDORA relaunch, unrelated newer game settings remaining intact, conflicting managed values refusing restoration, and no changes while Fortnite is running. Keep third-party editors and synchronization tools idle during confirmation. Check cloud sync and rendering-mode behavior separately. Hosted Windows filesystem/process tests do not certify actual game behavior or performance.

@@ -101,7 +101,8 @@ jobs:
             physicalHardwareTesting = 'still required'
           }
           $manifest | ConvertTo-Json -Depth 8 | Set-Content release/verification.json -Encoding utf8
-          Copy-Item docs/WINDOWS-QUICKSTART.md,docs/windows-validation.md,docs/WINDOWS-HANDOFF.md,FEATURES.md -Destination release/
+          node scripts/prepare-windows-handoff.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'Download instructions could not be prepared.' }
       - uses: actions/upload-artifact@v5
         with:
           name: PANDORA-Windows-x64-unsigned
@@ -114,6 +115,7 @@ jobs:
             release/WINDOWS-QUICKSTART.md
             release/WINDOWS-HANDOFF.md
             release/windows-validation.md
+            release/FORTNITE-SETTINGS.md
             release/FEATURES.md
           if-no-files-found: error
       - uses: actions/upload-artifact@v5
