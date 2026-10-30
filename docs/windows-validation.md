@@ -1,67 +1,216 @@
-# PANDORA feature status
+# Windows release validation checklist
 
-**Created by Sonnier · 0.1.0 development release**
+This checklist is **not a record of passing tests**. Run it on disposable
+Windows 11 x64 virtual machines and representative physical hardware before
+distributing PANDORA broadly. Repeat important cases on a standard account and
+an administrator account without elevating the GUI. Windows 10 is best effort.
 
-`COMPLETE` means the scoped implementation is present, not that every Windows
-machine is certified. `PHYSICAL-PC VALIDATION REQUIRED` marks behavior that still needs checking on
-your Windows PC, even where hosted Windows CI passes. See [docs/VALIDATION.md](docs/VALIDATION.md) for
-actual test/build outcomes and [the release checklist](docs/windows-validation.md).
+## Installation and lifecycle
 
-| Feature | Status | Scope and limitations |
-| --- | --- | --- |
-| Original branding and desktop shell | COMPLETE | Purple/black React UI in Electron; original SVG/PNG/ICO assets, PANDORA and Created by Sonnier identity. |
-| NVIDIA configuration center | COMPLETE WITH MANUAL DRIVER CONTROLS; PHYSICAL-PC VALIDATION REQUIRED | 54 searchable screenshot-transcribed reference settings, saved personal notes, Global/Per-Game instructions, detected GPU/driver context and guarded Control Panel launcher. Driver values are not read/applied by PANDORA; NVIDIA manual changes are outside PANDORA rollback. |
-| Cursor customization | COMPLETE; PHYSICAL-PC VALIDATION REQUIRED | Supplied crosshair preview; bounded CUR/ANI validation; native file picker; persistent content-addressed files; exact normal-pointer registry backup, reviewed apply/reload/read-back/restore and combined rollback; optional static first-frame in-app use. Other cursor roles are preserved. Reboot and third-party cursor software need physical-PC checks. |
-| Readable interface typography | COMPLETE; DISPLAY-SCALING VALIDATION REQUIRED | 15px base, 14px navigation/controls/body descriptions, 12–13px minimum secondary text, 20px section headings, larger hardware names and responsive card layouts. |
-| Hardware inventory | PARTIAL; PHYSICAL-PC VALIDATION REQUIRED | CPU/core count/reported clock, OS architecture, RAM, GPU/driver, OS, motherboard, active power plan and fixed volumes. Display information comes from active video controllers and may not map one-to-one to monitors. Physical storage model/media/bus/health, physical network adapters/link rates, installed versus usable RAM, device type and last boot are now reported when exposed. NVIDIA VRAM is reported separately through the optional driver utility; broader sensor coverage remains incomplete. |
-| Live CPU/RAM/process monitoring | COMPLETE; PHYSICAL-PC VALIDATION REQUIRED | Actual OS observations with timestamps. Process CPU values are cumulative seconds, not a percent estimate. |
-| GPU utilization | PARTIAL; PHYSICAL-PC VALIDATION REQUIRED | Busiest 3D-engine utilization from CIM, cached at five seconds. Provider absence is reported. Additional NVIDIA driver utilization is reported separately; CPU/AMD/Intel temperature and fan sensors remain unavailable. |
-| NVIDIA hardware readings | IMPLEMENTED; PHYSICAL-GPU VALIDATION REQUIRED | Fixed read-only NVIDIA SMI query from installed Windows locations: per-device VRAM used/total, temperature, power, graphics clock and utilization where supported. Bounded parser/execution, 15-second cache, explicit refresh/timestamp, per-value unavailable states and privacy-filtered report export. No PATH search, tool download, driver changes or inferred throttling. Hosted CI cannot certify physical NVIDIA readings. |
-| Drive reliability diagnostics | IMPLEMENTED; PHYSICAL-DRIVE VALIDATION REQUIRED | Explicit read-only Windows Storage snapshots: model/media/bus/provider health, temperature, reported wear, power-on hours and six read/write error counts. Exact UInt64 strings, counter/device matching, partial-provider failure, unavailable fields, bounded 32-device/20-second query, 30-second cache and privacy-filtered system export. No SMART self-test, repair/reset, lifespan prediction or blanket SSD health score. USB/RAID/virtual providers may omit readings. |
-| Startup inventory | COMPLETE; PHYSICAL-PC VALIDATION REQUIRED | Read-only HKCU/HKLM Run, 32-bit Run and Startup folders with available StartupApproved metadata. Guarded disable/restore is provided separately for four supported HKCU launcher Run entries. No publisher verification or fabricated impact score. |
-| Launcher startup disable/restore | COMPLETE; PHYSICAL-PC VALIDATION REQUIRED | Discord, Steam, Epic Games Launcher and Spotify named HKCU Run entries only. Exact command/type snapshot, short-lived review token, guarded removal, relaunch restore and conflict refusal. Does not stop apps, edit StartupApproved, services, tasks or HKLM. |
-| Process inventory | COMPLETE; PHYSICAL-PC VALIDATION REQUIRED | Read-only names, PIDs, memory and available cumulative CPU time. No process termination. |
-| Preference catalog | COMPLETE; PHYSICAL-PC VALIDATION REQUIRED | Eight per-user preferences, explicit target/tradeoff/reload guidance. No elevated/system-wide actions. Existing keys and optional-value guards constrain applicability. Registry verification does not guarantee a visible effect on every OS build. |
-| Preference backup and rollback | COMPLETE; PHYSICAL-PC VALIDATION REQUIRED | Exact original DWORD or absence, durable atomic journal, read-back verification, idempotence, reviewed newest-first batch restoration, partial batch outcomes, recovery and external-change conflict refusal. |
-| Reviewed presets | COMPLETE; PHYSICAL-PC VALIDATION REQUIRED | Competitive FPS, Balanced Gaming, Streaming + Gaming, Creator, Quiet/Everyday and Custom. Five-minute single-use reviews; exact per-item changes, skips and conflicts; previous profile ownership restored before new changes; manual settings preserved; custom selection retained. Presets use only the eight verified catalog preferences. |
-| Power-plan selection and restore | COMPLETE; PHYSICAL-PC VALIDATION REQUIRED | Existing Windows plans only, explicit current/target GUID review, durable original snapshot, read-back verification and external-change refusal. Requires restoring the previous managed plan before another selection. No invented plans, thermal control or guaranteed FPS gain. |
-| Advanced power controls | COMPLETE; PHYSICAL-PC VALIDATION REQUIRED | Six documented AC policy controls: processor minimum/maximum, boost policy, energy preference, PCIe link-state savings and cooling policy. Real stored-value detection, explicit choices/tradeoffs, exact durable originals, reviewed read-back/restore, inactive-plan restoration and ordered combined rollback. Battery values preserved. Firmware, Windows power mode or policy can override effective behavior. |
-| Combined managed rollback | COMPLETE; PHYSICAL-PC VALIDATION REQUIRED | One expiring review for preferences, power-plan selection and AC policies, pointer behavior, custom normal cursor, visual effects, supported launcher entries and preset ownership. Exact originals, global mutation serialization, conflict preservation and individual outcomes; cleanup remains irreversible. |
-| Pointer acceleration | COMPLETE; PHYSICAL-PC VALIDATION REQUIRED | Optional Windows API acceleration-off control; durable original thresholds/mode, explicit tradeoff, expiring review, read-back, exact effective-value rollback, external-conflict refusal and combined restore. No DPI, polling-rate, FPS or raw-input latency claim. |
-| Windows visual effects | COMPLETE; PHYSICAL-PC VALIDATION REQUIRED | Seven documented SystemParametersInfo BOOL controls: client-area, menu, combo-box and tooltip animation, list scrolling, selection fading and cursor shadow. Individual current-state detection, expiring review, durable exact effective-value originals, read-back and combined restoration. These are desktop preferences, not game graphics or FPS boosts. |
-| Hardware-specific graphics guidance | COMPLETE; PHYSICAL-PC VALIDATION REQUIRED | Vendor guidance based on reported NVIDIA/AMD/Intel GPU and driver; links to official driver pages and fixed Windows graphics/display settings. Calculated refresh intervals clearly separated from measured latency. Does not infer rendering GPU, feature compatibility or driver freshness. |
-| Windows System Restore | IMPLEMENTED; WINDOWS CLIENT CREATION TEST REQUIRED | Read-only restore-point list, reviewed creation with a separate UAC helper, fixed Checkpoint-Computer operation and verification of a new unique point. Opens Windows System Protection for protection settings/full-system restoration. Respects Windows frequency/protection policy. No automatic protection enablement, point deletion or system rollback. Windows Server is unsupported; hosted CI validates script fixtures and unavailable handling, not actual Windows 10/11 checkpoint creation. |
-| PC Cleaner: Windows temporary files | COMPLETE; PHYSICAL-PC VALIDATION REQUIRED | Scanned `.tmp`/`.temp` files older than seven days in known temporary locations; manifest selection, guarded deletion and failures. Personal extensions and recent files are excluded. |
-| PC Cleaner: browser caches | COMPLETE; PHYSICAL-PC VALIDATION REQUIRED | Separate opt-in; exact Chrome/Edge cache-data and Firefox cache-entry locations older than 24 hours. Passwords, cookies, history, profiles and Downloads are excluded. |
-| PC Cleaner: Recycle Bin | PARTIAL; PHYSICAL-PC VALIDATION REQUIRED | Separate app confirmation plus Windows confirmation, all current items across drives. No per-file selection or scan-bound manifest; newly added items are included. |
-| Cleanup accounting | PARTIAL | Exact logical candidate bytes and confirmed logical removed bytes, displayed in human-readable units. Physical reclaimed bytes are not attributed: allocation/compression, locks and concurrent activity prevent a reliable exact guarantee. |
-| Installed game detection | PARTIAL; PHYSICAL-PC VALIDATION REQUIRED | Verified Epic manifests/executables, Steam install manifests/directories including secondary libraries, known Fortnite and VALORANT fallback paths. Native manual executable selection for all six supported guides with PE-header validation, persisted paths, missing-file status and metadata-only removal. Manual paths do not establish game identity. No executable injection, game-file editing or game launch. |
-| Fortnite/game recommendations | PARTIAL | Guidance for Fortnite, VALORANT, CS2, Apex, Call of Duty/Warzone and GTA V. All six Windows presets are operational through reviewed catalog actions. No automatic game-file configuration, external overlay removal or measured FPS claim. |
-| Benchmark comparison | PARTIAL | Manual measurements plus local CSV frame-interval import (classic PresentMon MsBetweenPresents or frame_time_ms). Validated single-stream input, average FPS, mean-slowest-1% FPS, p99/longest interval, bounded peak chart, reviewed replacement, persisted provenance, per-run PC/preference snapshots, changed-condition notices and CSV export. No live game telemetry, automatic capture, inferred input latency or claimed gains. |
-| Dashboard recommendations | COMPLETE; PHYSICAL-PC VALIDATION REQUIRED | Evidence-based rules for low disk space, sampled memory pressure, storage-provider warnings, display mode, missing driver data and eligible Game Mode review. Reasons and caveats are visible; actions only navigate to review pages. No health score or automatic changes. |
-| Privacy-filtered exports | COMPLETE FOR CURRENT SNAPSHOTS | Native save dialog for system JSON and schema-v2 preference history plus managed preference/preset/power/AC-policy/startup/pointer/visual/cursor snapshots. Explicit unavailable sections and collection interval; private paths, commands, cursor images, tokens, raw errors and custom plan names omitted. No report import or complete cross-feature event log. |
-| Settings persistence | COMPLETE | Reduced motion, monitor interval, scan-on-launch and optional close-to-tray. Old preferences default new behavior off; no updater. |
-| PANDORA sign-in launch and tray | IMPLEMENTED; PHYSICAL-PC VALIDATION REQUIRED | Optional reviewed per-user registration restricted to the registered installed executable. Single-use expiring review, exact entry read-back and external-conflict refusal; Windows startup approval preserved. Optional notification icon, close-to-tray, reopen and explicit exit with active-operation guards. Portable startup registration is unavailable. Uninstall removes only a matching command. Actual sign-in and shell icon behavior need PC testing. |
-| Network diagnostics | COMPLETE; PHYSICAL-PC VALIDATION REQUIRED | Explicit eight-request ICMP tests to two fixed public destinations; individual replies, round-trip range/mean, adjacent-reply jitter and loss. No background probing, arbitrary target executor, DNS changes or network-stack modifications. |
-| Adapter capabilities and DNS check | COMPLETE; PHYSICAL-PC VALIDATION REQUIRED | Explicit physical/virtual/hidden adapter scan, negotiated rate, default-route presence, recognized EEE/interrupt-moderation settings and available power-management states. Fixed-host DNS query through current resolver with measured duration and cache caveat. No inferred game route, retained addresses, automatic probes or adapter/DNS changes. |
-| App removal/debloat | NOT IMPLEMENTED | No bundled-app uninstall, security disablement or service disable lists. |
-| Portable Windows executable | BUILT; PHYSICAL-PC VALIDATION REQUIRED | Unsigned x64 payload; archive integrity, bundled assets and checksum verified. Hosted CI launches the unpacked and installed app; the portable self-extracting launcher still needs a Windows client launch check. |
-| Windows installer | BUILT; PHYSICAL-PC VALIDATION REQUIRED | Per-user x64 NSIS with runtime-generated uninstaller, exact owned-file removal, icons and shortcuts. No Wine required to build. CI includes disposable install/launch/uninstall and preservation checks; install/launch/uninstall and preservation passed in hosted CI; exact outcomes recorded separately. |
-| Code signing / auto-update | NOT IMPLEMENTED | No verified-publisher claim, signing certificate or update service. |
-| Source and third-party licensing | PARTIAL | Source explicitly UNLICENSED pending owner decision; dependencies retain their licenses and bundled notices. |
+- Verify the installer hash, icon, product/creator text, start-menu/desktop
+  shortcuts, custom installation path and per-user scope.
+- Install, start, close and relaunch; verify saved settings and history persist.
+- Attempt a second instance; it should focus the existing app.
+- Check 1280×720, 1920×1080 and high-DPI scaling at 100/125/150/200 percent.
+- Navigate every route with keyboard only. Test dialog focus/escape, reduced
+  motion, accessible names, missing data and service failures.
+- Confirm no process is unnecessarily elevated, no login is needed, and core
+  flows work with networking disabled.
+- Uninstall with a pending managed preference. Verify the app warns about
+  retained changes, leaves journal data intact and does not alter unrelated
+  Windows settings. Reinstall and confirm the journal can still restore them.
 
-The implemented preference IDs are `game-mode`, `game-capture`, `transparency`,
-`taskbar-animations`, `file-extensions`, `explorer-checkboxes`, `advertising-id`
-and `tailored-experiences`. Quality-of-life/privacy preferences do not claim
-in-game performance benefits. Newer Windows versions or organization policy may
-ignore or override some preferences.
+## Read-only integration
 
-The benchmark screenshot supplied as reference contains example values. Those
-numbers and the reference development PC specifications are not used as live
-hardware readings or product performance claims.
+- Compare CPU, memory, GPU/driver, volumes, display data and OS build with native
+  Windows tools. Include a multi-GPU machine, a laptop and multiple volumes.
+- Deny or stop individual WMI/CIM providers in an isolated VM; a subsystem
+  failure must not fabricate data or blank all results.
+- Compare CPU/RAM metrics with Task Manager over time. Confirm hidden/minimized
+  polling is reduced or paused, without overlapping expensive scans.
+- Test absent GPUs/sensors and inaccessible process/startup paths. Inspect that
+  unknown values stay unknown.
+- Test detected and absent supported games. No sample reference hardware should
+  be presented as detected.
+- Inspect exported JSON for private paths, usernames, serials and addresses.
 
-There are **27 separately configurable targets**: eight registry preferences,
-seven visual-effect preferences, six advanced power controls, one installed power-plan selector, one pointer
-acceleration control, and four allowlisted launcher startup entries. Availability
-is detected on each PC. This is not a claim of 27 FPS tweaks; presets reuse these
-settings, and diagnostic/cleanup actions are counted separately.
+## Every catalog preference
+
+For each ID in `electron/tweak-catalog.ts`, use a disposable VM snapshot:
+
+1. Record the original Windows value and UI behavior, including an absent value.
+2. Review the target, tradeoff and reload/restart notice in PANDORA.
+3. Apply; verify the snapshot predates the write and the stored value is reread.
+4. Confirm Windows honors the preference where applicable; document OS builds
+   that ignore or override it. Registry persistence alone is not effectiveness.
+5. Apply again; the original backup must remain unchanged.
+6. Revert; verify the exact original value or absence, then restart/reopen the
+   relevant shell/app where needed.
+7. Modify the value externally after applying; revert must report a conflict and
+   preserve the new value.
+8. Test permission denial, disk-full journal writes, process interruption before
+   and after mutation, corrupt/oversized journal, and failed verification.
+9. Batch several items with one failure; inspect individual outcomes and recovery.
+
+## Cleaner
+
+- Create disposable old temporary files, recent files, nested directories,
+  locked files, hard links, symbolic links, junctions and other reparse points.
+- Put sentinel personal files outside the allowlisted roots. None may change.
+- Scan, modify/replace candidates, then clean. Changed identities must be skipped.
+- Attempt a junction/rename race between scan and delete. The native provider
+  must operate only on validated candidates without following the changed path.
+- Validate selected-category isolation, scan expiry, forged scan IDs, duplicate
+  category IDs, invalid confirmations and partial permission failure reporting.
+- Compare reported candidate sizes, confirmed deleted sizes, and volume free
+  space; account for allocation/compression and unrelated disk activity.
+- Confirm browser cleanup touches cache only, requires a separate confirmation,
+  and preserves passwords, cookies, history, downloads and profiles.
+- Confirm Recycle Bin cleanup uses its separate confirmation and clearly warns
+  that all current items across all drives will be emptied, including items added
+  since scanning. Test OS confirmation cancellation and partial failure. Test
+  items from multiple volumes and unusual names.
+- Never run these destructive cases against an actual user's personal files.
+
+## Release decision
+
+Record OS builds, hardware, commit/build ID, exact outcomes and unresolved issues
+in `docs/VALIDATION.md`. Do not replace this checklist with blanket claims of
+Windows compatibility, anti-cheat approval or FPS improvement.
+
+
+## Frame capture imports
+
+- Export one game process and swap chain using classic PresentMon `MsBetweenPresents`, or provide an explicit `frame_time_ms` column in milliseconds. Modern PresentMon layouts with other metric names are not inferred automatically.
+- Import before and after runs with identical settings/scenario/capture method. Check review/cancel, source labels, persistence and CSV export.
+- Independently verify average FPS as frame count / sum of intervals in seconds, and 1% low as 1000 / mean of the slowest ceil(N × 0.01) intervals. Percentile FPS reported by some tools uses a different definition.
+- Confirm missing/malformed/mixed-stream input does not replace existing measurements. No captured intervals establish input latency or causation of a performance change.
+
+## Presets, power, pointer and launcher startup
+
+- Review each preset and Custom, cancel once, apply, switch, and turn it off.
+  Individually applied/pre-existing settings must stay separate from profile
+  ownership. Preserve saved custom choices across preset switches and relaunch.
+- For an existing alternate power plan, review the exact GUID and tradeoff,
+  apply, relaunch and restore the original. Test a device exposing only Balanced.
+  An external plan change or removed original plan must not be overwritten.
+- Test optional pointer acceleration only after recording current behavior.
+  Verify immediate Windows behavior and exact API thresholds/mode restoration;
+  test an external edit and provider denial. Raw-input games may be unaffected.
+- For each supported HKCU launcher entry, inspect the saved command/type,
+  disable, close/reopen and restore. Do not expect current processes to stop or
+  Windows StartupApproved/service/task entries to change. External replacements
+  must block automatic restoration.
+- Review all managed changes, cancel once, then confirm. Inspect every result.
+  Simulate one provider being unavailable and an external conflict; unrelated
+  valid changes may restore, while skipped originals must remain available.
+
+## Manual game paths and expanded network diagnostics
+
+- Choose a real custom-install game executable, cancel once, save and relaunch.
+  Move the executable temporarily to confirm missing-path status. Forget the
+  selection and verify no game file was modified or deleted.
+- Compare CPU reported clock and OS architecture with CIM, including missing
+  values. Reported clock is a scan snapshot, not live boost telemetry.
+- Inspect a physical Ethernet adapter, Wi-Fi and a VPN/virtual adapter. Compare
+  link rates and driver-reported EEE/interrupt-moderation options with Windows.
+  Power-management permission failures must stay unavailable, with no elevation
+  prompt, invented values, connection reset or applied change.
+- Check default-route indications against Windows; do not infer game routing.
+  Run DNS checks with working, cached, blocked and disconnected conditions.
+  DNS duration must never be presented as Fortnite server ping or input latency.
+
+## Visual effects and graphics guidance
+
+- [ ] For each of the seven supported visual controls, record the current Windows
+      appearance. Review/cancel once, apply, reopen relevant apps, relaunch PANDORA
+      and restore. Only that selected effect should change.
+- [ ] Confirm disabled effects are not claimed as PANDORA changes. Unavailable
+      providers must remain unavailable, with originals retained.
+- [ ] Apply two visual preferences and use combined restore. Both must return to
+      their saved effective API values; review individual outcomes.
+- [ ] Compare GPU/driver identity and active display rate with Windows tools.
+      Verify NVIDIA/AMD guidance is conditional, fixed settings links open the
+      correct page, and milliseconds per refresh is not labeled input latency.
+
+
+## NVIDIA configuration and cursor customization
+
+- [ ] Open NVIDIA Settings; confirm detected GPU/driver match your hardware. Sonnier's reference values must not be mistaken for detected settings.
+- [ ] Search and filter the 54 settings; switch Global/Per-Game guidance. Save notes and reopen the application to confirm persistence.
+- [ ] Open the real NVIDIA Control Panel using the launcher. On unsupported hardware or a missing installation, verify the failure message and manual Start-menu alternative.
+- [ ] Record original driver values before manually changing anything. Driver defaults and PANDORA rollback are not backups of manual NVIDIA changes.
+- [ ] In Quality of Life, verify the actual supplied crosshair preview and hotspot. Cancel Apply Cursor and confirm no Windows change.
+- [ ] Apply only the normal pointer, check text/busy/resize roles are unchanged, restart PANDORA, and restore the exact previous pointer.
+- [ ] Apply again and restart Windows. Confirm the persistent app-data file is still used, then restore. Repeat with a local CUR and supported ANI file (in-app animation is a static first frame).
+- [ ] Change the normal pointer outside PANDORA while it is managed. Confirm conflict reporting and that automatic rollback does not overwrite the external change.
+- [ ] Toggle in-app use separately. Check cursor behavior on buttons, text fields, disabled controls and resizing. No Windows write should occur.
+- [ ] Review combined rollback and verify the custom normal pointer is included with its original value.
+- [ ] Check all pages at 100%, 125%, 150% and 200% display scaling for readable text, keyboard access, wrapping and scrolling.
+
+
+## Advanced power controls
+
+- On a standard account, record the active plan and AC/DC values before using a supported control. Review/cancel must not write; confirmed apply must preserve the original before writing and report read-back accurately. Permission or policy denial must remain explicit.
+- Test CPU minimum/maximum, boost policy, energy preference, PCIe savings and cooling policy separately where supported. Power mode, firmware and OEM controls may override effective behavior; a stored value alone is not evidence of clocks, fan speed, latency or FPS.
+- Reopen PANDORA and restore exact original values. Switch the active plan externally before restoration: restore the saved plan without activating it. Battery/DC values must remain unchanged throughout.
+- Test a valid pair of changed CPU bounds and combined restore in both directions. Minimum must never exceed maximum during the sequence. External modifications and deleted/unavailable plans must preserve backups and be reported rather than overwritten.
+- Compare repeated same-scene frame captures and actual thermals/noise/power on representative hardware. Do not recommend maximum performance universally, particularly on laptops. PANDORA does not presently measure temperatures itself.
+
+The implementation uses PowerGetActiveScheme, PowerReadACValueIndex, PowerWriteACValueIndex and PowerSetActiveScheme. Fixed setting identifiers were cross-checked against Microsoft's [Windows SDK winnt.h](https://github.com/microsoft/win32metadata/blob/main/generation/WinSDK/RecompiledIdlHeaders/um/winnt.h). Unsupported stored values remain unavailable; power-policy presence does not establish hardware effectiveness.
+
+
+## NVIDIA driver telemetry
+
+- Compare each supported NVIDIA device against NVIDIA SMI on the same PC. Check VRAM units (MiB/GiB), temperature, graphics clock, utilization and reported power; these are sampled driver values, not guarantees of throttling or performance.
+- Test NVIDIA absent, a missing utility, driver errors/timeouts, unsupported individual fields and multiple GPUs. All failures must remain unavailable, with no prior snapshot represented as current. AMD/Intel GPUs should still retain existing hardware inventory even though this sensor provider is NVIDIA-only.
+- Refresh within and after 15 seconds; check the cache label/timestamp and verify no periodic NVIDIA subprocess runs while idle. Provider queries occur only when entering System Monitor, explicitly refreshing or exporting a system report.
+- Inspect the exported provider timestamp and numeric fields; no UUID, serial, bus address, executable path or command output should be retained.
+
+
+## Windows System Restore (Windows 10/11 client only)
+
+- Use a disposable client VM with System Protection configured and no checkpoint in the past day. As a standard user, inspect the point list; if access is denied, the UI should explain it while permitting a reviewed administrator request. Windows Server must show unsupported and never offer creation.
+- Cancel PANDORA's review: no UAC prompt or checkpoint should occur. Then confirm and cancel UAC: show cancellation without success. PANDORA itself must not restart elevated.
+- Confirm creation with administrator approval. Verify a new PANDORA description and sequence in Windows System Protection. Success requires the helper to find a point absent from its baseline. A listed point is not proof that every future system restoration will succeed.
+- Retry within the Windows creation-frequency interval, turn off protection in the disposable VM, deny elevation and test insufficient disk space. No skipped/failed request may be reported as a completed backup. Do not change Windows protection or frequency policy merely to make a test pass.
+- Inspect the separate helper command: only the fixed Checkpoint-Computer MODIFY_SETTINGS operation, provider reads and verification are permitted. It must not accept renderer scripts/paths or write user-controlled elevated result files. Built-in module search is constrained to PSHOME Modules.
+- Test interrupted/long-running creation. If confirmation times out, it may still finish; refresh System Protection before retrying. Do not infer that a timeout proves nothing happened.
+- Keep exact PANDORA setting rollback separate from Windows System Restore. PANDORA must never select a point and automatically restore/reboot the OS, delete points, enable protection or bypass frequency policy.
+
+References: [Microsoft Checkpoint-Computer](https://learn.microsoft.com/powershell/module/microsoft.powershell.management/checkpoint-computer?view=powershell-5.1) and [SystemRestore.CreateRestorePoint](https://learn.microsoft.com/windows/win32/sr/createrestorepoint-systemrestore).
+
+
+## Storage reliability counters
+
+- Open System Monitor without requesting counters; no storage-reliability query should run. Click Read drive counters explicitly. System report export may also request this read-only snapshot.
+- On supported SSD and HDD devices, compare model, provider health, temperature, reported wear, power-on hours and read/write counters with Windows Get-StorageReliabilityCounter and the manufacturer's diagnostics. Record which fields the driver does not expose. Snapshot labels do not map to drive letters or Windows disk numbers.
+- Verify unavailable fields remain unavailable and reported zero stays distinct from a missing value. Wear is endurance used, not percent of life remaining; it can reach or exceed 100. No safe-temperature or remaining-life prediction should appear.
+- Test standard-account permission failures, USB/RAID/virtual disks, missing providers and unplugged external storage. Old successful readings must disappear after a failed refresh. A partial device failure must not replace another disk's data.
+- Refresh within 30 seconds: show a cached timestamp. Refresh after expiry: request a new snapshot. No counter reset, repair, self-test, administrator prompt or disk setting change should occur.
+- Export system JSON and check decimal-string counters retain exact large integers. No storage serial numbers, raw device IDs, local paths or provider exception text should be present.
+
+References: [Get-StorageReliabilityCounter](https://learn.microsoft.com/powershell/module/storage/get-storagereliabilitycounter) and [MSFT_StorageReliabilityCounter](https://learn.microsoft.com/windows-hardware/drivers/storage/msft-storagereliabilitycounter).
+
+
+## PANDORA sign-in launch and notification area
+
+- Both options must be off on a fresh install and after migrating an older settings file. Portable/development builds must not offer sign-in registration; the installed executable must match the per-user installation record and marker.
+- Cancel Enable sign-in launch review, then confirm a fresh review. Inspect Windows startup settings: registration and Windows approval are separate. If disabled there, PANDORA must report that state and must not override it. Sign out/in on a test PC and confirm PANDORA opens normally without applying tweaks or cleaning files.
+- Disable sign-in launch and confirm the matching Run entry is removed. An external replacement must be preserved and reported as a conflict. Reinstall/uninstall must remove only the command targeting that installation, preserving Windows StartupApproved metadata and unrelated entries.
+- Enable Close to notification area, close the window, and verify the icon remains accessible. Open from its menu/click and from launching a second instance. Hidden live metrics should pause. Disable the option while hidden through a reopened window; the icon should disappear and normal closing should exit.
+- Test Exit PANDORA from Settings and the tray. During a disposable cleanup/settings operation, close/exit must wait and preserve progress. After it finishes, exit should work. OS forced shutdown cannot be treated as a graceful exit.
+- Relaunch and check the tray preference persists. Test notification-area icon visibility at your Windows scaling and Explorer restart behavior; hosted CI cannot fully certify shell presentation or actual sign-in.
+
+
+## Managed settings report
+
+- In Restore & History, export a managed report, cancel once, then choose a disposable JSON file. Cancellation must not claim a saved report or refresh native review state. Repeated clicks while saving must not open duplicate dialogs.
+- Confirm schemaVersion 2 and all nine sections. Apply one reviewed setting in a disposable environment and compare original/current/applied values, then relaunch and export again. After exporting, fresh UI reviews and normal rollback must still work.
+- Check missing native providers retain null values and supported flags. A section whose journal cannot be read must be explicitly unavailable and collectionComplete false; no raw error or private path should appear. collectionComplete means sections were collected, not that every Windows provider is supported.
+- Inspect startup and cursor sections for absence of commands, paths, pixels and review tokens. Saved originals remain in the local backups; this report cannot be imported or used as a replacement backup. It is not a complete cross-feature chronological log.
+
+## Actual portable launcher
+
+- Run the portable EXE itself, not a manually extracted PANDORA.exe. Confirm extraction, navigation, actual hardware inventory, bundled cursor preview and normal exit. Run it a second time and check ordinary app-data persistence. Sign-in registration must remain unavailable for the temporary extraction path.
+- Hosted Windows CI runs the actual launcher with an isolated profile and a loopback debugging endpoint, checks the renderer/bridge, and exits without cleanup or tuning. Normal users should not supply debugging flags. Client-PC checks still cover antivirus/SmartScreen policy, standard-account behavior, spaces in paths and reopening after reboot.
