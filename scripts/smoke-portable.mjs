@@ -23,7 +23,9 @@ try {
   while (Date.now() < deadline) {
     await Promise.race([delay(250), exited.then(result => { throw new Error(`Portable launcher exited before its window opened (${result.code}).`); })]);
     try { const value = (await readFile(join(userData, 'DevToolsActivePort'), 'utf8')).split(/\r?\n/)[0]; if (/^\d{1,5}$/.test(value) && +value > 0 && +value <= 65535) { port = +value; break; } }
-    catch (error) { if (error.code !== 'ENOENT') throw error; }
+    // Chromium can briefly hold an exclusive Windows lock while publishing this
+    // file. Retry that observed startup race within the same 90-second deadline.
+    catch (error) { if (!['ENOENT', 'EBUSY'].includes(error.code)) throw error; }
   }
   assert.ok(port, 'Portable extraction/application startup must publish its debugging port within 90 seconds.');
   browser = await chromium.connectOverCDP(`http://127.0.0.1:${port}`);
