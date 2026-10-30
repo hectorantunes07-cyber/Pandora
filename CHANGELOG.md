@@ -7,6 +7,8 @@
 - Saved a durable full original before writing. Restoration changes only owned display values, preserves newer unrelated settings, refuses conflicting values and survives relaunch. Added integration with combined rollback, activity and privacy-filtered reports (now ten snapshot sections).
 - This is configuration-file editing, not a live game API or proof of current Fortnite support/performance. Rendering-mode behavior, cloud synchronization, game updates and actual gains need real-game verification.
 
+- Hardened Windows configuration replacement to preserve custom destination permissions. Added actual helper execution and protected-ACL round trips, precise Windows test diagnostics, bounded portable-launch sharing-violation retries, and download instructions tied to the built artifact.
+
 ## Persistent activity timeline — 2026-10-30
 
 - Added durable activity across supported cleanup, tuning, restoration, preset, startup, cursor, game-location and app-setting operations. Pending operations are recorded before execution; completed, partial, cancelled and unconfirmed outcomes remain distinct after reopening.

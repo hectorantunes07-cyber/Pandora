@@ -43,9 +43,9 @@ Cleanup reports confirmed logical file bytes, not an exact physical free-space i
 
 ## Download
 
-Application source: `501c28da7367a7ac71c5cf4eb658ff072b553971`. Both packages are built and archive-verified. CI launched the unpacked and installed app and the actual portable self-extracting launcher. The portable check verifies extraction, the sandboxed bridge, actual hardware inventory, bundled cursor, cleaner navigation and clean exit with an isolated profile. Native Windows CI passed for this source, including installer lifecycle and 48 UI journeys. Exact checksums are recorded in the accompanying `verification.json`.
+Application source: `f21492e7c775c4de05f3968a85138dd64dd825d5`. Both packages are built and archive-verified. CI launched the unpacked and installed app and the actual portable self-extracting launcher. The portable check verifies extraction, the sandboxed bridge, actual hardware inventory, bundled cursor, cleaner navigation and clean exit with an isolated profile. Native Windows CI passed for this source, including custom file-permission preservation during apply/rollback, installer lifecycle and 48 UI journeys. Exact checksums are recorded in the accompanying `verification.json`.
 
-Download **PANDORA-Windows-x64-unsigned** from [verified Fortnite-settings Windows build](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/41036430165). Sign in to GitHub if required and extract the ZIP first.
+Download **PANDORA-Windows-x64-unsigned** from [verified Fortnite-settings Windows build](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/41041633317). Sign in to GitHub if required and extract the ZIP first.
 
 - `PANDORA-Setup-0.1.0-x64.exe`: per-user installer with shortcuts and uninstaller.
 - `PANDORA-Portable-0.1.0-x64.exe`: no installation; still stores local app data.
