@@ -83,12 +83,16 @@ jobs:
             Write-Output "::error title=Installer lifecycle::$message"
             throw
           }
+      - name: Actual portable launcher smoke
+        timeout-minutes: 4
+        run: node scripts/smoke-portable.mjs
       - name: Record native validation and include testing instructions
         shell: pwsh
         run: |
           $manifest = Get-Content release/verification.json -Raw | ConvertFrom-Json
           $manifest.windowsLaunchVerified = $true
           $manifest | Add-Member -NotePropertyName installerLifecycleVerified -NotePropertyValue $true
+          $manifest | Add-Member -NotePropertyName portableLauncherVerified -NotePropertyValue $true
           $manifest | Add-Member -NotePropertyName windowsValidation -NotePropertyValue @{
             runner = $env:RUNNER_OS
             runUrl = "$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
