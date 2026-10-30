@@ -352,3 +352,19 @@ PANDORA backups. Startup commands, local paths, cursor images, review tokens, ra
 errors and custom power-plan names are excluded. Other than preference history,
 these sections are current snapshots, not an exhaustive event log. Windows or
 other applications can still change settings while the report is collected.
+
+
+## Activity timeline
+
+**Restore & History → Activity timeline** records supported PANDORA operations
+from this version onward, including cleanup and restoration. Search by operation
+and filter by result. The latest 500 entries are retained; older records and
+reviewed clearing are counted. Activity is included in Export managed report.
+
+Clearing activity requires confirmation and never deletes original-value backups
+or the existing preference restoration history. An interrupted operation is
+shown as Not confirmed; check current settings before retrying. If logging fails,
+PANDORA reports the gap and keeps the underlying operation/rollback available.
+A damaged activity file is preserved. Private paths, commands, filenames and raw
+error details are not recorded. Read-only scans/diagnostics and external Windows
+changes are outside this timeline; it does not reconstruct older activity.

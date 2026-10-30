@@ -1,5 +1,6 @@
 import { PowerTuning } from './PowerTuning';
 import { SystemRestore } from './SystemRestore';
+import { ActivityLog } from './ActivityLog';
 import { CursorCustomization } from './CursorCustomization';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, ArrowUpRight, Check, CheckCircle2, ChevronRight, CircleAlert, FileCheck2, Gamepad2, History, Info, ListFilter, RefreshCw, RotateCcw, Search, ShieldCheck, SlidersHorizontal, Sparkles, X, Zap } from 'lucide-react';
@@ -116,6 +117,7 @@ export function Restore({ tweaks, notify, refreshTweaks, onBusyChange }: { tweak
     </PageHeading>
     <p className="accounting-note">The managed report includes preference history and current power, pointer, cursor, visual, startup and preset snapshots. Private paths and commands are excluded. It is a diagnostic report, not a restorable backup.</p>
     <SystemRestore onBusyChange={onBusyChange}/>
+    <ActivityLog onBusyChange={onBusyChange}/>
     <RestoreAll onBusyChange={onBusyChange} onRestored={async () => { await load(); await refreshTweaks(); setRevision(n => n + 1); }}/>
     <ProfileControls key={`profile-${revision}`} tweaks={tweaks} refreshTweaks={refreshTweaks} onBusyChange={onBusyChange} restoreOnly/>
     <PowerControls key={`power-${revision}`} onBusyChange={onBusyChange} restoreOnly/>

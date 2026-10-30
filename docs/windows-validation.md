@@ -214,3 +214,13 @@ References: [Get-StorageReliabilityCounter](https://learn.microsoft.com/powershe
 
 - Run the portable EXE itself, not a manually extracted PANDORA.exe. Confirm extraction, navigation, actual hardware inventory, bundled cursor preview and normal exit. Run it a second time and check ordinary app-data persistence. Sign-in registration must remain unavailable for the temporary extraction path.
 - Hosted Windows CI runs the actual launcher with an isolated profile and a loopback debugging endpoint, checks the renderer/bridge, and exits without cleanup or tuning. Normal users should not supply debugging flags. Client-PC checks still cover antivirus/SmartScreen policy, standard-account behavior, spaces in paths and reopening after reboot.
+
+
+## Persistent activity timeline
+
+- Apply and restore a disposable preference, change a supported launcher or cursor, and perform a disposable cleanup. Check activity after each operation and after relaunch. Confirm partial/skipped results are distinct from completion and cleanup uses logical bytes, not a physical free-space claim.
+- Check sign-in/tray/app-setting and local game/NVIDIA-reference operations are labelled as those operations, not automatic driver optimization. Read-only diagnostics do not add activity. Cancel a native file picker and verify Cancelled.
+- Search/filter the timeline and load another page. Review clearing, cancel once, then confirm. Verify original-value backups and preference restoration history remain and rollback still works. A new operation after review must invalidate the old clear token.
+- Export a managed report and inspect retained activity for absence of commands, paths, filenames, raw errors and internal event IDs. Check the retention count and last-cleared time. Only activity recorded by this version is included.
+- On a disposable profile only, interrupt an operation after its pending record is saved. Relaunch: no recorded outcome means Not confirmed, never success. Inspect the actual setting before deciding what to do next.
+- On a disposable profile only, make the activity file unreadable. Verify the log is unavailable, its file remains untouched, and supported rollback is still governed by its own original backups. Logging failures must not change the underlying operation result. Real power-loss/disk-failure behavior still requires client testing.

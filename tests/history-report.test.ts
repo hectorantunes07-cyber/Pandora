@@ -4,6 +4,7 @@ const plan = '381b4222-f694-41f0-9685-ff5bb260df2e';
 const privateText = 'C:\\Users\\PRIVATE_SENTINEL\\secret.exe --private';
 function fixture(): HistoryReportSources {
   return {
+    activity: async () => ({ available: true, entries: [], limit: 500, discarded: 0, clearedAt: null, incomplete: false, warning: null }),
     history: async () => [{ id: privateText, tweakId: 'game-mode', title: privateText, timestamp: '2026-10-01T00:00:00Z', status: 'applied', originalValue: null, appliedValue: 1, message: privateText }],
     preferences: async () => [],
     profile: async () => ({ selection: { id: 'custom', ids: ['game-mode'] }, ownedIds: ['game-mode'], customIds: ['game-mode'], complete: true }),
@@ -16,6 +17,16 @@ function fixture(): HistoryReportSources {
   };
 }
 describe('managed settings report', () => {
+  it('exports retained activity without record identifiers, raw warnings or extra payload fields', async () => {
+    const sources = fixture();
+    sources.activity = async () => ({ available: true, entries: [{ id: privateText, action: 'clean', startedAt: '2026-10-30T00:00:00.000Z', endedAt: null, status: 'unconfirmed', succeeded: null, notConfirmed: null, cleanup: null }], limit: 500, discarded: 3, clearedAt: null, incomplete: true, warning: privateText });
+    const r = await collectHistoryReport(sources, '0.1.0');
+    expect(r.activity).toMatchObject({ status: 'available', data: { incomplete: true, discarded: 3, entries: [{ title: 'PC cleanup', status: 'unconfirmed' }] } });
+    expect(JSON.stringify(r)).not.toContain('PRIVATE_SENTINEL');
+    sources.activity = async () => ({ available: false, entries: [], limit: 500, discarded: 0, clearedAt: null, incomplete: true, warning: privateText });
+    const failed = await collectHistoryReport(sources, '0.1.0');
+    expect(failed.collectionComplete).toBe(false); expect(failed.activity.status).toBe('unavailable');
+  });
   it('includes all supported snapshot sections and preserves null originals, zero values and conflicts', async () => {
     const sources = fixture(); const r = await collectHistoryReport(sources, '0.1.0');
     expect(r.schemaVersion).toBe(2); expect(r.collectionComplete).toBe(true);

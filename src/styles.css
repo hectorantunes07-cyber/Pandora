@@ -169,3 +169,9 @@
 
 .lifecycle-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
 .setting-row strong { font-size: 14px; }
+.activity-filters { display: grid; grid-template-columns: minmax(0, 2fr) minmax(150px, 1fr); gap: 16px; margin: 18px 0; }
+.activity-filters label { display: flex; flex-direction: column; gap: 8px; font-size: 14px; color: var(--text-secondary, #c5b9d6); }
+.activity-filters input, .activity-filters select { width: 100%; min-width: 0; min-height: 42px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: #f2eff9; font-size: 14px; }
+.activity-filters input::placeholder { color: var(--muted); }
+[aria-label="Activity timeline"] .panel-title .lifecycle-actions { margin-top: 0; }
+@media (max-width: 640px) { .activity-filters { grid-template-columns: 1fr; } }

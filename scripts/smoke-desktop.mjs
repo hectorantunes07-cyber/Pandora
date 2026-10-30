@@ -1,4 +1,4 @@
-// Read-only packaged-renderer smoke check. Never applies a tweak or deletes files.
+// Packaged-renderer check with isolated app data. Never applies a Windows tweak or deletes user files.
 import { _electron as electron } from '@playwright/test';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -94,6 +94,12 @@ try {
   assert.equal(await page.getByRole('spinbutton', { name: 'Before Average FPS', exact: true }).inputValue(), '100.00');
   assert.equal(await page.getByRole('spinbutton', { name: 'Before 1% low FPS', exact: true }).inputValue(), '100.00');
   assert.equal(await page.getByRole('spinbutton', { name: 'Before Latency', exact: true }).inputValue(), '');
+  // Local app-state-only activity fixture. No Windows preferences or cleanup are changed.
+  assert.equal((await page.evaluate(() => window.pandora.getActivity())).entries.length, 0);
+  await page.evaluate(async () => window.pandora.saveSettings(await window.pandora.getSettings()));
+  const activity = await page.evaluate(() => window.pandora.getActivity());
+  assert.equal(activity.available, true); assert.equal(activity.entries.length, 1);
+  assert.equal(activity.entries[0].action, 'save-settings'); assert.equal(activity.entries[0].status, 'completed');
   // Exercise the real native export route while choosing only a disposable test file.
   const reportFile = join(directory, 'managed-report.json');
   await app.evaluate(({ dialog }, file) => { dialog.showSaveDialog = async () => ({ canceled: false, filePath: file }); }, reportFile);
@@ -101,17 +107,24 @@ try {
   const report = JSON.parse(await readFile(reportFile, 'utf8'));
   assert.equal(report.schemaVersion, 2); assert.equal(report.product, 'PANDORA');
   assert.equal(Object.keys(report.sections).length, 9);
+  assert.equal(report.activity.status, 'available');
+  assert.equal(report.activity.data.entries[0].action, 'save-settings');
   assert.equal(report.sections.history.status, 'available');
   assert.ok(Array.isArray(report.sections.history.data));
   assert.equal(JSON.stringify(report).includes(directory), false);
   await app.evaluate(({ dialog }) => { dialog.showSaveDialog = async () => ({ canceled: true, filePath: '' }); });
   assert.equal(await page.evaluate(() => window.pandora.exportReport('history')), null);
+  const clearActivity = await page.evaluate(() => window.pandora.previewClearActivity());
+  assert.equal(clearActivity.count, 1);
+  assert.equal((await page.evaluate(() => window.pandora.getActivity())).entries.length, 1);
+  assert.equal((await page.evaluate(token => window.pandora.clearActivity(token), clearActivity.token)).success, true);
+  assert.equal((await page.evaluate(() => window.pandora.getActivity())).entries.length, 0);
   assert.deepEqual(errors, []);
   const sandboxConfigured = await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].webContents.getLastWebPreferences().sandbox);
   assert.equal(sandboxConfigured, true);
   console.log(JSON.stringify({ passed: true, platform: info.platform, realHardwareRead: true,
     bridgeLoaded: true, rendererNodeAccess: false, unavailableWindowsActionsGuarded: process.platform !== 'win32',
-    frameCaptureFixtureVerified: true, managedReportExportVerified: true, containerTestFlags: containerMode }, null, 2));
+    frameCaptureFixtureVerified: true, managedReportExportVerified: true, localActivityVerified: true, containerTestFlags: containerMode }, null, 2));
 } catch (error) {
   if (process.env.GITHUB_ACTIONS === 'true') {
     const message = String(error).replaceAll('%', '%25').replaceAll('\r', '%0D').replaceAll('\n', '%0A');

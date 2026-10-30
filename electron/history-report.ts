@@ -7,8 +7,10 @@ import { PROFILE_DEFINITIONS } from '../shared/profiles';
 import { VISUAL_EFFECTS } from '../shared/visual-effects';
 import { STARTUP_APPS } from './startup';
 import { TWEAKS_BY_ID } from './tweak-catalog';
+import { ACTIVITY_ACTIONS, type ActivityInfo } from '../shared/activity';
 
 export interface HistoryReportSources {
+  activity(): Promise<ActivityInfo>;
   history(): Promise<HistoryEntry[]>;
   preferences(): Promise<TweakState[]>;
   profile(): Promise<ProfileStatus>;
@@ -76,12 +78,19 @@ export async function collectHistoryReport(sources: HistoryReportSources, versio
     }; }),
   ]);
   const sections = { history, preferences, profile, power, powerTuning, startup, pointer, visual, cursor };
+  const activity = await section(async () => {
+    const value = await sources.activity();
+    if (!value.available) throw new Error('Activity unavailable.');
+    return { limit: value.limit, discarded: value.discarded, clearedAt: value.clearedAt, incomplete: value.incomplete,
+      entries: value.entries.map(e => { if (!Object.hasOwn(ACTIVITY_ACTIONS, e.action)) throw new Error('Unknown activity.'); return { action: e.action, title: ACTIVITY_ACTIONS[e.action], startedAt: e.startedAt, endedAt: e.endedAt, status: e.status, succeeded: e.succeeded, notConfirmed: e.notConfirmed,
+        cleanup: e.cleanup ? { kind: e.cleanup.kind, deletedBytes: e.cleanup.deletedBytes, deletedFiles: e.cleanup.deletedFiles, skippedFiles: e.cleanup.skippedFiles } : null }; }) };
+  });
   return {
     schemaVersion: 2, product: 'PANDORA', createdBy: 'Sonnier', version, startedAt, completedAt: now().toISOString(),
-    collectionComplete: Object.values(sections).every(value => value.status === 'available'),
-    scope: 'Preference operation history and current managed-setting snapshots. Other sections are not a complete historical event log. Windows or another app may change settings during collection.',
+    collectionComplete: activity.status === 'available' && Object.values(sections).every(value => value.status === 'available'),
+    scope: 'Preference operation history, current managed-setting snapshots and retained activity from versions that record it. Snapshots are not a complete historical event log. Retention, clearing or recording failures can leave activity gaps. Windows or another app may change settings during collection.',
     privacy: 'Local paths, startup commands, cursor images, user-defined plan names, review tokens, internal record identifiers and raw provider errors are omitted.',
     restoration: 'Diagnostic report only. It cannot be imported to restore settings. Keep the original local PANDORA backups; cleanup and manual NVIDIA changes are outside rollback.',
-    sections,
+    sections, activity,
   };
 }

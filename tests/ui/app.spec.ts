@@ -11,6 +11,9 @@ async function desktopFixture(page: Page) {
     let cursorManaged = false, appCursor = false;
     const cursorInfo = () => ({ supported: true, current: { kind: 'String' as const, value: cursorManaged ? 'C:\\fixture.cur' : '' }, original: cursorManaged ? { kind: 'String' as const, value: '' } : null, currentPreview: null, selected: { id: 'fixture', name: 'Sonnier’s cursor', kind: 'cur' as const, width: 32, height: 32, x: 15, y: 16, preview: './cursors/sonnier.png', cssCursor: 'data:image/x-icon;base64,AA==' }, useInApp: appCursor, managed: cursorManaged, conflict: false, token: 'cursor-review' });
     window.pandora = {
+      getActivity: async () => ({ available: true, entries: [], limit: 500, discarded: 0, clearedAt: null, incomplete: false, warning: null }),
+      previewClearActivity: async () => ({ token: 'activity-clear-review', count: 0 }),
+      clearActivity: async () => ({ id: 'activity-clear', success: true, message: 'Activity cleared; backups kept.' }),
       getSystemRestore: async () => ({ supported: true, readable: true, points: systemPointCreated ? [{ sequence: 1, description: 'PANDORA fixture checkpoint', createdAt: new Date().toISOString() }] : [] }),
       previewSystemRestore: async () => ({ token: 'system-restore-review', description: 'PANDORA fixture checkpoint' }),
       createSystemRestore: async token => { track('system-restore-create', token); systemPointCreated = true; return { id: 'windows-system-restore', success: true, message: 'New Windows restore point verified.' }; },
@@ -871,4 +874,57 @@ test('managed report export explains scope, prevents duplicate requests and reco
   await page.evaluate(() => (window as any).__finishExport.resolve('PANDORA-history.json'));
   await expect(page.getByText('Managed settings report saved to PANDORA-history.json')).toBeVisible();
   await expect(exportButton).toBeEnabled();
+});
+
+test('activity timeline filters results, reviews clearing and preserves preference backups', async ({ page }) => {
+  await desktopFixture(page);
+  await page.addInitScript(() => {
+    let entries = Array.from({ length: 25 }, (_, i) => ({ id: String(i), action: i === 0 ? 'clean' as const : 'cursor-change' as const, startedAt: '2026-10-30T00:00:00.000Z', endedAt: '2026-10-30T00:00:01.000Z', status: i === 0 ? 'partial' as const : 'completed' as const, succeeded: i === 0 ? null : 1, notConfirmed: i === 0 ? 1 : 0, cleanup: i === 0 ? { kind: 'safe' as const, deletedBytes: 3e6, deletedFiles: 2, skippedFiles: 1 } : null }));
+    window.pandora!.getActivity = async () => ({ available: true, entries, limit: 500, discarded: 2, clearedAt: null, incomplete: false, warning: null });
+    window.pandora!.previewClearActivity = async () => ({ token: 'clear-reviewed', count: entries.length });
+    window.pandora!.clearActivity = async token => { (window as any).__calls.push({ method: 'clear-activity', args: [token] }); entries = []; return { id: 'activity-clear', success: true, message: 'Activity cleared; original backups kept.' }; };
+    window.pandora!.getHistory = async () => [{ id: 'original', tweakId: 'transparency', title: 'Original preference backup', timestamp: '2026-10-01T00:00:00Z', status: 'applied', originalValue: 1, appliedValue: 0, message: 'Retained original.' }];
+  });
+  await page.goto('/'); await page.getByRole('navigation').getByRole('button', { name: 'Restore & History', exact: true }).click();
+  const panel = page.getByRole('region', { name: 'Activity timeline' });
+  await expect(panel.getByText('3.00 MB', { exact: false })).toBeVisible();
+  await expect(panel.getByRole('button', { name: 'Show 20 more' })).toBeVisible();
+  await panel.getByRole('button', { name: 'Show 20 more' }).click();
+  await expect(panel.getByRole('button', { name: 'Show 20 more' })).toHaveCount(0);
+  await panel.getByLabel('Activity result').selectOption('partial');
+  await expect(panel.getByRole('heading', { name: 'PC cleanup', exact: true })).toHaveCount(1);
+  await expect(panel.getByRole('heading', { name: 'Change Windows normal cursor' })).toHaveCount(0);
+  await panel.screenshot({ path: 'test-results/pandora-activity.png' });
+  await panel.getByLabel('Find an activity').fill('not found'); await expect(panel.getByText('No activity matches these filters.')).toBeVisible();
+  await panel.getByLabel('Find an activity').fill(''); await panel.getByLabel('Activity result').selectOption('all');
+  await panel.getByRole('button', { name: 'Clear activity', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('Remove 25 reviewed entries');
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'clear-activity'))).toHaveLength(0);
+  await panel.getByRole('button', { name: 'Clear activity', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm clear activity', exact: true }).click();
+  await expect(panel.getByText('No recorded activity yet.')).toBeVisible();
+  await expect(page.getByText('Original preference backup')).toBeVisible();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'clear-activity'))).toEqual([{ method: 'clear-activity', args: ['clear-reviewed'] }]);
+});
+
+test('activity failures remain visible and interrupted outcomes are not presented as success', async ({ page }) => {
+  await desktopFixture(page);
+  await page.addInitScript(() => {
+    window.pandora!.getActivity = async () => ({ available: true, entries: [{ id: 'interrupted', action: 'power-apply', startedAt: '2026-10-30T00:00:00.000Z', endedAt: null, status: 'unconfirmed', succeeded: null, notConfirmed: null, cleanup: null }], limit: 500, discarded: 0, clearedAt: null, incomplete: false, warning: null });
+    window.pandora!.previewClearActivity = async () => ({ token: 'old-review', count: 1 });
+    window.pandora!.clearActivity = async () => { throw new Error('Activity changed after review. Refresh and review it again.'); };
+  });
+  await page.goto('/'); await page.getByRole('navigation').getByRole('button', { name: 'Restore & History', exact: true }).click();
+  const panel = page.getByRole('region', { name: 'Activity timeline' });
+  await expect(panel.getByText(/An earlier operation has no recorded outcome/)).toBeVisible();
+  await panel.getByRole('button', { name: 'Clear activity', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm clear activity' }).click();
+  await expect(panel.getByText('Activity changed after review. Refresh and review it again.')).toBeVisible();
+  await expect(panel.getByRole('heading', { name: 'Change power plan', exact: true })).toBeVisible();
+  await page.evaluate(() => { window.pandora!.getActivity = async () => ({ available: false, entries: [], limit: 500, discarded: 0, clearedAt: null, incomplete: true, warning: 'The log could not be read. Backups remain separate.' }); });
+  await panel.getByRole('button', { name: 'Refresh activity' }).click();
+  await expect(panel.getByText('The log could not be read. Backups remain separate.')).toBeVisible();
+  await expect(panel.getByRole('button', { name: 'Clear activity', exact: true })).toBeDisabled();
+  await expect(panel.getByText('No recorded activity yet.')).toHaveCount(0);
 });

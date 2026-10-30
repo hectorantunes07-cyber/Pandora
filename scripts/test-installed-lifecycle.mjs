@@ -28,6 +28,10 @@ try {
   await desktop.close(); desktop = null;
   page = await launch();
   assert.equal(await page.evaluate(() => window.pandora.getSettings().then(s => s.closeToTray)), true);
+  const activity = await page.evaluate(() => window.pandora.getActivity());
+  assert.ok(activity.entries.some(e => e.action === 'app-login-change' && e.status === 'completed'));
+  assert.ok(activity.entries.some(e => e.action === 'save-settings' && e.status === 'completed'));
+  assert.equal(activity.entries.some(e => e.status === 'running'), false);
   const persisted = await page.evaluate(() => window.pandora.getAppLifecycle()); assert.equal(persisted.login.state, 'owned');
   assert.equal((await page.evaluate(token => window.pandora.changeAppLogin(token, false), persisted.login.token)).success, true);
   const disabled = await page.evaluate(() => window.pandora.getAppLifecycle()); assert.equal(disabled.login.state, 'absent');

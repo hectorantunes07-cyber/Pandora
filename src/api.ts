@@ -9,6 +9,7 @@ const browserSettings = (): AppSettings => {
   catch { return defaultSettings; }
 };
 export const api: AppApi = window.pandora ?? {
+  getActivity: unavailable, previewClearActivity: unavailable, clearActivity: unavailable,
   getSystemRestore: unavailable, previewSystemRestore: unavailable, createSystemRestore: unavailable, openSystemProtection: unavailable,
   getGpuTelemetry: unavailable,
   getAppLifecycle: async () => ({ traySupported: false, login: { supported: false, state: 'unavailable', approved: null, token: null, reason: 'Use the installed Windows app to manage sign-in launch.' } }), changeAppLogin: unavailable,

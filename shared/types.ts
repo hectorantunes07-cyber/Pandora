@@ -44,6 +44,9 @@ export interface NetworkResult {
   received: number; lossPercent: number; averageMs: number | null; minMs: number | null; maxMs: number | null; jitterMs: number | null;
 }
 export interface AppApi {
+  getActivity(): Promise<import('./activity').ActivityInfo>;
+  previewClearActivity(): Promise<import('./activity').ActivityClearReview>;
+  clearActivity(token: string): Promise<OperationResult>;
   getAppLifecycle(): Promise<import('./app-lifecycle').AppLifecycleState>;
   changeAppLogin(token: string, enable: boolean): Promise<OperationResult>;
   getStorageReliability(): Promise<import('./storage-reliability').StorageReliability>;

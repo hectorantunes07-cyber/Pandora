@@ -1,4 +1,5 @@
 import { createPowerTuningService } from '../electron/power-tuning';
+import { createActivityService } from '../electron/activity';
 import { collectHistoryReport } from '../electron/history-report';
 import fs from 'node:fs/promises';
 import os from 'node:os';
@@ -40,7 +41,7 @@ describe('reviewed restoration across all managed features', () => {
   it('exports saved cross-feature originals after relaunch without changing Windows or deleting backups', async () => {
     await populate(services());
     const s = services();
-    const report = await collectHistoryReport({ history: () => s.tweaks.getHistory(), preferences: () => s.tweaks.getTweaks(), profile: () => s.tweaks.getProfile(), power: () => s.power.getInfo(), powerTuning: () => s.powerTuning.getInfo(), startup: () => s.startup.getControls(), pointer: () => s.pointer.getInfo(), visual: () => s.visual.getStates(), cursor: () => s.cursor.getInfo() }, 'test');
+    const report = await collectHistoryReport({ activity: () => createActivityService(dir).get(), history: () => s.tweaks.getHistory(), preferences: () => s.tweaks.getTweaks(), profile: () => s.tweaks.getProfile(), power: () => s.power.getInfo(), powerTuning: () => s.powerTuning.getInfo(), startup: () => s.startup.getControls(), pointer: () => s.pointer.getInfo(), visual: () => s.visual.getStates(), cursor: () => s.cursor.getInfo() }, 'test');
     expect(report.collectionComplete).toBe(true);
     expect(report.sections.power).toMatchObject({ data: { currentPlanId: B, backup: { originalPlanId: A, appliedPlanId: B, status: 'applied' } } });
     expect(report.sections.startup).toMatchObject({ data: expect.arrayContaining([{ id: 'discord', name: 'Discord', managed: true, state: 'disabled', currentEntryPresent: false, savedOriginalPresent: true }]) });

@@ -1,5 +1,12 @@
 # Changelog
 
+## Persistent activity timeline — 2026-10-30
+
+- Added durable activity across supported cleanup, tuning, restoration, preset, startup, cursor, game-location and app-setting operations. Pending operations are recorded before execution; completed, partial, cancelled and unconfirmed outcomes remain distinct after reopening.
+- Added searchable/filterable activity in Restore & History, 20-entry pagination, the latest 500 records, visible retention counts, and expiring reviewed clearing that preserves all rollback backups and preference restoration history.
+- Recording failures remain visible and do not block Windows operations or restoration. Corrupt activity files are preserved; an interrupted operation is never inferred successful. Logs omit commands, paths, filenames, free-text errors and raw operation payloads.
+- Extended managed JSON reports with the retained timeline. Activity starts with this version and can have gaps from retention, clearing or recording failures; it is not a complete history of Windows or other applications.
+
 ## Managed settings reports and portable launch checks — 2026-10-30
 
 - Expanded report export to schema version 2: preference operation history plus current preference, preset, power-plan, AC policy, launcher, pointer, visual-effect and cursor snapshots. Failed sections are explicitly unavailable; null readings, saved originals and conflicts remain distinct.
