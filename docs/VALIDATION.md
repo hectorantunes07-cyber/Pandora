@@ -2,7 +2,21 @@
 
 PANDORA 0.1.0 is being built in a Linux cloud workspace. Windows-specific checks must be distinguished from Linux unit tests and browser tests. No gaming performance gains have been benchmarked.
 
-## Current managed-report and portable-launch test build — 2026-10-30
+## Current persistent-activity Windows test build — 2026-10-30
+
+Application source: `b987f879ab55975f6a691be7616460695237edc3`. Later documentation commits do not change packaged runtime code.
+
+- **303 backend tests passed on Linux; 14 Windows-only checks skipped there. All 46 UI journeys passed**, with the two activity journeys rerun after the final control styling. Production build and real Electron integration passed. The activity panel was visually inspected.
+- [Native Windows CI](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/41021036720) passed all required stages at this exact source: backend/native apply-restore checks, all 46 UI journeys, both package builds, archive/source verification, unpacked/installed launch, managed-report/activity integration, installer lifecycle and the actual portable self-extracting launcher. The installed lifecycle test verifies completed sign-in/app-setting events survive process relaunch. The packaged smoke verifies local-setting activity, report inclusion, clear preview and confirmed clearing through the actual preload bridge.
+- Twelve new activity tests cover persistence, pending state before execution, interrupted sessions, partial batches, thrown/unconfirmed outcomes, picker cancellation, Recycle Bin failure with zero skipped files, malformed results, unreadable logs, final recording failure, retention/backup isolation, stale/expired/forged/replayed clearing, concurrency and persistent gap indication. Report tests verify activity redaction and unavailable-state handling.
+- Activity uses a bounded separate activity-v1.json file and durable atomic writes. It retains the latest 500 events, protects currently running records from pruning/clearing, records discard/clear metadata, and refuses corrupt-file clearing. Recording failures do not change the underlying operation result or block rollback. Previously pending entries with no current operation are displayed as unconfirmed, never inferred successful.
+- Only fixed action names, timestamps, status/counts and logical cleanup summaries are stored. Arguments, tokens, commands, filenames, paths and raw error/result payloads are excluded. It is an operation-level timeline from this implementation onward, not a reconstruction of older activity, third-party changes or every individual file result. Storage failures, retention and user clearing can leave gaps.
+- Both local EXEs passed archive integrity, x64 payload, bundled-code and SHA256 verification at clean source. Their exact bytes were not launched on Windows; CI builds and launches separate bytes. Local windowsLaunchVerified stays false. Prior verified packages/kit are preserved at release/checkpoints/aac5863-before-activity-history.
+- PANDORA-Setup-0.1.0-x64.exe: **158,350,218 bytes**, SHA256 `666b5d8afa38cd7404cefd6bcc15c6da26ebbad8d2b52f5e2b8c6eaaadaebfea`.
+- PANDORA-Portable-0.1.0-x64.exe: **111,583,507 bytes**, SHA256 `b5553ce30b02bfeb1c4cc6e6d95b737a31754db1ef0388ed51b8c8516f40c412`.
+- Overall requested scope is approximately **89% implemented** by rough estimate, with 27 tuning/preference targets. Activity is not another FPS tweak. Physical Windows sign-in/tray behavior, client restore-point creation/UAC, sensors, driver effects, power-loss/storage-failure scenarios and actual gaming benefits still require client/hardware validation. Broader unfinished features remain in FEATURES and WINDOWS-HANDOFF.
+
+## Previous managed-report and portable-launch test build — 2026-10-30
 
 Application source: `aac58630f5ac51c999a3026f0a1a25fdf36a3ed6`. Later documentation commits do not change packaged runtime code.
 
