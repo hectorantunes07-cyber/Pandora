@@ -2,7 +2,21 @@
 
 PANDORA 0.1.0 is being built in a Linux cloud workspace. Windows-specific checks must be distinguished from Linux unit tests and browser tests. No gaming performance gains have been benchmarked.
 
-## Current Fortnite-display Windows test build — 2026-10-30
+## Current optional-app and process-inspection build — 2026-10-30
+
+Application source: `c603e84f36fb9ab2106d086429fdd95284e20cf9`. Later documentation commits do not change packaged runtime code.
+
+- **361 backend tests passed locally, with 18 Windows-only checks skipped. All 51 UI journeys passed.** Typecheck, production build, native helper syntax/isolated runtime fixtures and real Linux Electron integration also passed. The optional-app page was visually inspected, with responsive checks at 1440, 1024 and 800 logical pixels.
+- [Exact-source Windows CI](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/41097684577) passed every required stage: unit/native tests, disposable preference restoration, UI tests, both Windows builds, archive/source/hash checks, packaged bridge, installer lifecycle, actual portable launcher and artifact upload.
+- Native read-only tests execute the current-user Appx query and inspect/recheck the real Node test process. Packaged smoke reads the actual running PANDORA process through its preload bridge. No Windows package is removed, no process is stopped and Explorer is stubbed in the native unit test. Hosted Server inventory does not certify consumer Windows registrations or localized Installed apps UI.
+- Optional-app tests preserve installed versus absent versus unavailable, pinned family identity, protected flags, multiple versions, partial failure, schema bounds, output privacy, concurrent-query coalescing and refresh. The UI confirms before requesting Windows Settings and keeps protected/unknown entries out of that action. No package savings or FPS benefits are inferred.
+- Process tests cover PID reuse, changed image/name, canonical path changes, expired/forged/reused/superseded tokens, stale asynchronous requests, inaccessible or remote paths, partial metadata and exited processes. File metadata is not publisher/signature verification. Details remain local and out of reports/activity.
+- Both local package archives passed x64/source/bundled-code/SHA256 verification. They are cross-built bytes, distinct from the packages built and launched by Windows CI. Local `windowsLaunchVerified` remains false. The prior verified kit is preserved under `release/checkpoints/f21492e-before-app-review`.
+- PANDORA-Setup-0.1.0-x64.exe: **158,380,950 bytes**, SHA256 `6b040d8df887b491b1c77915b59f6d86b247314b4a8ddba464153d4a098538b5`.
+- PANDORA-Portable-0.1.0-x64.exe: **111,607,401 bytes**, SHA256 `8b0d35ad761f226bc2b96c5cf4b1f887bc05e895d90acbefe43ead822c0c7200`.
+- Full requested scope remains roughly **90% implemented**, with 27 Windows preference targets plus three Fortnite display settings. These new inspection tools are not extra tuning actions. Broader automatic GPU/network controls, direct debloat, expanded sensors/game capture, signing/updating and physical-PC validation remain incomplete.
+
+## Previous Fortnite-display Windows test build — 2026-10-30
 
 Application source: `f21492e7c775c4de05f3968a85138dd64dd825d5`. Later documentation commits do not change packaged runtime code.
 

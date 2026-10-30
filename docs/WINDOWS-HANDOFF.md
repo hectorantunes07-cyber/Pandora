@@ -30,10 +30,13 @@ PANDORA 0.1.0 is ready for controlled Windows testing. It is an unsigned develop
 - Persistent activity timeline for supported cleanup, tuning, restoration, preset, startup, cursor, manual game locations and app settings. Search, outcome filters and pagination; latest 500 records; visible retention counts and reviewed clearing. Pending, completed, partial, cancelled and unconfirmed outcomes stay distinct. Logs exclude private paths/commands/errors and cannot replace rollback backups. Older activity is not reconstructed.
 - Local settings, privacy-filtered reports, portable application and per-user installer with retained rollback data on uninstall.
 
+- Optional Windows-app review: current-user registrations for eight fixed families, exact identity checks, version/status/protected flags, search/filter and reviewed Windows Installed apps shortcut. Windows handles any uninstall; PANDORA does not remove apps or back up their data.
+- Process identity details: actual name, PID/start time, executable path and reported company/version. Company metadata is not authenticated publisher information. Folder requests recheck the process instance and canonical local file; no process is stopped or modified, and detail paths are excluded from logs/reports.
+
 ## Still incomplete
 
 - Direct HAGS, per-game GPU/driver, fullscreen/overlay and broader GPU tuning controls; NVIDIA-specific configuration is not automatically applied.
-- Reversible adapter power/EEE/interrupt-moderation/DNS changes, full network-path diagnostics, and optional bundled-app removal. Current network features are diagnostics.
+- Reversible adapter power/EEE/interrupt-moderation/DNS changes, full network-path diagnostics, and direct bundled-app removal. The optional-app inventory and Windows Settings handoff are implemented. Current network features are diagnostics.
 - Windows client verification of the implemented restore-point flow and broader pre-change backups. Actual UAC approval and new checkpoint creation have not yet been tested on Windows 10/11. Local setting snapshots do not restore deleted files or Windows itself.
 - CPU and AMD/Intel GPU sensors, fan readings, raw vendor-specific SMART/self-test diagnostics and broader hardware compatibility. Windows storage reliability counters and NVIDIA telemetry are implemented but require physical-device validation.
 - Broader automated game configuration beyond the three Fortnite display preferences, live game telemetry/capture and measured performance benefits on your hardware.
@@ -43,9 +46,9 @@ Cleanup reports confirmed logical file bytes, not an exact physical free-space i
 
 ## Download
 
-Application source: `f21492e7c775c4de05f3968a85138dd64dd825d5`. Both packages are built and archive-verified. CI launched the unpacked and installed app and the actual portable self-extracting launcher. The portable check verifies extraction, the sandboxed bridge, actual hardware inventory, bundled cursor, cleaner navigation and clean exit with an isolated profile. Native Windows CI passed for this source, including custom file-permission preservation during apply/rollback, installer lifecycle and 48 UI journeys. Exact checksums are recorded in the accompanying `verification.json`.
+Application source: `c603e84f36fb9ab2106d086429fdd95284e20cf9`. Both packages are built and archive-verified. CI launched the unpacked and installed app and the actual portable self-extracting launcher. The portable check verifies extraction, the sandboxed bridge, actual hardware inventory, bundled cursor, cleaner navigation and clean exit with an isolated profile. Native Windows CI passed for this source, including custom file-permission preservation during apply/rollback, installer lifecycle and 51 UI journeys. Exact checksums are recorded in the accompanying `verification.json`.
 
-Download **PANDORA-Windows-x64-unsigned** from [verified Fortnite-settings Windows build](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/41041633317). Sign in to GitHub if required and extract the ZIP first.
+Download **PANDORA-Windows-x64-unsigned** from [verified app-inspection Windows build](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/41097684577). Sign in to GitHub if required and extract the ZIP first.
 
 - `PANDORA-Setup-0.1.0-x64.exe`: per-user installer with shortcuts and uninstaller.
 - `PANDORA-Portable-0.1.0-x64.exe`: no installation; still stores local app data.
@@ -55,6 +58,8 @@ The local `release/PANDORA-Windows-Test-Kit-0.1.0-x64.zip` contains cross-built 
 
 ## What you should test on your Windows PC
 
+- [ ] Compare optional-app registrations with Windows Installed apps, test search/filter and cancel/open review, then refresh. If you uninstall anything through Windows, back up its data first; PANDORA cannot undo app removal.
+- [ ] Inspect a normal and a protected process, verify identity/file metadata, and test a process exiting before Open file location. Company/version are descriptive metadata, not signature checks.
 - [ ] Verify the matching SHA256, install or launch as a normal user, reopen and inspect all pages at your display scaling.
 - [ ] Search the NVIDIA library, save notes and reopen it. Test the Control Panel launcher on your NVIDIA driver installation. Record original values before making manual driver changes; PANDORA rollback does not cover them.
 - [ ] Apply the normal cursor, check all other roles, relaunch, restore the original, and repeat across a Windows restart. Try another supported CUR/ANI file and optional in-app use.
