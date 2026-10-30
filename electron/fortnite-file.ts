@@ -34,7 +34,7 @@ try {
   $replacement=([BitConverter]::ToString($hash.ComputeHash([IO.File]::ReadAllBytes($temporary)))).Replace('-','').ToLowerInvariant();
   if($observed -ne '${expectedHash}' -or $replacement -ne '${desiredHash}') { throw 'Configuration changed before replacement.' }
 } finally { $hash.Dispose() }
-[System.IO.File]::Replace($temporary,$target,$null,$false)`;
+[System.IO.File]::Replace($temporary,$target,[NullString]::Value,$false)`;
 }
 async function replacePreservingPermissions(temporary: string, target: string, expected: Buffer, desired: Buffer) {
   if (process.platform !== 'win32') { await fs.rename(temporary, target); return; }

@@ -202,7 +202,7 @@ it('bounds the Windows replacement helper to sibling temporary/configuration fil
   const directory = "C:\\Users\\O'Brien\\Local\\FortniteGame\\Saved\\Config\\WindowsClient\\";
   const temporary = directory + '.pandora-11111111-1111-1111-1111-111111111111.tmp', target = directory + 'GameUserSettings.ini';
   const script = buildFortniteReplaceScript(temporary, target, 'a'.repeat(64), 'b'.repeat(64));
-  expect(script).toContain("O''Brien"); expect(script).toContain('[System.IO.File]::Replace('); expect(script).toContain('$null,$false)');
+  expect(script).toContain("O''Brien"); expect(script).toContain('[System.IO.File]::Replace('); expect(script).toContain('[NullString]::Value,$false)');
   for (const invalid of ['C:\\Other\\GameUserSettings.ini', directory + 'Documents.txt', '\\\\server\\GameUserSettings.ini']) expect(() => buildFortniteReplaceScript(temporary, invalid, 'a'.repeat(64), 'b'.repeat(64))).toThrow();
   expect(() => buildFortniteReplaceScript(temporary, target, "'; Write-Output injected; '", 'b'.repeat(64))).toThrow();
 });

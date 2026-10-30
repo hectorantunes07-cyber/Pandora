@@ -49,6 +49,30 @@ foreach ($layout in @(@{Name='DISPOSITION';Size=1}, @{Name='INFO';Size=52}, @{Na
 }
 Write-Output 'Cleaner C# declarations and Win32 structure sizes verified. No Win32 API was invoked.'
 
+# Execute the actual replacement helper against disposable files. In PowerShell,
+# $null binds as an empty String; NullString.Value is needed for File.Replace.
+$fortniteDirectory = Join-Path (Split-Path $InputFile) 'fortnite-config'
+$null = New-Item -ItemType Directory -Path $fortniteDirectory
+$fortniteTarget = Join-Path $fortniteDirectory 'GameUserSettings.ini'
+$fortniteTemporary = Join-Path $fortniteDirectory '.pandora-11111111-1111-1111-1111-111111111111.tmp'
+$beforeBytes = [Text.Encoding]::UTF8.GetBytes('before')
+$afterBytes = [Text.Encoding]::UTF8.GetBytes('after')
+[IO.File]::WriteAllBytes($fortniteTarget, $beforeBytes)
+[IO.File]::WriteAllBytes($fortniteTemporary, $afterBytes)
+$sha = [Security.Cryptography.SHA256]::Create()
+try { $beforeHash = ([BitConverter]::ToString($sha.ComputeHash($beforeBytes))).Replace('-','').ToLowerInvariant(); $afterHash = ([BitConverter]::ToString($sha.ComputeHash($afterBytes))).Replace('-','').ToLowerInvariant() } finally { $sha.Dispose() }
+$replacementScript = ([string]$scripts.fortniteReplace).Replace('C:\Fixture\GameUserSettings.ini', $fortniteTarget).Replace('C:\Fixture\.pandora-11111111-1111-1111-1111-111111111111.tmp', $fortniteTemporary).Replace(('a' * 64), $beforeHash).Replace(('b' * 64), $afterHash)
+function Get-Process { param([string]$ErrorAction) @() }
+try {
+  & ([scriptblock]::Create($replacementScript))
+  if([IO.File]::ReadAllText($fortniteTarget) -ne 'after' -or [IO.File]::Exists($fortniteTemporary)) { throw 'Configuration replacement was not verified.' }
+  [IO.File]::WriteAllBytes($fortniteTemporary, $afterBytes)
+  $rejected = $false
+  try { & ([scriptblock]::Create($replacementScript)) } catch { $rejected = $true }
+  if(-not $rejected -or [IO.File]::ReadAllText($fortniteTarget) -ne 'after') { throw 'Changed configuration hash was not protected.' }
+} finally { Remove-Item Function:Get-Process }
+Write-Output 'Actual configuration replacement and stale-content refusal passed isolated runtime fixtures. Windows ACL preservation is tested separately on Windows.'
+
 # Run the real inventory script against isolated cmdlet fixtures. These functions
 # shadow OS providers only in this temporary checker process; no WMI is queried.
 function Get-CimInstance {
