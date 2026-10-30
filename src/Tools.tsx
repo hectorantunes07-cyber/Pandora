@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import { Activity, ArrowDown, ArrowRight, ArrowUp, ChartNoAxesCombined, Check, Download, FlaskConical, Layers, Monitor, RefreshCw, Save, Search, Settings, ShieldCheck, Sparkles, Trash2 } from 'lucide-react';
 import type { AppSettings, ProcessInfo, StartupEntry } from '../shared/types';
 import { api, errorMessage, formatBytes, isDesktop, unsupportedMessage } from './api';
+import { ProcessDetails } from './ProcessDetails';
+import { OptionalApps } from './OptionalApps';
 import { StartupControls } from './StartupControls';
 import { AppLifecycleSettings } from './AppLifecycleSettings';
 import { BenchmarkConfiguration } from './BenchmarkConfiguration';
@@ -11,7 +13,8 @@ import { validFrameCapture, type FrameCapture } from '../shared/frame-capture';
 import { Badge, EmptyState, Modal, Notice, PageHeading, PanelTitle, Spinner, Toggle } from './components';
 
 export function Processes({ onBusyChange }: { onBusyChange: (busy: boolean) => void }) {
-  const [tab, setTab] = useState<'processes' | 'startup'>('processes');
+  const [tab, setTab] = useState<'processes' | 'startup' | 'optional'>('processes');
+  const [detailsPid, setDetailsPid] = useState<number | null>(null);
   const [processes, setProcesses] = useState<ProcessInfo[]>([]);
   const [startup, setStartup] = useState<StartupEntry[]>([]);
   const [search, setSearch] = useState('');
@@ -20,7 +23,7 @@ export function Processes({ onBusyChange }: { onBusyChange: (busy: boolean) => v
   const [error, setError] = useState('');
   const [updated, setUpdated] = useState<string | null>(null);
   const refresh = useCallback(async () => {
-    if (!isDesktop) return;
+    if (!isDesktop || tab === 'optional') return;
     setLoading(true); setError('');
     try {
       if (tab === 'processes') setProcesses(await api.getProcesses());
@@ -35,14 +38,16 @@ export function Processes({ onBusyChange }: { onBusyChange: (busy: boolean) => v
   const count = tab === 'processes' ? filteredProcesses.length : filteredStartup.length;
 
   return <>
-    <PageHeading eyebrow="APPLICATIONS" title="Processes & Startup" description="See what is running now and what starts with Windows.">
+    <PageHeading eyebrow="APPLICATIONS" title="Processes & Startup" description="Review running processes, startup entries, and optional Windows apps.">
       {tab === 'startup' && <button className="button primary" disabled={!isDesktop} onClick={() => api.openWindowsSettings('startup').catch(err => setError(errorMessage(err)))}>Open Windows startup settings<ArrowRight size={16}/></button>}
-      <button className="button secondary" onClick={() => void refresh()} disabled={!isDesktop || loading}><RefreshCw size={16} className={loading ? 'spin' : ''}/>Refresh list</button>
+      {tab !== 'optional' && <button className="button secondary" onClick={() => void refresh()} disabled={!isDesktop || loading}><RefreshCw size={16} className={loading ? 'spin' : ''}/>Refresh list</button>}
     </PageHeading>
     <div className="tabs" aria-label="Application inventory">
       <button className={`tab ${tab === 'processes' ? 'active' : ''}`} onClick={() => { setTab('processes'); setSearch(''); }}><Activity size={16}/>Running processes</button>
       <button className={`tab ${tab === 'startup' ? 'active' : ''}`} onClick={() => { setTab('startup'); setSearch(''); }}><Layers size={16}/>Startup apps</button>
+      <button className={`tab ${tab === 'optional' ? 'active' : ''}`} onClick={() => setTab('optional')}><Layers size={16}/>Optional Windows apps</button>
     </div>
+    {tab === 'optional' ? <OptionalApps/> : <>
     <Notice>{tab === 'processes' ? 'This view is read-only. Memory is each process’s working set; CPU time is its cumulative processor time, not a live percentage.' : 'The inventory below is read-only. Manage supported launcher entries with the reviewed controls, or use Windows startup settings for other apps. Scheduled tasks and Windows services are not included.'}</Notice>
     {tab === 'startup' && <StartupControls onBusyChange={onBusyChange}/>}
     {!isDesktop ? <section className="panel"><EmptyState icon={Monitor} title="Meet the apps behind your PC" description={unsupportedMessage}/></section> : <section className="panel">
@@ -52,11 +57,13 @@ export function Processes({ onBusyChange }: { onBusyChange: (busy: boolean) => v
         {tab === 'processes' && <select className="select" aria-label="Sort processes" value={sort} onChange={event => setSort(event.target.value as typeof sort)}><option value="memory">Highest memory first</option><option value="cpu">Highest CPU time first</option><option value="name">Name A–Z</option></select>}
       </div>
       {error && <Notice tone="error">{error}</Notice>}
-      {loading ? <div className="panel-empty"><Spinner label={`Reading ${tab === 'processes' ? 'running processes' : 'startup apps'}…`}/></div> : count ? <div className="table-wrap"><table className="data-table"><thead><tr><th scope="col">Application</th>{tab === 'processes' ? <><th scope="col">Process ID</th><th scope="col">Memory</th><th scope="col">CPU time</th></> : <><th scope="col">Location</th><th scope="col">Startup status</th></>}</tr></thead><tbody>
-        {tab === 'processes' ? filteredProcesses.map(process => <tr key={process.pid}><td><strong>{process.name}</strong></td><td>{process.pid}</td><td>{formatBytes(process.memoryBytes, 1)}</td><td>{process.cpuSeconds === null ? 'Unavailable' : `${process.cpuSeconds.toFixed(1)} s`}</td></tr>) : filteredStartup.map((entry, index) => <tr key={`${entry.location}-${entry.name}-${index}`}><td><strong>{entry.name}</strong></td><td>{entry.location}</td><td><Badge tone={entry.status === 'Disabled' ? '' : 'green'}>{entry.status}</Badge></td></tr>)}
+      {loading ? <div className="panel-empty"><Spinner label={`Reading ${tab === 'processes' ? 'running processes' : 'startup apps'}…`}/></div> : count ? <div className="table-wrap"><table className="data-table"><thead><tr><th scope="col">Application</th>{tab === 'processes' ? <><th scope="col">Process ID</th><th scope="col">Memory</th><th scope="col">CPU time</th><th scope="col">Details</th></> : <><th scope="col">Location</th><th scope="col">Startup status</th></>}</tr></thead><tbody>
+        {tab === 'processes' ? filteredProcesses.map(process => <tr key={process.pid}><td><strong>{process.name}</strong></td><td>{process.pid}</td><td>{formatBytes(process.memoryBytes, 1)}</td><td>{process.cpuSeconds === null ? 'Unavailable' : `${process.cpuSeconds.toFixed(1)} s`}</td><td><button className="button secondary" onClick={() => setDetailsPid(process.pid)} aria-label={`Inspect ${process.name} (${process.pid})`}>Details</button></td></tr>) : filteredStartup.map((entry, index) => <tr key={`${entry.location}-${entry.name}-${index}`}><td><strong>{entry.name}</strong></td><td>{entry.location}</td><td><Badge tone={entry.status === 'Disabled' ? '' : 'green'}>{entry.status}</Badge></td></tr>)}
       </tbody></table></div> : !error && <EmptyState icon={Layers} title={search ? 'No matching apps' : tab === 'startup' ? 'No startup entries reported' : 'No process data reported'} description={search ? 'Try a different name or clear your search.' : tab === 'startup' ? 'The supported Windows startup locations have no entries, or this platform does not expose them.' : 'Refresh the list to query your operating system again.'}/>}
       {updated && <p className="benchmark-note">Snapshot updated at {updated}. Refresh to see changes.</p>}
     </section>}
+    </>}
+    {detailsPid !== null && <ProcessDetails key={detailsPid} pid={detailsPid} close={() => setDetailsPid(null)}/>}
   </>;
 }
 

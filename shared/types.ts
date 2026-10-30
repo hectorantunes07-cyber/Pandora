@@ -37,7 +37,7 @@ export interface CleanupScan { id: string; kind: CleanupKind; timestamp: string;
 export interface CleanupResult { kind?: CleanupKind; deletedBytes: number; deletedFiles: number; skippedFiles: number; failures: { path: string; reason: string }[]; recoveredBytes: number | null; }
 export interface ProgressEvent { operation: 'scan' | 'clean' | 'tweaks'; completed: number; total: number | null; message: string; }
 export interface AppSettings { reduceMotion: boolean; pollInterval: number; scanOnLaunch: boolean; closeToTray: boolean; }
-export type WindowsSettingsPage = 'display' | 'power' | 'startup' | 'graphics';
+export type WindowsSettingsPage = 'display' | 'power' | 'startup' | 'graphics' | 'apps';
 export type NetworkTarget = 'cloudflare' | 'google';
 export interface NetworkResult {
   target: NetworkTarget; address: string; timestamp: string; samples: (number | null)[];
@@ -99,6 +99,9 @@ export interface AppApi {
   scanCleanup(kind: CleanupKind): Promise<CleanupScan>;
   clean(scanId: string, categoryIds: string[], confirmation: CleanupKind): Promise<CleanupResult>;
   getProcesses(): Promise<ProcessInfo[]>;
+  getProcessDetails(pid: number): Promise<import('./process-details').ProcessDetails>;
+  openProcessLocation(token: string): Promise<void>;
+  getOptionalApps(): Promise<import('./optional-apps').OptionalAppsInfo>;
   getStartup(): Promise<StartupEntry[]>;
   getGames(): Promise<GameInfo[]>;
   getSettings(): Promise<AppSettings>;

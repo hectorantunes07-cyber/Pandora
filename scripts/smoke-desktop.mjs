@@ -45,6 +45,16 @@ try {
   assert.equal(cursor.managed, false);
   assert.match(cursor.selected.preview, /^data:image\/png;base64,/);
   assert.equal(await page.evaluate(() => window.pandora.getNvidiaPreset()), null);
+  if (process.platform === 'win32') {
+    const ownPid = app.process().pid;
+    const details = await page.evaluate(pid => window.pandora.getProcessDetails(pid), ownPid);
+    assert.equal(details.pid, ownPid);
+    assert.ok(details.name && details.startedAt);
+  }
+  const optionalApps = await page.evaluate(() => window.pandora.getOptionalApps());
+  assert.equal(optionalApps.entries.length, 8);
+  assert.equal(optionalApps.supported, process.platform === 'win32');
+  assert.ok(optionalApps.entries.every(e => ['installed', 'not-installed', 'unavailable'].includes(e.state)));
   const fortnite = await page.evaluate(() => window.pandora.getFortniteSettings());
   assert.equal(typeof fortnite.supported, 'boolean');
   assert.equal(fortnite.managed, false);

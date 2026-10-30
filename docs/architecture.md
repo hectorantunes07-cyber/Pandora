@@ -72,3 +72,10 @@ Windows machines and are tracked independently from adapter tests.
 ## Game display configuration
 
 The Fortnite service uses a fixed current-user configuration path and recognizes only three existing scalar fields. A bounded parser retains encoding and unrelated bytes. Expiring review tokens bind the complete observed file and backup state. Process checks, ancestor/link guards, a durable original, atomic replacement and read-back bound each write. Restoration changes only owned values, preserves newer unrelated configuration, and refuses conflicting managed values. No renderer path or command is accepted. See [the game configuration contract](FORTNITE-SETTINGS.md) for limitations; actual game compatibility is a separate validation gate.
+
+
+### Read-only app and process inspection
+
+`optional-apps` has no arguments and queries eight fixed current-user Appx identities. Each identity includes its expected publisher-derived package family. Bounded output, package-property validation and per-family errors preserve unknown versus absent. The renderer can request only the fixed `apps` Windows Settings URI; no uninstall command, package-management executor or caller-supplied path is exposed. Opening settings does not imply that an app was removed.
+
+`process-details` accepts only a numeric PID and returns bounded metadata without command-line arguments. `process-location` accepts an opaque five-minute single-use token, rereads the PID/start time/image identity, checks the unchanged canonical local regular-file path, then asks Explorer to select that file. No arbitrary renderer path, process launch/termination, remote path or elevated operation is supported. File company/version are descriptive metadata, not authenticated publisher information. Detail paths are neither persisted nor included in reports/activity.

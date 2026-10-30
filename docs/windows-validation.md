@@ -229,3 +229,12 @@ References: [Get-StorageReliabilityCounter](https://learn.microsoft.com/powershe
 ## Fortnite display configuration
 
 Follow [the detailed Fortnite validation sequence](FORTNITE-SETTINGS.md). Use an isolated copy first, then a backed-up real configuration. Verify all three existing values against the game menu; cancel before confirming. Check original restoration after PANDORA relaunch, unrelated newer game settings remaining intact, conflicting managed values refusing restoration, and no changes while Fortnite is running. Keep third-party editors and synchronization tools idle during confirmation. Check cloud sync and rendering-mode behavior separately. Hosted Windows filesystem/process tests do not certify actual game behavior or performance.
+
+
+## Optional Windows apps and process details
+
+- Open Processes & Startup → Optional Windows apps as a normal Windows user. Compare the eight selected families with Installed apps; verify localized names, installed/absent/protected/unavailable states and multiple registrations where present. Server CI may legitimately report absent or unavailable registrations.
+- Confirm other users and provisioned packages, Store, Edge/WebView2, drivers, security and essential Windows components are not enumerated. No package is removed by scanning or opening the review dialog.
+- Cancel a review, then open Installed apps. Check the Windows Settings shortcut and app-name guidance. If you choose to uninstall a disposable optional app, back up its data first, use Windows' own confirmation, return and refresh. PANDORA rollback cannot restore that app or its data. Do not test against personal recordings/projects/tasks.
+- Open Details for a normal process and compare its PID, start time and image path with native tools. Company/version are file metadata only. Protected/ended processes must report unavailable details without requesting elevation.
+- Open file location only after reviewing it. Test a process exiting after review and a moved/deleted executable: the folder request must fail safely. Paths stay in this local view and must not appear in exported reports or activity. No process may be terminated or launched by these controls.

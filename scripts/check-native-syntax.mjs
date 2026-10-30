@@ -12,10 +12,10 @@ const root = fileURLToPath(new URL('..', import.meta.url));
 const directory = await mkdtemp(join(tmpdir(), 'pandora-native-syntax-'));
 try {
   const bundle = join(directory, 'scripts.cjs');
-  await build({ stdin: { contents: "export {FORTNITE_PROCESS_QUERY, buildFortniteReplaceScript} from './electron/fortnite-file'; export {buildLoginScript} from './electron/app-login'; export {STORAGE_RELIABILITY_QUERY} from './electron/storage-reliability'; export {SYSTEM_RESTORE_QUERY, buildRestorePointScript, buildRestoreElevationScript} from './electron/system-restore-native'; export {POWER_TUNING_NATIVE_SOURCE} from './electron/power-tuning-native'; export {NVIDIA_LAUNCH_SCRIPT} from './electron/nvidia'; export {CURSOR_NATIVE_SOURCE} from './electron/cursor-native'; export {CLEANER_SCRIPT} from './electron/cleaner-native'; export {WINDOWS_QUERIES} from './electron/system'; export {NETWORK_SCRIPT} from './electron/network'; export {ADAPTER_INSPECTION_SCRIPT, DNS_INSPECTION_SCRIPT} from './electron/network-inspection'; export {POINTER_NATIVE_SOURCE} from './electron/pointer'; export {VISUAL_EFFECTS_NATIVE_SOURCE} from './electron/visual-effects';", resolveDir: root }, outfile: bundle, bundle: true, platform: 'node', format: 'cjs', logLevel: 'silent' });
-  const { FORTNITE_PROCESS_QUERY, buildFortniteReplaceScript, buildLoginScript, STORAGE_RELIABILITY_QUERY, SYSTEM_RESTORE_QUERY, buildRestorePointScript, buildRestoreElevationScript, POWER_TUNING_NATIVE_SOURCE, NVIDIA_LAUNCH_SCRIPT, CURSOR_NATIVE_SOURCE, CLEANER_SCRIPT, WINDOWS_QUERIES, NETWORK_SCRIPT, ADAPTER_INSPECTION_SCRIPT, DNS_INSPECTION_SCRIPT, POINTER_NATIVE_SOURCE, VISUAL_EFFECTS_NATIVE_SOURCE } = createRequire(import.meta.url)(bundle);
+  await build({ stdin: { contents: "export {buildProcessDetailsQuery} from './electron/process-details'; export {OPTIONAL_APPS_QUERY} from './electron/optional-apps'; export {FORTNITE_PROCESS_QUERY, buildFortniteReplaceScript} from './electron/fortnite-file'; export {buildLoginScript} from './electron/app-login'; export {STORAGE_RELIABILITY_QUERY} from './electron/storage-reliability'; export {SYSTEM_RESTORE_QUERY, buildRestorePointScript, buildRestoreElevationScript} from './electron/system-restore-native'; export {POWER_TUNING_NATIVE_SOURCE} from './electron/power-tuning-native'; export {NVIDIA_LAUNCH_SCRIPT} from './electron/nvidia'; export {CURSOR_NATIVE_SOURCE} from './electron/cursor-native'; export {CLEANER_SCRIPT} from './electron/cleaner-native'; export {WINDOWS_QUERIES} from './electron/system'; export {NETWORK_SCRIPT} from './electron/network'; export {ADAPTER_INSPECTION_SCRIPT, DNS_INSPECTION_SCRIPT} from './electron/network-inspection'; export {POINTER_NATIVE_SOURCE} from './electron/pointer'; export {VISUAL_EFFECTS_NATIVE_SOURCE} from './electron/visual-effects';", resolveDir: root }, outfile: bundle, bundle: true, platform: 'node', format: 'cjs', logLevel: 'silent' });
+  const { buildProcessDetailsQuery, OPTIONAL_APPS_QUERY, FORTNITE_PROCESS_QUERY, buildFortniteReplaceScript, buildLoginScript, STORAGE_RELIABILITY_QUERY, SYSTEM_RESTORE_QUERY, buildRestorePointScript, buildRestoreElevationScript, POWER_TUNING_NATIVE_SOURCE, NVIDIA_LAUNCH_SCRIPT, CURSOR_NATIVE_SOURCE, CLEANER_SCRIPT, WINDOWS_QUERIES, NETWORK_SCRIPT, ADAPTER_INSPECTION_SCRIPT, DNS_INSPECTION_SCRIPT, POINTER_NATIVE_SOURCE, VISUAL_EFFECTS_NATIVE_SOURCE } = createRequire(import.meta.url)(bundle);
   const payload = join(directory, 'scripts.json');
-  await writeFile(payload, JSON.stringify({ fortniteProcess: FORTNITE_PROCESS_QUERY, fortniteReplace: buildFortniteReplaceScript('C:\\Fixture\\.pandora-11111111-1111-1111-1111-111111111111.tmp', 'C:\\Fixture\\GameUserSettings.ini', 'a'.repeat(64), 'b'.repeat(64)), appLoginRead: buildLoginScript('C:\\Users\\Fixture\\PANDORA\\PANDORA.exe'), appLoginEnable: buildLoginScript('C:\\Users\\Fixture\\PANDORA\\PANDORA.exe', { expected: 'absent', enable: true }), appLoginDisable: buildLoginScript('C:\\Users\\Fixture\\PANDORA\\PANDORA.exe', { expected: 'owned', enable: false }), storageReliability: STORAGE_RELIABILITY_QUERY, systemRestoreQuery: SYSTEM_RESTORE_QUERY, systemRestoreCreate: buildRestorePointScript('8c867f33-14c2-4d27-9557-20fd0173f972'), systemRestoreElevate: buildRestoreElevationScript('8c867f33-14c2-4d27-9557-20fd0173f972'), nvidiaLauncher: NVIDIA_LAUNCH_SCRIPT, cleaner: CLEANER_SCRIPT, network: NETWORK_SCRIPT, adapterInspection: ADAPTER_INSPECTION_SCRIPT, dnsInspection: DNS_INSPECTION_SCRIPT, ...WINDOWS_QUERIES }));
+  await writeFile(payload, JSON.stringify({ processDetails: buildProcessDetailsQuery(123), optionalApps: OPTIONAL_APPS_QUERY, fortniteProcess: FORTNITE_PROCESS_QUERY, fortniteReplace: buildFortniteReplaceScript('C:\\Fixture\\.pandora-11111111-1111-1111-1111-111111111111.tmp', 'C:\\Fixture\\GameUserSettings.ini', 'a'.repeat(64), 'b'.repeat(64)), appLoginRead: buildLoginScript('C:\\Users\\Fixture\\PANDORA\\PANDORA.exe'), appLoginEnable: buildLoginScript('C:\\Users\\Fixture\\PANDORA\\PANDORA.exe', { expected: 'absent', enable: true }), appLoginDisable: buildLoginScript('C:\\Users\\Fixture\\PANDORA\\PANDORA.exe', { expected: 'owned', enable: false }), storageReliability: STORAGE_RELIABILITY_QUERY, systemRestoreQuery: SYSTEM_RESTORE_QUERY, systemRestoreCreate: buildRestorePointScript('8c867f33-14c2-4d27-9557-20fd0173f972'), systemRestoreElevate: buildRestoreElevationScript('8c867f33-14c2-4d27-9557-20fd0173f972'), nvidiaLauncher: NVIDIA_LAUNCH_SCRIPT, cleaner: CLEANER_SCRIPT, network: NETWORK_SCRIPT, adapterInspection: ADAPTER_INSPECTION_SCRIPT, dnsInspection: DNS_INSPECTION_SCRIPT, ...WINDOWS_QUERIES }));
   await writeFile(join(directory, 'power-tuning.cs'), POWER_TUNING_NATIVE_SOURCE);
   await writeFile(join(directory, 'cursor.cs'), CURSOR_NATIVE_SOURCE);
   await writeFile(join(directory, 'pointer.cs'), POINTER_NATIVE_SOURCE);
@@ -105,6 +105,36 @@ if ($inventory.physicalDisks[0].bus -ne 'NVMe' -or $inventory.installedRamBytes 
 if ($inventory.cpuReportedMHz -ne 4200 -or $inventory.architecture -ne '64-bit') { throw 'CPU clock and architecture aggregation failed.' }
 if ($inventory.notes.Count -ne 0) { throw 'Unexpected provider failure in inventory fixture.' }
 Write-Output 'Inventory PowerShell runtime fixture passed, including formatted versus numeric link speed. No native provider was invoked.'
+
+function Get-AppxPackage {
+ param([string]$Name,[string]$PackageTypeFilter,[string]$ErrorAction)
+ if($PackageTypeFilter -ne 'Main'){throw 'Main registrations only.'}
+ if($Name -eq 'Microsoft.BingNews'){throw 'Fixture provider failure.'}
+ if($Name -eq 'Clipchamp.Clipchamp') {
+  [pscustomobject]@{Name=$Name;PackageFamilyName='Clipchamp.Clipchamp_yxz26nhyzhsrt';Version='1.2.3.4';Architecture='X64';IsFramework=$false;IsResourcePackage=$false;NonRemovable=$false;SignatureKind='Store';Status='Ok';InstallLocation='PRIVATE_SENTINEL'}
+ }
+}
+$optional = (& ([scriptblock]::Create([string]$scripts.optionalApps))) | ConvertFrom-Json
+if($optional.entries.Count -ne 8 -or $optional.entries[0].packages.Count -ne 1 -or -not $optional.entries[0].readable){throw 'Optional app installed registration failed.'}
+if($optional.entries[1].packages.Count -ne 0 -or -not $optional.entries[1].readable){throw 'Absent registration must remain distinct.'}
+if($optional.entries[2].readable -or $optional.entries[2].packages.Count -ne 0){throw 'Failed registration query must remain unavailable.'}
+if(($optional | ConvertTo-Json -Depth 8) -match 'PRIVATE_SENTINEL'){throw 'Optional app query leaked a private path.'}
+Remove-Item Function:Get-AppxPackage
+Write-Output 'Optional-app query passed isolated installed/absent/failed-provider and privacy fixtures. No Windows package was modified.'
+function Get-Process {
+ param([int]$Id,[string]$ErrorAction)
+ if($Id -ne 123){throw 'Unexpected process fixture ID.'}
+ $fixture=[pscustomobject]@{Id=123;ProcessName='Fixture';StartTime=[DateTime]::UtcNow;MainModule=[pscustomobject]@{FileName=$null};HasExited=$false}
+ $fixture | Add-Member -MemberType ScriptMethod -Name Refresh -Value {}
+ $fixture | Add-Member -MemberType ScriptMethod -Name Dispose -Value {}
+ $fixture
+}
+$detail=(& ([scriptblock]::Create([string]$scripts.processDetails))) | ConvertFrom-Json
+if($detail.pid -ne 123 -or $detail.name -ne 'Fixture' -or -not $detail.startedAt -or $null -ne $detail.executable){throw 'Process details must preserve unavailable image metadata.'}
+Remove-Item Function:Get-Process
+Write-Output 'Process identity script passed an isolated protected-image fixture. No process was changed.'
+
+
 
 function Get-NetAdapter {
  param([switch]$IncludeHidden, [string]$ErrorAction)

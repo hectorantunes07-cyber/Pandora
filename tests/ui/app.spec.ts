@@ -11,6 +11,9 @@ async function desktopFixture(page: Page) {
     let cursorManaged = false, appCursor = false;
     const cursorInfo = () => ({ supported: true, current: { kind: 'String' as const, value: cursorManaged ? 'C:\\fixture.cur' : '' }, original: cursorManaged ? { kind: 'String' as const, value: '' } : null, currentPreview: null, selected: { id: 'fixture', name: 'Sonnier’s cursor', kind: 'cur' as const, width: 32, height: 32, x: 15, y: 16, preview: './cursors/sonnier.png', cssCursor: 'data:image/x-icon;base64,AA==' }, useInApp: appCursor, managed: cursorManaged, conflict: false, token: 'cursor-review' });
     window.pandora = {
+      getProcessDetails: async pid => ({ pid, name: 'fixture.exe', startedAt: '2026-10-30T10:00:00.000Z', executable: 'C:\\Fixture\\fixture.exe', company: 'Unverified fixture company', version: '1.0', token: 'process-token' }),
+      openProcessLocation: async token => { track('process-location', token); },
+      getOptionalApps: async () => ({ supported: true, timestamp: new Date().toISOString(), complete: true, entries: [] }),
       getFortniteSettings: async () => ({ supported: true, current: null, original: null, managed: false, managedFields: [], conflict: false, running: null, canChange: false, reason: 'No Fortnite configuration fixture configured.' }),
       previewFortniteSettings: async () => { throw new Error('No Fortnite configuration fixture configured.'); },
       changeFortniteSettings: async () => { throw new Error('No Fortnite configuration fixture configured.'); },
@@ -1012,4 +1015,72 @@ test('Fortnite controls handle running games, stale confirmation, unreadable bac
   await page.setViewportSize({ width: 1440, height: 960 });
   await panel.scrollIntoViewIfNeeded();
   await panel.screenshot({ path: 'test-results/pandora-fortnite.png' });
+});
+
+
+test('optional apps distinguish registration states and require a review before opening Windows controls', async ({ page }) => {
+  await desktopFixture(page);
+  await page.addInitScript(() => {
+    window.pandora!.getOptionalApps = async () => ({ supported: true, complete: false, timestamp: new Date().toISOString(), entries: [
+      { id: 'clipchamp', state: 'installed', packages: [{ version: '1.2.3.4', architecture: 'X64', protected: false, status: 'Ok' }], reason: null },
+      { id: 'solitaire', state: 'installed', packages: [{ version: '1.2.3.4', architecture: 'X64', protected: true, status: 'Ok' }], reason: null },
+      { id: 'news', state: 'unavailable', packages: [], reason: 'Provider unavailable.' },
+      { id: 'weather', state: 'not-installed', packages: [], reason: null },
+    ] });
+  });
+  await page.goto('/'); await page.getByRole('navigation').getByRole('button', { name: /Processes & Startup/ }).click();
+  await page.getByRole('button', { name: 'Optional Windows apps', exact: true }).click();
+  await expect(page.getByText('2 INSTALLED')).toBeVisible(); await expect(page.getByText('WINDOWS PROTECTED')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Review in Windows' })).toHaveCount(1);
+  await page.screenshot({ path: 'test-results/pandora-optional-apps.png', fullPage: true });
+  await page.getByRole('button', { name: 'Review in Windows' }).click();
+  await expect(page.getByRole('dialog')).toContainText('cannot be rolled back'); await page.getByRole('button', { name: 'Keep app' }).click();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'windows-settings'))).toHaveLength(0);
+  await page.getByRole('button', { name: 'Review in Windows' }).click(); await page.getByRole('button', { name: 'Open Installed apps' }).click();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'windows-settings'))).toEqual([{ method: 'windows-settings', args: ['apps'] }]);
+  await page.getByLabel('Optional app status').selectOption('all'); await page.getByLabel('Search optional apps').fill('news');
+  await expect(page.getByText('Provider unavailable.')).toBeVisible(); await expect(page.getByRole('button', { name: 'Review in Windows' })).toHaveCount(0);
+  await page.getByLabel('Search optional apps').fill('weather'); await expect(page.getByText('NOT INSTALLED', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Refresh apps' }).click();
+  await expect(page.getByText(/Windows Installed apps was opened/)).toHaveCount(0);
+});
+
+test('optional app failures remain visible and the cards fit smaller windows', async ({ page }) => {
+  await desktopFixture(page);
+  await page.addInitScript(() => {
+    window.pandora!.getOptionalApps = async () => ({ supported: true, complete: true, timestamp: new Date().toISOString(), entries: [{ id: 'clipchamp', state: 'installed', packages: [{ version: '1.2.3.4', architecture: 'X64', protected: false, status: 'Ok' }], reason: null }] });
+    window.pandora!.openWindowsSettings = async () => { throw new Error('Windows Settings could not open.'); };
+  });
+  await page.goto('/'); await page.getByRole('navigation').getByRole('button', { name: /Processes & Startup/ }).click();
+  await page.getByRole('button', { name: 'Optional Windows apps', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Review in Windows' })).toBeVisible();
+  for (const width of [1440, 1024, 800]) {
+    await page.setViewportSize({ width, height: 960 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  }
+  await page.getByRole('button', { name: 'Review in Windows' }).click(); await page.getByRole('button', { name: 'Open Installed apps' }).click();
+  await expect(page.getByRole('dialog')).toContainText('Windows Settings could not open.');
+  await page.getByRole('button', { name: 'Keep app' }).click();
+  await page.evaluate(() => { window.pandora!.getOptionalApps = async () => { throw new Error('Read failed.'); }; });
+  await page.getByRole('button', { name: 'Refresh apps' }).click(); await expect(page.getByText('Read failed.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Review in Windows' })).toHaveCount(0);
+});
+
+
+test('process details show metadata and only open a reviewed location on request', async ({ page }) => {
+  await desktopFixture(page); await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: /Processes & Startup/ }).click();
+  await page.getByRole('button', { name: 'Inspect fixture.exe (123)' }).click();
+  await expect(page.getByRole('dialog')).toContainText('not verified publisher');
+  await expect(page.getByRole('dialog')).toContainText('Unverified fixture company');
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'process-location'))).toHaveLength(0);
+  await page.getByRole('button', { name: 'Open file location' }).click();
+  await expect(page.getByRole('dialog')).toContainText('Windows Explorer was asked');
+  await expect(page.getByRole('button', { name: 'Open file location' })).toBeDisabled();
+  expect(await page.evaluate(() => (window as any).__calls.find((c: any) => c.method === 'process-location').args)).toEqual(['process-token']);
+  await page.getByRole('button', { name: 'Close details' }).click();
+  await page.evaluate(() => { window.pandora!.getProcessDetails = async () => { throw new Error('This process exited.'); }; });
+  await page.getByRole('button', { name: 'Inspect fixture.exe (123)' }).click();
+  await expect(page.getByRole('dialog')).toContainText('This process exited.');
+  await expect(page.getByRole('button', { name: 'Open file location' })).toBeDisabled();
 });

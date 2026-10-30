@@ -1,5 +1,11 @@
 # Changelog
 
+## Optional apps and process identity — 2026-10-30
+
+- Added a current-user optional Windows-app inventory with eight fixed app families, package identity validation, installed/absent/unavailable/protected states, search/filter and explicit refresh. Package paths and account identifiers are omitted.
+- Added a reviewed Windows Installed apps handoff with app-specific data-preservation guidance. Windows performs any uninstall; PANDORA does not claim application removal is reversible or an FPS improvement.
+- Added on-request process identity, start time, executable location and reported file metadata. Opening a local executable folder requires a fresh, expiring, single-use identity check; process exits, PID reuse and changed destinations are refused. No process is stopped or modified, and metadata is not a signature or publisher verification.
+
 ## Reviewed Fortnite display preferences — 2026-10-30
 
 - Added actual local-configuration controls for the existing Fortnite frame cap, V-Sync and dynamic-resolution keys. The review shows current and requested values, tradeoffs and game-verification requirements; no changes happen on selection or cancellation.
