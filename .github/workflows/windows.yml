@@ -25,7 +25,16 @@ jobs:
       - name: Native script syntax and C# compilation
         run: node scripts/check-native-syntax.mjs
       - name: Unit and filesystem safety tests
-        run: npm test
+        shell: pwsh
+        run: |
+          & npm.cmd test 2>&1 | Tee-Object -FilePath unit-windows.log
+          $testExit = $LASTEXITCODE
+          if ($testExit -ne 0) {
+            $tail = (Get-Content unit-windows.log -Tail 120) -join "`n"
+            $annotation = $tail.Replace('%', '%25').Replace("`r", '%0D').Replace("`n", '%0A')
+            Write-Output "::error title=Windows unit validation::$annotation"
+          }
+          exit $testExit
       - name: Disposable runner registry, profile, power, pointer, visual effects and startup exact restore
         shell: pwsh
         run: |
@@ -125,6 +134,7 @@ jobs:
           path: |
             build-windows.log
             native-windows.log
+            unit-windows.log
             playwright-report
             test-results
 
