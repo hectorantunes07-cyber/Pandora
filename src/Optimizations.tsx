@@ -99,11 +99,13 @@ export function Restore({ tweaks, notify, refreshTweaks, onBusyChange }: { tweak
   const exportHistory = async () => {
     if (exporting.current || busy) return;
     exporting.current = true; setBusy(true); onBusyChange(true); setError('');
-    try { const path = await api.exportReport('history'); if (path) notify(`Managed settings report saved to ${path}`); }
-    catch (err) { setError(errorMessage(err)); }
+    let collected = false;
+    try { const path = await api.exportReport('history'); if (path) { collected = true; notify(`Managed settings report saved to ${path}`); } }
+    catch (err) { collected = true; setError(errorMessage(err)); }
     finally {
       // State collection refreshes native review tokens. Reopen controls with fresh reviews.
-      setRevision(n => n + 1); exporting.current = false; setBusy(false); onBusyChange(false);
+      if (collected) setRevision(n => n + 1);
+      exporting.current = false; setBusy(false); onBusyChange(false);
     }
   };
   return <>
