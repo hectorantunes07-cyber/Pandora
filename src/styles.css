@@ -269,3 +269,7 @@
 .network-path-results .network-samples { grid-template-columns:repeat(4,minmax(0,1fr)); }
 .network-path-results .network-samples strong { font-size:14px; white-space:nowrap; }
 @media(max-width:1000px) { .network-path-results .two-columns { grid-template-columns:1fr; } }
+
+.fortnite-quality { margin-top:24px; border-top:1px solid var(--line); padding-top:20px; }
+.fortnite-quality > summary { cursor:pointer; font-size:20px; line-height:1.5; margin-bottom:16px; }
+.fortnite-quality > summary span { font-size:13px; color:#bcb1cd; margin-left:12px; display:inline-block; }

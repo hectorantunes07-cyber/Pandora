@@ -87,7 +87,7 @@ export async function collectHistoryReport(sources: HistoryReportSources, versio
     const values = (v: FortniteValues | null) => {
       if (v === null) return null;
       if (!validFortniteValues(v)) throw new Error('Invalid game display values.');
-      return { frameRateLimit: v.frameRateLimit, vsync: v.vsync, dynamicResolution: v.dynamicResolution };
+      return Object.fromEntries(FORTNITE_FIELDS.filter(key => v[key] !== undefined).map(key => [key, v[key]]));
     };
     if (value.managedFields.some(key => !FORTNITE_FIELDS.includes(key))) throw new Error('Unknown managed game setting.');
     return { supported: value.supported, managed: value.managed, managedFields: [...value.managedFields], conflict: value.conflict, running: value.running, current: values(value.current), original: values(value.original), canChange: value.canChange };

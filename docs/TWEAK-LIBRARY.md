@@ -2,7 +2,7 @@
 
 Created by Sonnier. This inventory describes implemented behavior, not measured FPS improvements. Availability is checked on each PC. Settings changed outside PANDORA can block automatic restoration so they are not overwritten.
 
-There are **33 configurable Windows policy/preference values and three Fortnite display values**. Six battery values are counterparts of the existing power controls. Presets reuse these values; they do not add more tweaks. Cursor customization, cleanup and diagnostics are listed separately.
+There are **33 configurable Windows policy/preference values and up to eleven existing Fortnite display/quality values**. Six battery values are counterparts of the existing power controls. Presets reuse these values; they do not add more tweaks. Cursor customization, cleanup and diagnostics are listed separately.
 
 ## Working Windows and game controls
 
@@ -13,12 +13,12 @@ There are **33 configurable Windows policy/preference values and three Fortnite 
 | Processor and PCIe | Minimum processor state; maximum processor state; boost policy; energy preference; PCIe link power management; cooling policy | Separate AC/DC originals on the saved plan; other source preserved |
 | Startup | Current-user Run entries for Discord, Steam, Epic Games Launcher and Spotify | Exact original command and registry type |
 | Mouse | Windows pointer acceleration | Original two thresholds and acceleration mode |
-| Fortnite | Frame cap; V-Sync; dynamic resolution, when the existing local configuration exposes them | Original owned values; unrelated newer settings preserved; game must be closed |
+| Fortnite | Frame cap; V-Sync; dynamic resolution; optional view distance, anti-aliasing, shadows, post-processing, textures, effects, foliage and shading quality, when the existing local configuration exposes supported values | Original owned values; unrelated newer settings preserved; game must be closed |
 | Privacy | Advertising ID; tailored experiences | Exact original value or absence |
 
 New battery policy changes require a positively detected battery. Previously saved battery settings remain restorable if the battery later becomes unavailable. Power policies can be overridden by firmware, Windows power mode or OEM software. Favoring performance can increase heat, fan noise and battery drain.
 
-Fortnite, VALORANT, CS2, Apex Legends, Warzone and GTA V have guides and installation/path management. Only the three listed Fortnite file values have direct game-file controls. The other guides do not automatically rewrite game configurations. There is no GTA VI entry.
+Fortnite, VALORANT, CS2, Apex Legends, Warzone and GTA V have guides and installation/path management. Only the listed Fortnite file values have direct game-file controls. The other guides do not automatically rewrite game configurations. There is no GTA VI entry.
 
 ## Quality of Life
 

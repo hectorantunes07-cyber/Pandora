@@ -45,12 +45,12 @@ describe('reviewed restoration across all managed features', () => {
   it('restores a saved Fortnite configuration with other changes and skips a running game', async () => {
     const s = services(), local = path.join(dir, 'local');
     const config = path.join(local, 'FortniteGame/Saved/Config/WindowsClient/GameUserSettings.ini');
-    const original = Buffer.from('[/Script/FortniteGame.FortGameUserSettings]\r\nFrameRateLimit=144.000000\r\nbUseVSync=True\r\nbUseDynamicResolution=False\r\n');
+    const original = Buffer.from('[/Script/FortniteGame.FortGameUserSettings]\r\nFrameRateLimit=144.000000\r\nbUseVSync=True\r\nbUseDynamicResolution=False\r\n[ScalabilityGroups]\r\nsg.ShadowQuality=3\r\n');
     await fs.mkdir(path.dirname(config), { recursive: true }); await fs.writeFile(config, original);
     let running = false;
     const adapter = createFortniteFileAdapter(local, async () => running, true);
     s.fortnite = createFortniteService(dir, adapter);
-    await s.fortnite.change((await s.fortnite.preview({ frameRateLimit: 240, vsync: false, dynamicResolution: false }, false)).token);
+    await s.fortnite.change((await s.fortnite.preview({ frameRateLimit: 240, vsync: false, dynamicResolution: false, shadows: 0 }, false)).token);
     await populate(s); running = true;
     const recovery = createRestoreService(s), blocked = await recovery.preview();
     expect(blocked.items.find(i => i.id === 'fortnite-config')).toMatchObject({ eligible: false });
@@ -60,7 +60,7 @@ describe('reviewed restoration across all managed features', () => {
     running = false; s.fortnite = createFortniteService(dir, adapter);
     const reopened = createRestoreService(s), reviewed = await reopened.preview();
     expect(reviewed.items).toHaveLength(1);
-    expect(reviewed.items[0]).toMatchObject({ id: 'fortnite-config', eligible: true, original: 'Frame rate limit: 144 FPS · V-Sync: On' });
+    expect(reviewed.items[0]).toMatchObject({ id: 'fortnite-config', eligible: true, original: 'Frame rate limit: 144 FPS · V-Sync: On · Shadow quality: Epic' });
     expect((await reopened.restore(reviewed.token))[0].success).toBe(true);
     expect(await fs.readFile(config)).toEqual(original);
   }, 30_000); // Includes two cold native Windows file replacements.

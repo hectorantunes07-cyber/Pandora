@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { readSmallJson, writeDurableJson } from './durable-store';
 import { parseFortniteConfig, MAX_FORTNITE_CONFIG } from './fortnite-config';
 import { createFortniteFileAdapter, sameFortniteSnapshot, type FortniteAdapter, type FortniteSnapshot } from './fortnite-file';
-import { FORTNITE_FRAME_CAPS, FORTNITE_FIELDS, validFortniteValues, type FortniteInfo, type FortniteReview } from '../shared/fortnite-settings';
+import { FORTNITE_FRAME_CAPS, FORTNITE_FIELDS, FORTNITE_QUALITY, validFortniteValues, type FortniteInfo, type FortniteReview } from '../shared/fortnite-settings';
 import type { OperationResult } from '../shared/types';
 
 interface Backup { version: 1; locationId: string; original: string; applied: string; status: 'pending' | 'applied' | 'restored'; timestamp: string; }
@@ -23,7 +23,7 @@ export function createFortniteService(directory: string, adapter: FortniteAdapte
     for (const key of fields) Object.assign(next, { [key]: original.values[key] });
     // The unchanged PANDORA file can be restored exactly. Otherwise replace only
     // owned scalar values, keeping newer unrelated values and formatting intact.
-    const desired = bytes.toString('base64') === b.applied ? Buffer.from(b.original, 'base64') : current.patch(next, original.rawValues);
+    const desired = conflict ? bytes : bytes.toString('base64') === b.applied ? Buffer.from(b.original, 'base64') : current.patch(next, original.rawValues);
     return { conflict, fields, desired };
   }
   async function load(): Promise<Backup | null> {
@@ -70,6 +70,7 @@ export function createFortniteService(directory: string, adapter: FortniteAdapte
     } else {
       if (managed(b)) throw new Error('Restore the managed Fortnite configuration before applying another change.');
       if (!validFortniteValues(value) || (value.frameRateLimit !== current.frameRateLimit && !(FORTNITE_FRAME_CAPS as readonly number[]).includes(value.frameRateLimit))) throw new Error('Choose a supported frame cap and display options.');
+      if (FORTNITE_QUALITY.some(({ id }) => value[id] !== current[id] && value[id] !== undefined && value[id]! > 3)) throw new Error('Choose Low, Medium, High or Epic for new quality changes.');
       desired = parseFortniteConfig(snapshot.bytes).patch(value);
       if (desired.equals(snapshot.bytes)) throw new Error('Choose a different setting before reviewing.');
     }

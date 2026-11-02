@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Gamepad2, RefreshCw } from 'lucide-react';
-import { FORTNITE_FRAME_CAPS, FORTNITE_LABELS, type FortniteInfo, type FortniteReview, type FortniteValues } from '../shared/fortnite-settings';
+import { FORTNITE_FRAME_CAPS, FORTNITE_FIELDS, FORTNITE_LABELS, FORTNITE_QUALITY, FORTNITE_QUALITY_LEVELS, fortniteValueLabel, type FortniteInfo, type FortniteReview, type FortniteValues } from '../shared/fortnite-settings';
 import type { OperationResult } from '../shared/types';
 import { api, errorMessage, isDesktop } from './api';
 import { Badge, Modal, Notice, PanelTitle, Spinner } from './components';
@@ -39,7 +39,7 @@ export function FortniteSettings({ onBusyChange, restoreOnly = false }: { onBusy
   const changed = draft && info?.current && (Object.keys(draft) as (keyof FortniteValues)[]).some(key => draft[key] !== info.current![key]);
   return <section className="panel fortnite-settings" aria-label="Fortnite display preferences">
     <PanelTitle icon={Gamepad2} title="Fortnite display preferences" action={<Badge tone={info?.conflict ? 'amber' : 'purple'}>{info?.conflict ? 'EXTERNAL CHANGE' : info?.managed ? 'ORIGINAL SAVED' : 'OPTIONAL'}</Badge>}/>
-    <p className="benchmark-note">Set a frame cap, V-Sync and dynamic resolution in Fortnite’s existing local configuration. Close Fortnite and configuration editors first. Check the video menu on your next launch; a game update or cloud sync may replace these values.</p>
+    <p className="benchmark-note">Manage display and supported graphics-quality values in Fortnite’s existing local configuration. Close Fortnite and configuration editors first. Check the video menu on your next launch; a game update or cloud sync may replace these values.</p>
     {!isDesktop && <Notice>Open the Windows app to read your Fortnite settings.</Notice>}
     {info?.reason && <Notice tone="warning">{info.reason}</Notice>}
     {info?.current && <div className="fortnite-settings-grid">
@@ -47,12 +47,28 @@ export function FortniteSettings({ onBusyChange, restoreOnly = false }: { onBusy
       <div className="fortnite-setting"><h3>V-Sync</h3><p>Can reduce tearing by synchronizing frames with the display. It can add latency. Coordinate this with your driver and variable-refresh settings; there is no universal best choice.</p><span className="accounting-note">Current file: {info.current.vsync ? 'On' : 'Off'}</span><label>V-Sync<select disabled={editingDisabled || restoreOnly} value={String(draft?.vsync ?? info.current.vsync)} onChange={e => setDraft(v => v && ({ ...v, vsync: e.target.value === 'true' }))}><option value="false">Off</option><option value="true">On</option></select></label></div>
       <div className="fortnite-setting"><h3>Dynamic resolution</h3><p>Allows supported rendering modes to vary internal resolution to meet their frame target. Image sharpness can change. Turning it off keeps resolution steadier but can reduce performance.</p><span className="accounting-note">Current file: {info.current.dynamicResolution ? 'On' : 'Off'}</span><label>Dynamic resolution<select disabled={editingDisabled || restoreOnly} value={String(draft?.dynamicResolution ?? info.current.dynamicResolution)} onChange={e => setDraft(v => v && ({ ...v, dynamicResolution: e.target.value === 'true' }))}><option value="false">Off</option><option value="true">On</option></select></label></div>
     </div>}
+    {info?.current && <details className="fortnite-quality">
+      <summary>Graphics quality <span>{FORTNITE_QUALITY.filter(setting => info.current![setting.id] !== undefined).length} of 8 available</span></summary>
+      <p className="benchmark-note">Only recognized values already present in the ScalabilityGroups section can be edited. Rendering mode, the game version and individual features can override these groups. Check the video menu after launching Fortnite.</p>
+      <div className="fortnite-settings-grid">{FORTNITE_QUALITY.map(setting => {
+        const current = info.current![setting.id], selected = draft?.[setting.id] ?? current;
+        return <div className="fortnite-setting" key={setting.id}>
+          <h3>{setting.title}</h3><p>{setting.description}</p>
+          <span className="accounting-note">Current file: {fortniteValueLabel(setting.id, current)}</span>
+          {current === undefined ? <p className="accounting-note">No supported, unambiguous value was found. Use the in-game menu; PANDORA will not add this setting.</p> :
+            <label>{setting.title}<select disabled={editingDisabled || restoreOnly} value={selected} onChange={e => setDraft(v => v && ({ ...v, [setting.id]: Number(e.target.value) }))}>
+              {current === 4 && <option value={4}>Cinematic (4, stored)</option>}
+              {FORTNITE_QUALITY_LEVELS.map((label, value) => <option key={value} value={value}>{label}</option>)}
+            </select></label>}
+        </div>;
+      })}</div>
+    </details>}
     {info?.managed && <p className="accounting-note">Managed settings: {info.managedFields.map(key => FORTNITE_LABELS[key]).join(', ')}. Restore the saved display values before applying another configuration. Unrelated newer settings are preserved; conflicting managed values block restoration.</p>}
     <div className="button-row"><button className="button secondary" disabled={!isDesktop || reading || busy} onClick={() => void load()}><RefreshCw size={14}/>{reading ? 'Reading settings…' : 'Read Fortnite settings'}</button>{!restoreOnly && <button className="button primary" disabled={editingDisabled || !changed} onClick={() => void preview(false)}>Review Fortnite changes</button>}<button className="button secondary" disabled={disabled || !info?.managed} onClick={() => void preview(true)}>Review original configuration</button></div>
     {error && <Notice tone="error">{error}</Notice>}{result && <Notice tone={result.success ? 'success' : 'warning'}>{result.message}</Notice>}
     {review && <Modal title={review.restore ? 'Restore original Fortnite display values?' : 'Apply Fortnite display preferences?'} description="Keep Fortnite and configuration editors closed until this operation finishes. Only the reviewed local configuration is changed; game executables, anti-cheat and driver settings are untouched." onClose={() => setReview(null)} busy={busy} footer={<><button className="button secondary" disabled={busy} onClick={() => setReview(null)}>Cancel</button><button className="button primary" disabled={busy} onClick={() => void apply()}>{busy ? <Spinner label="Verifying configuration…"/> : review.restore ? 'Restore Fortnite configuration' : 'Apply Fortnite preferences'}</button></>}>
-      <dl className="detail-list"><div><dt>Frame cap</dt><dd>{capLabel(review.current.frameRateLimit)} → {capLabel(review.desired.frameRateLimit)}</dd></div><div><dt>V-Sync</dt><dd>{review.current.vsync ? 'On' : 'Off'} → {review.desired.vsync ? 'On' : 'Off'}</dd></div><div><dt>Dynamic resolution</dt><dd>{review.current.dynamicResolution ? 'On' : 'Off'} → {review.desired.dynamicResolution ? 'On' : 'Off'}</dd></div></dl>
-      <Notice>{review.restore ? 'Restores only the values PANDORA changed. Other settings and newer formatting are preserved. A conflicting managed value blocks restoration; values already back at their originals need no write.' : 'The entire original configuration is stored in your local PANDORA backup. Only changed values in these three existing keys are replaced. Formatting, other settings and file encoding are preserved. No read-only flag is added.'}</Notice>
+      <dl className="detail-list">{FORTNITE_FIELDS.filter(key => review.current[key] !== review.desired[key]).map(key => <div key={key}><dt>{FORTNITE_LABELS[key]}</dt><dd>{fortniteValueLabel(key, review.current[key])} → {fortniteValueLabel(key, review.desired[key])}</dd></div>)}</dl>
+      <Notice>{review.restore ? 'Restores only the values PANDORA changed. Other settings and newer formatting are preserved. A conflicting managed value blocks restoration; values already back at their originals need no write.' : 'The entire original configuration is stored in your local PANDORA backup. Only the reviewed values in existing, recognized keys are replaced. Formatting, other settings and file encoding are preserved. No read-only flag is added.'}</Notice>
       <p className="accounting-note">These are saved preferences, not live game readings. Confirm compatibility and actual performance in Fortnite. No FPS or input-latency improvement has been measured.</p>
     </Modal>}
   </section>;

@@ -19,6 +19,15 @@ function fixture(): HistoryReportSources {
   };
 }
 describe('managed settings report', () => {
+  it('exports only recognized Fortnite quality values and omits unavailable groups', async () => {
+    const sources = fixture(); const original = sources.fortnite;
+    sources.fortnite = async () => ({ ...await original(), current: { frameRateLimit: 0, vsync: false, dynamicResolution: true, shadows: 0, textures: 2 }, original: { frameRateLimit: 144, vsync: true, dynamicResolution: true, shadows: 3, textures: 2 }, managed: true, managedFields: ['shadows'] });
+    const report = await collectHistoryReport(sources, 'test');
+    expect(report.sections.fortnite).toMatchObject({ status: 'available', data: { current: { shadows: 0, textures: 2 }, original: { shadows: 3 }, managedFields: ['shadows'] } });
+    expect(JSON.stringify(report)).not.toContain('PRIVATE_SENTINEL');
+    expect(JSON.stringify(report.sections.fortnite)).not.toContain('foliage');
+  });
+
   it('exports retained activity without record identifiers, raw warnings or extra payload fields', async () => {
     const sources = fixture();
     sources.activity = async () => ({ available: true, entries: [{ id: privateText, action: 'clean', startedAt: '2026-10-30T00:00:00.000Z', endedAt: null, status: 'unconfirmed', succeeded: null, notConfirmed: null, cleanup: null }], limit: 500, discarded: 3, clearedAt: null, incomplete: true, warning: privateText });

@@ -939,10 +939,10 @@ test('activity failures remain visible and interrupted outcomes are not presente
   await expect(panel.getByText('No recorded activity yet.')).toHaveCount(0);
 });
 
-async function fortniteFixture(page: Page) {
+async function fortniteFixture(page: Page, quality = false) {
   await desktopFixture(page);
-  await page.addInitScript(() => {
-    const original = { frameRateLimit: 144, vsync: true, dynamicResolution: false };
+  await page.addInitScript((quality: boolean) => {
+    const original: import('../../shared/fortnite-settings').FortniteValues = { frameRateLimit: 144, vsync: true, dynamicResolution: false, ...(quality ? { viewDistance: 3, antiAliasing: 3, shadows: 3, postProcessing: 3, textures: 3, effects: 3, foliage: 3, shading: 4 } : {}) };
     let current = { ...original }, managed = false;
     let review: import('../../shared/fortnite-settings').FortniteReview;
     (window as any).__fortniteMode = 'ready';
@@ -950,7 +950,7 @@ async function fortniteFixture(page: Page) {
     api.getFortniteSettings = async () => {
       const mode = (window as any).__fortniteMode;
       if (mode === 'broken') throw new Error('The Fortnite backup is invalid. It has been preserved.');
-      return { supported: true, current, original: managed ? original : null, managed, managedFields: managed ? ['frameRateLimit', 'vsync'] : [], conflict: mode === 'conflict', running: mode === 'running', canChange: mode === 'ready', reason: mode === 'running' ? 'Close Fortnite before reviewing or restoring these settings.' : mode === 'conflict' ? 'The file changed outside PANDORA. Automatic restoration is blocked.' : null };
+      return { supported: true, current, original: managed ? original : null, managed, managedFields: managed ? (Object.keys(original) as (keyof typeof original)[]).filter(key => original[key] !== current[key]) : [], conflict: mode === 'conflict', running: mode === 'running', canChange: mode === 'ready', reason: mode === 'running' ? 'Close Fortnite before reviewing or restoring these settings.' : mode === 'conflict' ? 'The file changed outside PANDORA. Automatic restoration is blocked.' : null };
     };
     api.previewFortniteSettings = async (value, restore) => {
       (window as any).__calls.push({ method: 'fortnite-preview', args: [value, restore] });
@@ -963,7 +963,7 @@ async function fortniteFixture(page: Page) {
       current = { ...review.desired }; managed = !review.restore;
       return { id: 'fortnite-config', success: true, message: review.restore ? 'Original configuration restored and verified.' : 'Display preferences saved and verified.' };
     };
-  });
+  }, quality);
 }
 
 test('Fortnite preferences require review, preserve cancel, and expose original restore after navigation', async ({ page }) => {
@@ -1242,4 +1242,46 @@ test('path comparison locks both probe controls and failures discard stale measu
   await expect(page.getByRole('alert')).toContainText('Route check timed out.');
   await expect(page.getByRole('region', { name: 'Local and internet comparison', exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Start test', exact: true })).toBeEnabled();
+});
+
+
+test('Fortnite quality controls review only changes, preserve cancellation and restore after navigation', async ({ page }) => {
+  await fortniteFixture(page, true); await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Game Profiles', exact: true }).click();
+  const panel = page.getByRole('region', { name: 'Fortnite display preferences', exact: true });
+  await panel.locator('summary').click();
+  await expect(panel.locator('summary')).toContainText('8 of 8 available');
+  await expect(panel.getByRole('combobox', { name: 'Shading quality', exact: true })).toHaveValue('4');
+  await panel.getByRole('combobox', { name: 'Shadow quality', exact: true }).selectOption('0');
+  await panel.getByRole('combobox', { name: 'Texture quality', exact: true }).selectOption('1');
+  await panel.getByRole('button', { name: 'Review Fortnite changes' }).click();
+  const review = page.getByRole('dialog');
+  await expect(review).toContainText('Epic → Low'); await expect(review).toContainText('Epic → Medium');
+  await expect(review.locator('dt')).toHaveText(['Shadow quality', 'Texture quality']);
+  await review.getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'fortnite-change'))).toHaveLength(0);
+  await panel.getByRole('button', { name: 'Review Fortnite changes' }).click();
+  await page.getByRole('button', { name: 'Apply Fortnite preferences', exact: true }).click();
+  await expect(panel.getByRole('combobox', { name: 'Shadow quality', exact: true })).toBeDisabled();
+  await expect(panel).toContainText('Managed settings: Shadow quality, Texture quality');
+  await page.getByRole('navigation').getByRole('button', { name: 'Restore & History', exact: true }).click();
+  await panel.getByRole('button', { name: 'Review original configuration' }).click();
+  await expect(review).toContainText('Low → Epic');
+  await page.getByRole('button', { name: 'Restore Fortnite configuration', exact: true }).click();
+  await expect(panel).toHaveCount(0);
+});
+
+test('Fortnite quality availability and responsive controls do not invent missing preferences', async ({ page }) => {
+  await fortniteFixture(page); await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Game Profiles', exact: true }).click();
+  const panel = page.getByRole('region', { name: 'Fortnite display preferences', exact: true });
+  await panel.locator('summary').click();
+  await expect(panel.locator('summary')).toContainText('0 of 8 available');
+  await expect(panel.getByRole('combobox', { name: 'Shadow quality', exact: true })).toHaveCount(0);
+  await expect(panel.getByText('No supported, unambiguous value was found.', { exact: false })).toHaveCount(8);
+  for (const width of [1024, 800]) {
+    await page.setViewportSize({ width, height: 900 });
+    if (width <= 1000) await expect(page.locator('.sidebar')).toBeHidden();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  }
 });
