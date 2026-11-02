@@ -1,5 +1,11 @@
 # Changelog
 
+## Fortnite graphics-quality controls — 2026-11-02
+
+- Added eight optional existing graphics-quality groups with actual file-state detection, per-setting tradeoffs and review before applying. Missing or ambiguous groups remain unavailable. The collapsible section reports availability and retains readable responsive layouts.
+- Reused durable original-before-write backups, permission-preserving replacement, read-back, individual/combined restoration and privacy-filtered reports. Older three-field journals remain usable; newer unowned settings survive restoration. Conflicting or missing managed groups block overwrite.
+- Passed local backend/interface checks and the complete native Windows build/lifecycle workflow. Both unsigned Windows formats are ready for controlled PC testing; actual Fortnite rendering behavior and performance gains remain unverified.
+
 ## Optional apps and process identity — 2026-10-30
 
 - Added a current-user optional Windows-app inventory with eight fixed app families, package identity validation, installed/absent/unavailable/protected states, search/filter and explicit refresh. Package paths and account identifiers are omitted.

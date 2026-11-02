@@ -2,7 +2,22 @@
 
 PANDORA 0.1.0 is being built in a Linux cloud workspace. Windows-specific checks must be distinguished from Linux unit tests and browser tests. No gaming performance gains have been benchmarked.
 
-## Current network-comparison Windows test build — 2026-11-02
+## Current Fortnite graphics-quality Windows test build — 2026-11-02
+
+Application source: `cfd061c704c3e8e2c179ee3fa21dd0e02ea98e0d`. Later documentation commits do not change packaged runtime code.
+
+- **403 backend tests passed locally, with 21 native-only skips. All 60 UI journeys passed.** Typecheck, production build and actual Linux Electron bridge/report/activity smoke passed. Visual review at 1440 and 800 logical pixels confirmed readable quality cards and no horizontal overflow.
+- [Exact-source Windows CI](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/41482564439) passed every required stage: native file configuration replacement/restoration, existing registry/power/cleaner safeguards, all UI journeys, both packages, source/archive/hash verification, packaged launch, installed lifecycle/data preservation and actual portable launch.
+- Eight optional existing ScalabilityGroups values have individual detection and reviewed controls: view distance, anti-aliasing, shadows, post-processing, textures, effects, foliage and shading. New choices are Low through Epic (0–3); stored cinematic 4 can be retained/restored. No key is invented. Duplicate/unsupported/operator-based fields are unavailable, while the original three display controls remain usable when quality groups are absent or ambiguous.
+- New regressions cover all eight values, UTF-8/UTF-16LE byte preservation, unsupported/missing/duplicate/operator input, strict IPC shape, exact originals after relaunch, preservation of newer unowned quality values, missing/conflicting managed values, legacy three-field journal compatibility, newly added unowned groups, cinematic-original restoration, combined rollback summaries and privacy-filtered exports. Existing native replacement and ACL checks remain enabled.
+- The full original remains durable before writing. Managed ownership is derived from exact original/applied differences. New or unchanged groups in a legacy backup are not claimed. Conflicting or unreadable managed values block restoration and retain originals. The confirmation lists only values that actually change.
+- These are saved Unreal Engine scalability preferences in Fortnite's existing INI, not an Epic automation API or verified live-game behavior. Rendering mode, upscaler, game version/cloud synchronization and real FPS/latency effects still need physical-game validation. Nanite/Lumen/Reflex/upscaler selection and resolution scale remain manual.
+- Both local packages passed clean-source archive integrity, x64 payload, bundled-code and SHA256 verification. Local cross-built bytes differ from Windows CI-built/launched bytes; local `windowsLaunchVerified` stays false. The previous verified packages and kit are preserved at `release/checkpoints/4fd3c57-before-fortnite-quality`.
+- PANDORA-Setup-0.1.0-x64.exe: **158,392,820 bytes**, SHA256 `182632c2cdf4af63d61bec098796913187fcb5ea440988a359fb5a755369cc7d`.
+- PANDORA-Portable-0.1.0-x64.exe: **111,616,965 bytes**, SHA256 `f5e58b9c5745dc8304a667e01a97857666d03d37bab2e38efe290e971aebff49`.
+- Rough full-spec implementation estimate: **92%**. There are 33 Windows values plus up to eleven supported Fortnite values (44 total). These are configurable preferences, not guaranteed FPS improvements. Broader GPU/network writes, direct app removal, sensor/game-capture coverage, signing/updating and physical-PC validation remain incomplete.
+
+## Previous network-comparison Windows test build — 2026-11-02
 
 Application source: `4fd3c57e84a4cb84ec29b4bdef2ca2ad18231cad`. Later documentation commits do not change packaged runtime code.
 

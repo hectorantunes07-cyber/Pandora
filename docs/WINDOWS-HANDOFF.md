@@ -46,9 +46,9 @@ Cleanup reports confirmed logical file bytes, not an exact physical free-space i
 
 ## Download
 
-Application source: `4fd3c57e84a4cb84ec29b4bdef2ca2ad18231cad`. Both packages are built and archive-verified. CI launched the unpacked and installed app and the actual portable self-extracting launcher. The portable check verifies extraction, the sandboxed bridge, actual hardware inventory, bundled cursor, cleaner navigation and clean exit with an isolated profile. Native Windows CI passed for this source, including separate AC/DC policy apply/rollback, absent-battery apply refusal, custom game-file permission preservation, installer lifecycle and all 58 UI journeys, including gateway comparison, cross-page Quality of Life restoration and computed text-size checks. Exact checksums are recorded in the accompanying `verification.json`.
+Application source: `cfd061c704c3e8e2c179ee3fa21dd0e02ea98e0d`. Both packages are built and archive-verified. CI launched the unpacked and installed app and the actual portable self-extracting launcher. The portable check verifies extraction, the sandboxed bridge, actual hardware inventory, bundled cursor, cleaner navigation and clean exit with an isolated profile. Native Windows CI passed for this source, including separate AC/DC policy apply/rollback, absent-battery apply refusal, custom game-file permission preservation, installer lifecycle and all 60 UI journeys, including Fortnite quality review/rollback, gateway comparison, cross-page Quality of Life restoration and computed text-size checks. Exact checksums are recorded in the accompanying `verification.json`.
 
-Download **PANDORA-Windows-x64-unsigned** from [verified Windows build](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/41386707256). Sign in to GitHub if required and extract the ZIP first.
+Download **PANDORA-Windows-x64-unsigned** from [verified Windows build](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/41482564439). Sign in to GitHub if required and extract the ZIP first.
 
 - `PANDORA-Setup-0.1.0-x64.exe`: per-user installer with shortcuts and uninstaller.
 - `PANDORA-Portable-0.1.0-x64.exe`: no installation; still stores local app data.
