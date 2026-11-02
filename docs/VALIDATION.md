@@ -2,7 +2,21 @@
 
 PANDORA 0.1.0 is being built in a Linux cloud workspace. Windows-specific checks must be distinguished from Linux unit tests and browser tests. No gaming performance gains have been benchmarked.
 
-## Current readability and Quality of Life Windows test build — 2026-11-01
+## Current network-comparison Windows test build — 2026-11-02
+
+Application source: `4fd3c57e84a4cb84ec29b4bdef2ca2ad18231cad`. Later documentation commits do not change packaged runtime code.
+
+- **383 backend tests passed locally, with 21 Windows/PowerShell-only cases skipped in the default Linux suite. All 58 UI journeys passed.** The separate configured PowerShell run passed 13 focused network/route cases, including nine isolated route-provider scenarios. Typecheck, production build, all native helper syntax/runtime fixtures and the real Linux Electron bridge/report/activity smoke passed.
+- [Exact-source Windows CI](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/41386707256) passed every required stage: actual Windows route/ICMP execution, isolated route fixtures, existing native filesystem and setting-restoration tests, all UI journeys, both packages, source/archive/checksum checks, installed lifecycle and actual portable launcher.
+- New tests cover explicit requests, shared concurrency, failure recovery, per-destination loss/jitter, unavailable/direct routes, blocked replies, malformed data, routing changes, private-field omission and responsive cards. Native fixtures validate ordinary, changed, direct, missing, loopback, multicast, IPv6, hostname and ambiguous routes. The actual Windows check reads the selected route and sends bounded ICMP requests; no successful reply or latency value is assumed.
+- Visual review at 1440 and 800 logical pixels confirmed readable sample cells, stacked narrow destination cards and no horizontal overflow. Screenshots use synthetic interface fixtures, not observations of the user's hardware.
+- This remains an IPv4 gateway comparison, not traceroute, bandwidth testing or game-server/input latency. Measurements are sequential. A matched route at the beginning and end cannot exclude transient changes, ICMP filtering or congestion; physical Ethernet/Wi-Fi/VPN behavior needs PC validation. No network configuration writes or additional tweak-count claim were introduced.
+- Both local EXEs passed clean-source archive/x64/bundled-code/SHA256 verification. Local bytes are distinct from Windows CI-built/launched bytes; local `windowsLaunchVerified` stays false. Prior verified packages and kit are preserved at `release/checkpoints/a3c48d9-before-network-comparison`.
+- PANDORA-Setup-0.1.0-x64.exe: **158,388,700 bytes**, SHA256 `13fb9c6008120b6c23fde4cd0931179e0709ed6cf887f2c7dc3dc17095ccdffa`.
+- PANDORA-Portable-0.1.0-x64.exe: **111,613,622 bytes**, SHA256 `b0ff14ad61dc15e350113d7834ea767a12ba2adf079be9eb3f71ef36b3d43637`.
+- Full-spec estimate remains approximately **91%**, not a finished public release. Broader GPU/network writes, direct app removal, sensor/game-capture coverage, signing/updating and physical-PC validation remain incomplete. There are still 33 Windows values plus three Fortnite display values.
+
+## Previous readability and Quality of Life Windows test build — 2026-11-01
 
 Application source: `a3c48d964541b599bd1c2ae976562922bb05054e`. Later documentation commits do not change packaged runtime code.
 
