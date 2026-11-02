@@ -144,6 +144,7 @@ jobs:
             release/WINDOWS-HANDOFF.md
             release/windows-validation.md
             release/FORTNITE-SETTINGS.md
+            release/TWEAK-LIBRARY.md
             release/FEATURES.md
           if-no-files-found: error
       - uses: actions/upload-artifact@v5

@@ -13,8 +13,8 @@ if (!manifest.windowsLaunchVerified || !manifest.installerLifecycleVerified || !
     typeof run !== 'string' || !/^https:\/\/github\.com\/hectorantunes07-cyber\/Pandora\/actions\/runs\/\d+$/.test(run)) {
   throw new Error('Native Windows validation must succeed before preparing download instructions.');
 }
-for (const file of ['docs/WINDOWS-QUICKSTART.md', 'docs/windows-validation.md', 'docs/WINDOWS-HANDOFF.md', 'docs/FORTNITE-SETTINGS.md', 'FEATURES.md']) {
-  let text = await fs.readFile(path.join(root, file), 'utf8');
+for (const file of ['docs/WINDOWS-QUICKSTART.md', 'docs/windows-validation.md', 'docs/WINDOWS-HANDOFF.md', 'docs/FORTNITE-SETTINGS.md', 'docs/TWEAK-LIBRARY.md', 'FEATURES.md']) {
+  let text = (await fs.readFile(path.join(root, file), 'utf8')).replaceAll('(docs/TWEAK-LIBRARY.md)', '(TWEAK-LIBRARY.md)');
   if (file.endsWith('WINDOWS-HANDOFF.md')) {
     if (!/Application source: `[a-f0-9]{40}`/.test(text)) throw new Error('The handoff source marker is missing.');
     text = text.replace(/Application source: `[a-f0-9]{40}`/, `Application source: \`${manifest.sourceCommit}\``)

@@ -4,7 +4,7 @@ PANDORA 0.1.0 is ready for controlled Windows testing. It is an unsigned develop
 
 ## Implemented (see validation record for platform checks)
 
-- Original purple/black desktop interface, accessible confirmations, responsive navigation and reduced motion. Larger body/navigation text, readable descriptions and 20px section headings without global zoom.
+- Original purple/black desktop interface, accessible confirmations, responsive navigation and reduced motion. 14px compact controls, tabs, tables, body descriptions and dialog details; 14px navigation, 20px section headings, brighter secondary text and wrapping layouts without global zoom. Quality of Life groups existing Explorer, appearance, visual-effect and cursor/pointer controls using the same original backups as Optimizations. See [the working-control inventory](TWEAK-LIBRARY.md).
 - NVIDIA Settings with 54 searchable screenshot-based reference entries, Sonnier’s personal setup, persistent notes, Global/Per-Game guidance, hardware context and a Control Panel launcher. Driver configuration is manual; reference values are not detected settings.
 - Quality of Life cursor manager: the supplied crosshair, actual preview/hotspot, validated local CUR/ANI picker, persistent files, normal-pointer-only configuration, exact original backup, confirmation, native reload/read-back and restore after reopening. Optional in-app use is separate; animated files use a static first frame there.
 - Actual hardware inventory, CPU/RAM monitoring, supported GPU utilization, CPU reported-clock snapshot, OS architecture, storage health/provider data, monitor modes and network link rates.
@@ -46,7 +46,7 @@ Cleanup reports confirmed logical file bytes, not an exact physical free-space i
 
 ## Download
 
-Application source: `8d35ea6addf9ce4d7dd30fb80cf23b45e089b6d8`. Both packages are built and archive-verified. CI launched the unpacked and installed app and the actual portable self-extracting launcher. The portable check verifies extraction, the sandboxed bridge, actual hardware inventory, bundled cursor, cleaner navigation and clean exit with an isolated profile. Native Windows CI passed for this source, including separate AC/DC policy apply/rollback, absent-battery apply refusal, custom game-file permission preservation, installer lifecycle and all 54 UI journeys. Exact checksums are recorded in the accompanying `verification.json`.
+Application source: `8d35ea6addf9ce4d7dd30fb80cf23b45e089b6d8`. Both packages are built and archive-verified. CI launched the unpacked and installed app and the actual portable self-extracting launcher. The portable check verifies extraction, the sandboxed bridge, actual hardware inventory, bundled cursor, cleaner navigation and clean exit with an isolated profile. Native Windows CI passed for this source, including separate AC/DC policy apply/rollback, absent-battery apply refusal, custom game-file permission preservation, installer lifecycle and the complete UI suite. Exact checksums are recorded in the accompanying `verification.json`.
 
 Download **PANDORA-Windows-x64-unsigned** from [verified Windows build](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/41122650946). Sign in to GitHub if required and extract the ZIP first.
 

@@ -6,12 +6,14 @@ This is an unsigned 0.1.0 development build. Use Windows 11 x64, initially on a 
 
 1. Download the Setup installer or portable `.exe` and its matching `.sha256` together, or download `PANDORA-Windows-x64-unsigned` from a successful repository **Actions → Windows build and checks** run. Extract an Actions artifact ZIP first.
 2. In PowerShell, run `Get-FileHash .\PANDORA-Portable-0.1.0-x64.exe -Algorithm SHA256` (replace `Portable` with `Setup` for the installer) and compare the entire hash with the sidecar; letter case does not matter. An updated build has a different hash; always use its matching sidecar. The hash establishes file identity, not publisher trust.
-3. Launch as a normal user. Windows may report an unknown publisher because this build is unsigned. Do not turn off Windows security protections. If your PC or organization blocks it, record the message and test through an approved environment.
+3. Exit any older PANDORA instance, including its tray copy, then launch the new build as a normal user. Windows may report an unknown publisher because this build is unsigned. Do not turn off Windows security protections. If your PC or organization blocks it, record the message and test through an approved environment.
 4. The portable extracts its runtime temporarily but saves settings and history under `%APPDATA%\PANDORA`. It is not a leave-no-trace application. Preserve that folder if you want to retain rollback history. The installer uses the same history. Install it with the Setup executable; it does not need administrator privileges.
+
+See [TWEAK-LIBRARY.md](TWEAK-LIBRARY.md) for every working control, manual-only guidance and remaining capabilities.
 
 ## Test in this order
 
-- **Interface:** open each page, resize the window, use keyboard navigation and try reduced motion in Settings. Confirm “Created by Sonnier” branding.
+- **Interface:** open each page, resize the window, use keyboard navigation and try reduced motion in Settings. Check compact controls, tables, cleaner descriptions and dialog details at your Windows scaling setting. In Quality of Life, test the shared Explorer/appearance and visual-effect controls as well as the cursor. Confirm “Created by Sonnier” branding.
 - **System Monitor:** compare CPU, usable RAM, GPU/driver and drives with Windows tools. Select Refresh after disk activity. Review the timestamp and provider notes. Missing temperatures and unsupported counters must stay unavailable. Export a report if useful.
 - **Drive diagnostics:** in System Monitor, select Read drive counters. Compare supported readings with Windows and the drive manufacturer’s utility. Missing counters stay unavailable; wear shows estimated endurance used, not life remaining. This read-only check does not run self-tests, repair disks or establish that a drive is fault-free.
 - **Network Diagnostics:** choose a public destination and Start test. Review individual replies, loss and jitter. Missing replies can mean blocked ICMP; this does not automatically indicate a broken connection.

@@ -345,7 +345,9 @@ test('navigation and cleaner remain usable on a scaled narrow desktop', async ({
   await desktopFixture(page);
   await page.setViewportSize({ width: 960, height: 640 });
   await page.goto('/');
+  await expect(page.locator('.sidebar')).toBeHidden();
   await page.getByRole('button', { name: 'Open navigation', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Open navigation', exact: true })).toHaveAttribute('aria-expanded', 'true');
   await page.getByRole('navigation').getByRole('button', { name: /PC Cleaner/ }).click();
   await expect(page.getByRole('heading', { name: 'PC Cleaner', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Scan & Clean' }).click();
@@ -800,6 +802,7 @@ test('drive diagnostics show per-device unavailability, caching and readable nar
   });
   await page.setViewportSize({ width: 900, height: 720 });
   await page.goto('/');
+  await page.getByRole('button', { name: 'Open navigation', exact: true }).click();
   await page.getByRole('navigation').getByRole('button', { name: 'System Monitor', exact: true }).click();
   const panel = page.getByRole('region', { name: 'Drive diagnostics' });
   await panel.getByRole('button', { name: 'Read drive counters' }).click();
@@ -1137,4 +1140,65 @@ test('history exposes both power sources and allows battery restoration without 
   await expect(page.getByRole('dialog')).toContainText('one battery power-plan value');
   await page.getByRole('button', { name: 'Confirm power setting', exact: true }).click();
   expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'power-tuning-change').map((c: any) => c.args))).toEqual([['power-tuning-review', 'dc']]);
+});
+
+test('Quality of Life reuses reviewed desktop preferences and visual-effect rollback', async ({ page }) => {
+  await desktopFixture(page);
+  await page.addInitScript(() => {
+    const get = window.pandora!.getTweaks, apply = window.pandora!.applyTweaks, revert = window.pandora!.revertTweaks;
+    let managed = false;
+    window.pandora!.getTweaks = async () => {
+      const values = (await get()).map(s => s.id === 'transparency' ? { ...s, managed, state: managed ? 'applied' as const : 'available' as const, currentValue: managed ? 0 : 1 } : s);
+      return [...values, { ...values[0], id: 'game-mode', title: 'Windows Game Mode', category: 'Gaming' }];
+    };
+    window.pandora!.applyTweaks = async ids => { const result = await apply(ids); if (ids.includes('transparency')) managed = true; return result; };
+    window.pandora!.revertTweaks = async ids => { const result = await revert(ids); if (ids.includes('transparency')) managed = false; return result; };
+  });
+  await page.goto('/'); await page.getByRole('button', { name: 'Quality of Life', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'File Explorer & appearance', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Windows Game Mode', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('region', { name: 'Windows visual effects' }).locator('.tweak-card')).toHaveCount(7);
+  await expect(page.getByRole('button', { name: 'Apply Cursor', exact: true })).toBeVisible();
+  await page.getByRole('checkbox', { name: 'Select Reduce transparency', exact: true }).check();
+  await page.getByRole('button', { name: 'Review changes', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('Windows surfaces will look opaque.');
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'apply'))).toHaveLength(0);
+  await page.getByRole('button', { name: 'Review changes', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm & apply', exact: true }).click();
+  await expect(page.getByText('Applied and verified.', { exact: true })).toBeVisible();
+  expect(await page.evaluate(() => (window as any).__calls.find((c: any) => c.method === 'apply').args)).toEqual([['transparency']]);
+  await page.getByRole('button', { name: 'Restore Reduce transparency', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm restore', exact: true }).click();
+  expect(await page.evaluate(() => (window as any).__calls.find((c: any) => c.method === 'revert').args)).toEqual([['transparency']]);
+  const effect = page.getByRole('region', { name: 'Windows visual effects' }).locator('.tweak-card').filter({ hasText: 'Turn off menu animations' });
+  await effect.getByRole('button', { name: 'Review change', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm visual change', exact: true }).click();
+  await page.getByRole('button', { name: 'Optimizations', exact: true }).click();
+  const sameEffect = page.getByRole('region', { name: 'Windows visual effects' }).locator('.tweak-card').filter({ hasText: 'Turn off menu animations' });
+  await expect(sameEffect).toContainText('Managed · Off');
+  await sameEffect.getByRole('button', { name: 'Review restore', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm visual change', exact: true }).click();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'visual-change').map((c: any) => c.args))).toEqual([['visual-review-token', false], ['visual-review-token', true]]);
+});
+
+test('dense controls, tables and descriptions remain readable across pages and smaller windows', async ({ page }) => {
+  await desktopFixture(page); await page.setViewportSize({ width: 1100, height: 800 }); await page.goto('/');
+  for (const name of ['Overview', 'Optimizations', 'Game Profiles', 'PC Cleaner', 'Quality of Life', 'NVIDIA Settings', 'Processes & Startup', 'Performance Lab', 'Network Diagnostics', 'Settings & About']) {
+    await page.getByRole('button', { name: name === 'PC Cleaner' ? 'PC Cleaner NEW' : name, exact: true }).click();
+    await expect(page.locator('#main-content h1:visible')).toHaveText(name === 'Overview' ? 'Welcome to Pandora' : name === 'Settings & About' ? 'Settings & About' : name);
+    const small = await page.locator('#main-content').evaluate(root => Array.from(root.querySelectorAll<HTMLElement>('.button, .tab, .search-field input, .detail-list > div, .data-table, .data-table th, .modal > p, .tweak-card > p, .category-copy p, .checklist-row p, .optional-clean p, .setting-row p')).filter(el => el.getClientRects().length && parseFloat(getComputedStyle(el).fontSize) < 14).map(el => ({ selector: el.className || el.tagName, size: getComputedStyle(el).fontSize })));
+    expect(small, `Small primary text on ${name}`).toEqual([]);
+    expect(await page.locator('#main-content').evaluate(el => el.scrollWidth <= el.clientWidth + 1), `Overflow on ${name}`).toBe(true);
+  }
+  await page.getByRole('button', { name: 'Quality of Life', exact: true }).click();
+  for (const width of [1024, 800]) {
+    await page.setViewportSize({ width, height: 800 });
+    expect(await page.locator('#main-content').evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+    const preference = page.locator('.tweak-card').filter({ has: page.getByRole('heading', { name: 'Reduce transparency', exact: true }) });
+    await preference.getByRole('button', { name: 'What changes?' }).click();
+    expect(await page.locator('.modal .detail-list > div').first().evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(14);
+    expect(await page.locator('.modal').evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+    await page.getByRole('button', { name: 'Close', exact: true }).click();
+  }
 });
