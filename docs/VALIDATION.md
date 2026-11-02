@@ -2,7 +2,22 @@
 
 PANDORA 0.1.0 is being built in a Linux cloud workspace. Windows-specific checks must be distinguished from Linux unit tests and browser tests. No gaming performance gains have been benchmarked.
 
-## Current separate-battery-policy Windows test build — 2026-10-30
+## Current readability and Quality of Life Windows test build — 2026-11-01
+
+Application source: `a3c48d964541b599bd1c2ae976562922bb05054e`. Later documentation commits do not change packaged runtime code.
+
+- **All 56 distinct UI journeys passed locally after targeted test corrections; the full 56-test suite passed together on Windows.** Typecheck, production build and actual Linux Electron bridge/report/activity integration passed. The unchanged backend and native restoration suites passed in Windows CI.
+- [Exact-source Windows CI](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/41383609701) passed every required stage, including native AC/DC restoration and filesystem guards, all UI tests, installer and portable builds, source/archive/checksum verification, packaged app launch, installer lifecycle, actual portable launcher and artifact upload.
+- Readability checks inspect actual computed font sizes across Overview, Optimizations, Game Profiles, PC Cleaner, Quality of Life, NVIDIA Settings, Processes & Startup, Performance Lab, Network Diagnostics and Settings. Compact controls, tabs, tables, primary descriptions and detail rows use at least 14px; section headings and important statistics retain their larger sizes. Secondary text is brighter. Layout and dialogs were checked at 1100, 1024 and 800 logical pixels.
+- Quality of Life now reuses the existing four Explorer/appearance preferences and seven visual-effect controls alongside cursor/pointer customization. Tests verify scoped filtering, cancel-before-write, confirmed preference apply/restore and applying a visual effect in Quality of Life then restoring it in Optimizations with the same managed state. No new OS mutation or duplicate backup implementation was added.
+- Visual review at 1440 and 800 pixels caught the old fixed sidebar hiding offset: increased width left a visible strip when collapsed. Width-relative hiding, visibility and expanded-state semantics fix this. The closed sidebar is excluded from keyboard focus. A previous narrow-screen test clicked the accidentally visible navigation; it now opens the menu like a user. New test fixture corrections model managed state and avoid matching hidden page headings or omitting the cleaner's accessible NEW badge.
+- Screenshots were visually inspected with explicit synthetic test data; they are not observations of the user's hardware. Physical Windows scaling/font rendering, real hardware and actual setting effects still require PC tests.
+- Installer and portable archives passed x64 payload, bundled-code and SHA256 verification at clean source. Local cross-built bytes are distinct from the packages built and launched in CI, so local `windowsLaunchVerified` remains false. The previous verified packages/kit are retained at `release/checkpoints/8d35ea6-before-readability`.
+- PANDORA-Setup-0.1.0-x64.exe: **158,384,748 bytes**, SHA256 `8641b22f969d2da8686e013ea3a4ae6ece80de3e71c397f4a9c5321ac9ab16ed`.
+- PANDORA-Portable-0.1.0-x64.exe: **111,610,583 bytes**, SHA256 `0fe223ec8da72585e871721e39d146de0fa363581a4345534510d4f175c8b2e2`.
+- The test kit now includes the working-control inventory, TWEAK-LIBRARY.md. Scope remains roughly **91% implemented**, with 33 Windows values and three Fortnite display values; this pass improves usability and organization without increasing the tweak count. Broader graphics/network automation, direct debloat, sensors/game capture, signing/updating and physical-PC validation remain incomplete.
+
+## Previous separate-battery-policy Windows test build — 2026-10-30
 
 Application source: `8d35ea6addf9ce4d7dd30fb80cf23b45e089b6d8`. Later documentation commits do not change packaged runtime code.
 
