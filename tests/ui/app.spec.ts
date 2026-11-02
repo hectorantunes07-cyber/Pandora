@@ -53,6 +53,7 @@ async function desktopFixture(page: Page) {
       previewProfile: async (id, custom) => { track('profile-preview', id, custom); return { token: 'review-token', selection: id ? { id, ids: custom ?? ['game-mode'] } : null, blocked: false, changes: [{ id: 'game-mode', title: 'Windows Game Mode', action: 'apply', reason: 'May offer no measurable benefit.', target: 'HKCU test setting', from: 0, to: 1, restart: 'Reopen game.' }] }; },
       applyProfile: async token => { track('profile-apply', token); return [{ id: 'game-mode', success: true, message: 'Applied and verified.' }]; },
       openWindowsSettings: async page => { track('windows-settings', page); },
+      testNetworkPath: async target => { track('network-path', target); const measurement = { timestamp: new Date().toISOString(), samples: [1, 2, 1, 2, 1, 2, 1, 2], received: 8, lossPercent: 0, averageMs: 1.5, minMs: 1, maxMs: 2, jitterMs: 1 }; return { target, timestamp: measurement.timestamp, gatewayStatus: 'available', routeStable: true, gateway: measurement, internet: { ...measurement, target, address: target === 'google' ? '8.8.8.8' : '1.1.1.1', samples: Array(8).fill(20), averageMs: 20, minMs: 20, maxMs: 20, jitterMs: 0 } }; },
       testNetwork: async target => { track('network', target); return { target, address: target === 'google' ? '8.8.8.8' : '1.1.1.1', timestamp: new Date().toISOString(), samples: [10, 20, null, 10, 20, 10, 20, 10], received: 7, lossPercent: 12.5, averageMs: 14.3, minMs: 10, maxMs: 20, jitterMs: 10 }; },
       getSystem: async () => ({ platform: 'win32', timestamp: new Date().toISOString(), cpu: 'UI test processor', logicalCores: 8, physicalCores: 4, gpu: 'UI test graphics', gpuDriver: 'test-driver', ramBytes: 16e9, ramSpeedMHz: 3200, os: 'Windows test fixture', motherboard: 'UI test board', installedRamBytes: 32e9, deviceType: 'Portable', physicalDisks: [{ model: 'Test NVMe drive', bytes: 1e12, media: 'SSD', bus: 'NVMe', health: 'Healthy' }], networkAdapters: [{ description: 'Test Ethernet adapter', status: 'Up', linkSpeedBits: 2.5e9 }], powerPlan: 'Balanced', volumes: [{ name: 'C:', totalBytes: 1e12, freeBytes: 6e11 }], monitors: [{ name: 'Test display', width: 1920, height: 1080, refreshHz: 144 }], notes: [] }),
       getMetrics: async () => ({ timestamp: new Date().toISOString(), cpuPercent: 24, gpuPercent: null, ramUsedBytes: 6e9, ramTotalBytes: 16e9, processCount: 12 }),
@@ -1201,4 +1202,44 @@ test('dense controls, tables and descriptions remain readable across pages and s
     expect(await page.locator('.modal').evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
     await page.getByRole('button', { name: 'Close', exact: true }).click();
   }
+});
+
+test('gateway comparison is explicit, persists across navigation and handles changing routes', async ({ page }) => {
+  await desktopFixture(page); await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Network Diagnostics' }).click();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'network-path'))).toHaveLength(0);
+  await page.getByLabel('Diagnostic destination').selectOption('google');
+  await page.getByRole('button', { name: 'Compare local and internet', exact: true }).click();
+  const results = page.getByRole('region', { name: 'Local and internet comparison', exact: true });
+  await expect(results.getByRole('region', { name: 'Selected route gateway' })).toContainText('1.5 ms');
+  await expect(results.getByRole('region', { name: 'Google · 8.8.8.8' })).toContainText('20.0 ms');
+  expect(await page.evaluate(() => (window as any).__calls.find((c: any) => c.method === 'network-path').args)).toEqual(['google']);
+  await page.getByRole('navigation').getByRole('button', { name: 'Overview', exact: true }).click();
+  await page.getByRole('navigation').getByRole('button', { name: 'Network Diagnostics' }).click();
+  await expect(results).toBeVisible();
+  await page.evaluate(() => { const original = window.pandora!.testNetworkPath; window.pandora!.testNetworkPath = async target => ({ ...await original(target), routeStable: false, gatewayStatus: 'no-gateway', gateway: null }); });
+  await page.getByRole('button', { name: 'Compare local and internet', exact: true }).click();
+  await expect(results).toContainText('route changed');
+  await expect(results).toContainText('no separate IPv4 gateway');
+  await expect(results.getByRole('region', { name: 'Selected route gateway' })).toContainText('UNAVAILABLE');
+  await page.setViewportSize({ width: 800, height: 900 });
+  await expect(page.locator('.sidebar')).toBeHidden();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await results.screenshot({ path: 'test-results/pandora-network-path.png' });
+});
+
+test('path comparison locks both probe controls and failures discard stale measurements', async ({ page }) => {
+  await desktopFixture(page); await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Network Diagnostics' }).click();
+  await page.getByRole('button', { name: 'Start test', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Network test results' })).toBeVisible();
+  await page.evaluate(() => { window.pandora!.testNetworkPath = () => new Promise((_resolve, reject) => { (window as any).__rejectPath = () => reject(new Error('Route check timed out.')); }); });
+  await page.getByRole('button', { name: 'Compare local and internet', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Start test', exact: true })).toBeDisabled();
+  await expect(page.getByLabel('Diagnostic destination')).toBeDisabled();
+  await expect(page.getByRole('region', { name: 'Network test results' })).toHaveCount(0);
+  await page.evaluate(() => (window as any).__rejectPath());
+  await expect(page.getByRole('alert')).toContainText('Route check timed out.');
+  await expect(page.getByRole('region', { name: 'Local and internet comparison', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Start test', exact: true })).toBeEnabled();
 });

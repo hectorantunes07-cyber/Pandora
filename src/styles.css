@@ -261,3 +261,11 @@
   .sidebar { left: 0; transform: translateX(-100%); visibility: hidden; transition: transform .2s, visibility .2s; }
   .sidebar.sidebar-open { transform: translateX(0); visibility: visible; }
 }
+
+/* Keep per-destination samples readable inside comparison cards. */
+.network-path-results { margin:24px 0; }
+.network-path-results > p { color:var(--text-secondary, #bcb1cd); line-height:1.6; }
+.network-path-results .two-columns { align-items:start; }
+.network-path-results .network-samples { grid-template-columns:repeat(4,minmax(0,1fr)); }
+.network-path-results .network-samples strong { font-size:14px; white-space:nowrap; }
+@media(max-width:1000px) { .network-path-results .two-columns { grid-template-columns:1fr; } }

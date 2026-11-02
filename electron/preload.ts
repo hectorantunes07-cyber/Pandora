@@ -46,6 +46,7 @@ const api: AppApi = {
   applyProfile: token => ipcRenderer.invoke('pandora:profile-apply', token),
   openWindowsSettings: page => ipcRenderer.invoke('pandora:windows-settings', page),
   testNetwork: target => ipcRenderer.invoke('pandora:network-test', target),
+  testNetworkPath: target => ipcRenderer.invoke('pandora:network-path', target),
   getSystem: forceRefresh => ipcRenderer.invoke('pandora:system', forceRefresh),
   getMetrics: () => ipcRenderer.invoke('pandora:metrics'),
   getTweaks: () => ipcRenderer.invoke('pandora:tweaks'),

@@ -249,3 +249,5 @@ Follow [the detailed Fortnite validation sequence](FORTNITE-SETTINGS.md). Use an
 - [ ] Test actual behavior on AC and battery with controlled workloads. Observe runtime, heat and fan noise; stored settings and hosted runner tests do not establish improved performance or safe behavior on every laptop.
 
 Hosted Windows DC tests use a disposable plan and a fixture-only positive battery reading to exercise read/write/restore on runners without a physical battery. They also verify the real native apply path refuses an absent/unknown battery. Never enable mutation-fixture environment flags on your PC.
+
+- [ ] Network Diagnostics: explicitly compare the selected IPv4 gateway and public destination, check eight samples per available destination, repeat with VPN/direct routes and blocked ICMP, and confirm unavailable/route-change messages. No DNS/adapter settings may change. Physical network behavior is separate from hosted Windows fixture validation.

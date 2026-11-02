@@ -162,6 +162,7 @@ function registerServices() {
   handle('network-inspect', () => inspection.inspect());
   handle('dns-test', () => inspection.dns());
   handle('network-test', (target: unknown) => network.testNetwork(target));
+  handle('network-path', (target: unknown) => network.testNetworkPath(target));
   handle('windows-settings', async (page: unknown) => {
     const uri = windowsSettingsUri(page);
     if (process.platform !== 'win32') throw new Error('This shortcut requires Windows.');

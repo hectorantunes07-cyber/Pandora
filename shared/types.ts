@@ -39,6 +39,13 @@ export interface ProgressEvent { operation: 'scan' | 'clean' | 'tweaks'; complet
 export interface AppSettings { reduceMotion: boolean; pollInterval: number; scanOnLaunch: boolean; closeToTray: boolean; }
 export type WindowsSettingsPage = 'display' | 'power' | 'startup' | 'graphics' | 'apps';
 export type NetworkTarget = 'cloudflare' | 'google';
+export interface NetworkPathResult {
+  target: NetworkTarget; timestamp: string;
+  gatewayStatus: 'available' | 'no-gateway' | 'unavailable';
+  routeStable: boolean | null;
+  gateway: Omit<NetworkResult, 'target' | 'address'> | null;
+  internet: NetworkResult;
+}
 export interface NetworkResult {
   target: NetworkTarget; address: string; timestamp: string; samples: (number | null)[];
   received: number; lossPercent: number; averageMs: number | null; minMs: number | null; maxMs: number | null; jitterMs: number | null;
@@ -90,6 +97,7 @@ export interface AppApi {
   applyProfile(token: string): Promise<OperationResult[]>;
   openWindowsSettings(page: WindowsSettingsPage): Promise<void>;
   testNetwork(target: NetworkTarget): Promise<NetworkResult>;
+  testNetworkPath(target: NetworkTarget): Promise<NetworkPathResult>;
   getSystem(forceRefresh?: boolean): Promise<SystemInfo>;
   getMetrics(): Promise<Metrics>;
   getTweaks(): Promise<TweakState[]>;

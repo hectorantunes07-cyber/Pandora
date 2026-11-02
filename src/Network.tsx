@@ -1,19 +1,22 @@
 import { useState } from 'react';
 import { Activity, Globe, Radio, ShieldCheck, Wifi } from 'lucide-react';
-import type { NetworkResult, NetworkTarget } from '../shared/types';
+import type { NetworkPathResult, NetworkResult, NetworkTarget } from '../shared/types';
 import { api, errorMessage, isDesktop } from './api';
 import { Badge, Notice, PageHeading, PanelTitle, Spinner } from './components';
+import { NetworkPathResults } from './NetworkPath';
 import { NetworkInspection } from './NetworkInspection';
 const ms = (value: number | null) => value === null ? 'Unavailable' : `${value.toFixed(1)} ms`;
 export function NetworkDiagnostics() {
   const [target, setTarget] = useState<NetworkTarget>('cloudflare');
   const [result, setResult] = useState<NetworkResult | null>(null);
+  const [pathResult, setPathResult] = useState<NetworkPathResult | null>(null);
+  const [comparing, setComparing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const run = async () => {
+  const run = async (compare = false) => {
     if (busy) return;
-    setBusy(true); setError(''); setResult(null);
-    try { setResult(await api.testNetwork(target)); }
+    setBusy(true); setComparing(compare); setError(''); setResult(null); setPathResult(null);
+    try { if (compare) setPathResult(await api.testNetworkPath(target)); else setResult(await api.testNetwork(target)); }
     catch (err) { setError(errorMessage(err)); }
     finally { setBusy(false); }
   };
@@ -22,14 +25,17 @@ export function NetworkDiagnostics() {
     <NetworkInspection/>
     <section className="panel network-test">
       <PanelTitle icon={Wifi} title="Connection check" action={<Badge tone="purple">READ ONLY</Badge>}/>
-      <p>Send eight small ICMP requests to a public diagnostic destination. Tests run only when you choose Start test. No DNS, adapter or Windows settings are changed.</p>
+      <p>Send eight small ICMP requests to a public diagnostic destination. Choose a single-destination test or a local/internet comparison. No DNS, adapter or Windows settings are changed.</p>
       <div className="process-toolbar"><label className="network-destination">Diagnostic destination<select className="select" aria-label="Diagnostic destination" value={target} disabled={busy} onChange={event => setTarget(event.target.value as NetworkTarget)}><option value="cloudflare">Cloudflare · 1.1.1.1</option><option value="google">Google · 8.8.8.8</option></select></label>
-        <button className="button primary" disabled={busy || !isDesktop} onClick={run}>{busy ? <Spinner label="Measuring connection…"/> : <><Radio size={17}/>Start test</>}</button>
+        <button className="button primary" disabled={busy || !isDesktop} onClick={() => run()}>{busy && !comparing ? <Spinner label="Measuring connection…"/> : <><Radio size={17}/>Start test</>}</button>
+        <button className="button secondary" disabled={busy || !isDesktop} onClick={() => run(true)}>{busy && comparing ? <Spinner label="Checking both destinations…"/> : 'Compare local and internet'}</button>
       </div>
-      {busy && <p className="accounting-note" role="status">Waiting for actual replies. Each request has a one-second timeout; this usually takes a few seconds.</p>}
+      <p className="accounting-note">Compare the IPv4 gateway selected by Windows with the public destination. This sends eight requests to each; VPN routes may have no separate gateway.</p>
+      {busy && <p className="accounting-note" role="status">Waiting for actual replies. Each request has a one-second timeout; a comparison can take up to 35 seconds.</p>}
       {!isDesktop && <Notice>Open the Windows desktop app to measure your connection.</Notice>}
       {error && <Notice tone="error">{error}</Notice>}
     </section>
+    {pathResult && <NetworkPathResults result={pathResult}/>}
     {result && <section className="panel" aria-label="Network test results">
       <PanelTitle icon={Activity} title="Your measured results" action={<Badge tone={result.received === 8 ? 'green' : 'amber'}>{result.received} OF 8 REPLIES</Badge>}/>
       <div className="result-stats"><div><strong>{ms(result.averageMs)}</strong><span>Average round trip</span></div><div><strong>{ms(result.jitterMs)}</strong><span>Jitter between adjacent replies</span></div><div><strong>{result.lossPercent.toFixed(1)}%</strong><span>Requests without a reply</span></div></div>
