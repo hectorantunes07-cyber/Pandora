@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import { Activity, ArrowDown, ArrowRight, ArrowUp, ChartNoAxesCombined, Check, Download, FlaskConical, Layers, Monitor, RefreshCw, Save, Search, Settings, ShieldCheck, Sparkles, Trash2 } from 'lucide-react';
 import type { AppSettings, ProcessInfo, StartupEntry } from '../shared/types';
 import { api, errorMessage, formatBytes, isDesktop, unsupportedMessage } from './api';
+import { ProcessActivity } from './ProcessActivity';
 import { ProcessDetails } from './ProcessDetails';
 import { OptionalApps } from './OptionalApps';
 import { StartupControls } from './StartupControls';
@@ -48,7 +49,8 @@ export function Processes({ onBusyChange }: { onBusyChange: (busy: boolean) => v
       <button className={`tab ${tab === 'optional' ? 'active' : ''}`} onClick={() => setTab('optional')}><Layers size={16}/>Optional Windows apps</button>
     </div>
     {tab === 'optional' ? <OptionalApps/> : <>
-    <Notice>{tab === 'processes' ? 'This view is read-only. Memory is each process’s working set; CPU time is its cumulative processor time, not a live percentage.' : 'The inventory below is read-only. Manage supported launcher entries with the reviewed controls, or use Windows startup settings for other apps. Scheduled tasks and Windows services are not included.'}</Notice>
+    <Notice>{tab === 'processes' ? 'The inventory below is read-only. Memory is each process’s working set; CPU time is cumulative. Use the CPU activity sample above to measure recent processor use.' : 'The inventory below is read-only. Manage supported launcher entries with the reviewed controls, or use Windows startup settings for other apps. Scheduled tasks and Windows services are not included.'}</Notice>
+    {tab === 'processes' && <ProcessActivity/>}
     {tab === 'startup' && <StartupControls onBusyChange={onBusyChange}/>}
     {!isDesktop ? <section className="panel"><EmptyState icon={Monitor} title="Meet the apps behind your PC" description={unsupportedMessage}/></section> : <section className="panel">
       <PanelTitle icon={tab === 'processes' ? Activity : Layers} title={tab === 'processes' ? 'Running on your PC' : 'Configured startup apps'} action={<Badge>{count} {tab === 'processes' ? 'PROCESSES' : 'APPS'}</Badge>}/>

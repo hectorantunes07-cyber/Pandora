@@ -107,6 +107,7 @@ export interface AppApi {
   scanCleanup(kind: CleanupKind): Promise<CleanupScan>;
   clean(scanId: string, categoryIds: string[], confirmation: CleanupKind): Promise<CleanupResult>;
   getProcesses(): Promise<ProcessInfo[]>;
+  sampleProcessActivity(): Promise<import('./process-activity').ProcessActivity>;
   getProcessDetails(pid: number): Promise<import('./process-details').ProcessDetails>;
   openProcessLocation(token: string): Promise<void>;
   getOptionalApps(): Promise<import('./optional-apps').OptionalAppsInfo>;

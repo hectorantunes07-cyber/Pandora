@@ -62,6 +62,7 @@ async function desktopFixture(page: Page) {
       revertTweaks: async ids => { track('revert', ids); return ids.map(id => ({ id, success: true, message: 'Restored and verified.' })); },
       getHistory: async () => [],
       getGames: async () => [{ id: 'fortnite', name: 'Fortnite', installed: false, path: null }],
+      sampleProcessActivity: async () => { track('process-activity'); return { timestamp: new Date().toISOString(), logicalProcessors: 8, rows: [{ pid: 120, name: 'Active test app', memoryBytes: 32e6, cpuPercent: 12.5, intervalMs: 2000, status: 'measured' }, { pid: 121, name: 'Protected test app', memoryBytes: null, cpuPercent: null, intervalMs: null, status: 'unavailable' }], noLongerObserved: 1, truncated: false, minIntervalMs: 2000, maxIntervalMs: 2000 }; },
       getProcesses: async () => [{ pid: 123, name: 'fixture.exe', memoryBytes: 1e8, cpuSeconds: 4 }],
       getStartup: async () => [{ name: 'Fixture launcher', location: 'HKCU Run', status: 'Enabled (read-only)' }],
       getSettings: async () => ({ reduceMotion: false, scanOnLaunch: true, pollInterval: 2000, closeToTray: false }),
@@ -1284,4 +1285,38 @@ test('Fortnite quality availability and responsive controls do not invent missin
     if (width <= 1000) await expect(page.locator('.sidebar')).toBeHidden();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   }
+});
+
+test('process activity samples only on request and distinguishes measured CPU from inaccessible counters', async ({ page }) => {
+  await desktopFixture(page); await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Processes & Startup', exact: true }).click();
+  expect(await page.evaluate(() => (window as any).__calls.filter((c: any) => c.method === 'process-activity'))).toHaveLength(0);
+  const panel = page.getByRole('region', { name: 'Process CPU activity' });
+  await panel.getByRole('button', { name: 'Measure CPU activity' }).click();
+  await expect(panel.getByRole('row').filter({ hasText: 'Active test app' })).toContainText('12.5%');
+  await expect(panel.getByRole('row').filter({ hasText: 'Protected test app' })).toContainText('Unavailable');
+  await panel.getByLabel('Search sampled processes').fill('protected');
+  await expect(panel.getByRole('row').filter({ hasText: 'Active test app' })).toHaveCount(0);
+  await panel.getByLabel('Search sampled processes').fill('');
+  for (const width of [1024, 800]) {
+    await page.setViewportSize({ width, height: 900 });
+    if (width <= 1000) await expect(page.locator('.sidebar')).toBeHidden();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  }
+  await panel.screenshot({ path: 'test-results/pandora-process-activity.png' });
+});
+
+test('process activity prevents duplicate clicks and clears stale results on a failed new sample', async ({ page }) => {
+  await desktopFixture(page); await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Processes & Startup', exact: true }).click();
+  const panel = page.getByRole('region', { name: 'Process CPU activity' });
+  await panel.getByRole('button', { name: 'Measure CPU activity' }).click();
+  await expect(panel).toContainText('12.5%');
+  await page.evaluate(() => { window.pandora!.sampleProcessActivity = () => new Promise((_resolve, reject) => { (window as any).__failProcessSample = () => reject(new Error('Process counters timed out.')); }); });
+  await panel.getByRole('button', { name: 'Measure CPU activity' }).click();
+  await expect(panel.getByRole('button')).toBeDisabled();
+  await expect(panel).not.toContainText('12.5%');
+  await page.evaluate(() => (window as any).__failProcessSample());
+  await expect(panel.getByRole('alert')).toContainText('Process counters timed out.');
+  await expect(panel.getByRole('button', { name: 'Measure CPU activity' })).toBeEnabled();
 });

@@ -55,6 +55,7 @@ const api: AppApi = {
   getHistory: () => ipcRenderer.invoke('pandora:history'),
   scanCleanup: kind => ipcRenderer.invoke('pandora:scan-cleanup', kind),
   clean: (id, categories, confirmation) => ipcRenderer.invoke('pandora:clean', id, categories, confirmation),
+  sampleProcessActivity: () => ipcRenderer.invoke('pandora:process-activity'),
   getProcesses: () => ipcRenderer.invoke('pandora:processes'),
   getProcessDetails: pid => ipcRenderer.invoke('pandora:process-details', pid),
   openProcessLocation: token => ipcRenderer.invoke('pandora:process-location', token),

@@ -251,3 +251,10 @@ Follow [the detailed Fortnite validation sequence](FORTNITE-SETTINGS.md). Use an
 Hosted Windows DC tests use a disposable plan and a fixture-only positive battery reading to exercise read/write/restore on runners without a physical battery. They also verify the real native apply path refuses an absent/unknown battery. Never enable mutation-fixture environment flags on your PC.
 
 - [ ] Network Diagnostics: explicitly compare the selected IPv4 gateway and public destination, check eight samples per available destination, repeat with VPN/direct routes and blocked ICMP, and confirm unavailable/route-change messages. No DNS/adapter settings may change. Physical network behavior is separate from hosted Windows fixture validation.
+
+## Process CPU activity sampling
+
+- Open Processes & Startup and click Measure CPU activity. Confirm no sample starts automatically. The two-second wait excludes provider collection overhead.
+- Compare an idle app and a controlled busy app across repeated samples. CPU share uses all logical processors as 100%; Task Manager frequency-adjusted utilization may differ. Do not infer a gaming gain.
+- Check protected/exiting processes, new process instances and unavailable counters. Unavailable must never display as measured zero. Search and CPU/memory sorting should remain usable at your Windows display scale.
+- Confirm repeated clicks are blocked while sampling and failed samples clear older readings. No processes should be stopped or reprioritized.

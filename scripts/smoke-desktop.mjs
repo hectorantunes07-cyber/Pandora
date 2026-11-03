@@ -55,6 +55,13 @@ try {
   assert.equal(optionalApps.entries.length, 8);
   assert.equal(optionalApps.supported, process.platform === 'win32');
   assert.ok(optionalApps.entries.every(e => ['installed', 'not-installed', 'unavailable'].includes(e.state)));
+  if (process.platform === 'win32') {
+    const activity = await page.evaluate(() => window.pandora.sampleProcessActivity());
+    assert.ok(activity.logicalProcessors > 0);
+    assert.ok(activity.rows.some(row => row.status === 'measured' && row.intervalMs >= 1900 && row.cpuPercent >= 0 && row.cpuPercent <= 100), 'Packaged process sampling must return actual measured counters');
+  } else {
+    assert.equal(await page.evaluate(async () => { try { await window.pandora.sampleProcessActivity(); return false; } catch { return true; } }), true);
+  }
   const fortnite = await page.evaluate(() => window.pandora.getFortniteSettings());
   assert.equal(typeof fortnite.supported, 'boolean');
   assert.equal(fortnite.managed, false);

@@ -20,6 +20,7 @@ import { createCursorService } from './cursor';
 import { createNvidiaService, openNvidiaControlPanel } from './nvidia';
 import { createPointerService } from './pointer';
 import { createGamePathService, validateGameId } from './game-paths';
+import { createProcessActivityService } from './process-activity';
 import { createNetworkService } from './network';
 import { createNetworkInspection } from './network-inspection';
 import { createSettingsService, validateSettings } from './settings';
@@ -168,6 +169,8 @@ function registerServices() {
     if (process.platform !== 'win32') throw new Error('This shortcut requires Windows.');
     await shell.openExternal(uri);
   });
+  const processActivity = createProcessActivityService();
+  handle('process-activity', () => processActivity.sample());
   handle('system', getSystem);
   handle('metrics', getMetrics);
   const gpuTelemetry = createGpuTelemetryService();

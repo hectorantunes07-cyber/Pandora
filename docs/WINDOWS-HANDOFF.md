@@ -33,6 +33,8 @@ PANDORA 0.1.0 is ready for controlled Windows testing. It is an unsigned develop
 - Optional Windows-app review: current-user registrations for eight fixed families, exact identity checks, version/status/protected flags, search/filter and reviewed Windows Installed apps shortcut. Windows handles any uninstall; PANDORA does not remove apps or back up their data.
 - Process identity details: actual name, PID/start time, executable path and reported company/version. Company metadata is not authenticated publisher information. Folder requests recheck the process instance and canonical local file; no process is stopped or modified, and detail paths are excluded from logs/reports.
 
+Process CPU activity is now implemented as an explicit read-only sample in Processes & Startup. It displays measured CPU share, final working set and per-process availability, with search and sorting. It does not stop apps, measure startup impact or prove a gaming improvement. Review the current validation record for the exact tested build.
+
 ## Still incomplete
 
 - Direct HAGS, per-game GPU/driver, fullscreen/overlay and broader GPU tuning controls; NVIDIA-specific configuration is not automatically applied.

@@ -27,7 +27,7 @@ export const api: AppApi = window.pandora ?? {
   getPower: unavailable, applyPower: unavailable, restorePower: unavailable, getProfile: unavailable, previewProfile: unavailable, applyProfile: unavailable,
   openWindowsSettings: unavailable, testNetwork: unavailable, testNetworkPath: unavailable, getSystem: unavailable, getMetrics: unavailable, getTweaks: unavailable,
   applyTweaks: unavailable, revertTweaks: unavailable, getHistory: unavailable,
-  scanCleanup: unavailable, clean: unavailable, getProcesses: unavailable,
+  scanCleanup: unavailable, clean: unavailable, getProcesses: unavailable, sampleProcessActivity: unavailable,
   getProcessDetails: unavailable, openProcessLocation: unavailable, getOptionalApps: unavailable, getStartup: unavailable, getGames: unavailable, getSettings: async () => browserSettings(),
   saveSettings: async settings => { localStorage.setItem('pandora.appearance', JSON.stringify(settings)); return settings; },
   exportReport: unavailable, onProgress: () => () => {}, windowAction: () => {},
