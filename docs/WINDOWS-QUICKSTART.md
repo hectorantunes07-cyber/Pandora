@@ -14,6 +14,7 @@ See [TWEAK-LIBRARY.md](TWEAK-LIBRARY.md) for every working control, manual-only 
 ## Test in this order
 
 - **Interface:** open each page, resize the window, use keyboard navigation and try reduced motion in Settings. Check compact controls, tables, cleaner descriptions and dialog details at your Windows scaling setting. In Quality of Life, test the shared Explorer/appearance and visual-effect controls as well as the cursor. Confirm “Created by Sonnier” branding.
+- **Processes & Startup:** click Measure CPU activity for a read-only sample. Compare idle and busy apps; unavailable counters must stay unavailable. CPU share is normalized across logical processors and can differ from Task Manager. No process is stopped or reprioritized.
 - **System Monitor:** compare CPU, usable RAM, GPU/driver and drives with Windows tools. Select Refresh after disk activity. Review the timestamp and provider notes. Missing temperatures and unsupported counters must stay unavailable. Export a report if useful.
 - **Drive diagnostics:** in System Monitor, select Read drive counters. Compare supported readings with Windows and the drive manufacturer’s utility. Missing counters stay unavailable; wear shows estimated endurance used, not life remaining. This read-only check does not run self-tests, repair disks or establish that a drive is fault-free.
 - **Network Diagnostics:** choose a public destination and Start test. Review individual replies, loss and jitter. Missing replies can mean blocked ICMP; this does not automatically indicate a broken connection.

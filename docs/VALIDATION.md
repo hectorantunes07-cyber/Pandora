@@ -2,7 +2,20 @@
 
 PANDORA 0.1.0 is being built in a Linux cloud workspace. Windows-specific checks must be distinguished from Linux unit tests and browser tests. No gaming performance gains have been benchmarked.
 
-## Current Fortnite graphics-quality Windows test build — 2026-11-02
+## Current process-activity Windows test build — 2026-11-03
+
+Application source: `9ae7f0bd5d71e240328cfc309678f24cdc05ae68`. Later documentation commits do not change packaged runtime code.
+
+- **413 backend tests passed locally, with 22 native-only skips. All 62 UI journeys passed.** Production build, native script/structure/runtime checks and actual Linux Electron bridge smoke passed. The new panel was visually inspected at 800 logical pixels; responsive tests check 1024 and 800 with no horizontal overflow.
+- [Exact-source Windows CI](https://github.com/hectorantunes07-cyber/Pandora/actions/runs/41700698805) passed every required stage, including actual per-process sampling, the packaged sampling bridge, native cleaner/configuration and rollback fixtures, all interface journeys, installer and portable builds, source/archive verification, installed lifecycle/data preservation and actual portable launcher execution.
+- Sampling is explicit and read-only. It uses exact integer CPU-counter differences, monotonic per-process timing, PID/start-time identity and stable logical-processor normalization. Zero, inaccessible counters, PID reuse, absent/new processes, partial snapshots and inconsistent readings remain distinct. Tests cover failure/retry and duplicate clicks. Search, sorting and bounded rows do not modify processes.
+- CPU share differs from Task Manager frequency-adjusted utilization. Collection adds some load; a short sample does not establish startup impact or a gaming improvement. Physical-PC comparisons remain required.
+- Both local executables passed clean-source/x64/bundled-code/archive/SHA256 verification. Local cross-built bytes differ from native CI-built/launched bytes; local `windowsLaunchVerified` remains false. Previous packages and kit are preserved under `release/checkpoints/cfd061c-before-process-activity`.
+- PANDORA-Setup-0.1.0-x64.exe: **158,398,379 bytes**, SHA256 `b2e2997ecf107f5145e885c8264da7d15228ab18a616cf12fb2cbe0b05753213`.
+- PANDORA-Portable-0.1.0-x64.exe: **111,621,183 bytes**, SHA256 `d6543aecaeabd525579fb610212f5406dbd4cb61844c712e112051062044f671`.
+- Full-spec implementation estimate remains **about 92%**. The count remains 33 Windows values plus up to eleven Fortnite values. Broader GPU/network writes, direct app removal, additional sensors/live game capture, signing/updating and physical-PC testing are still incomplete.
+
+## Previous Fortnite graphics-quality Windows test build — 2026-11-02
 
 Application source: `cfd061c704c3e8e2c179ee3fa21dd0e02ea98e0d`. Later documentation commits do not change packaged runtime code.
 
